@@ -1,9 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\RegisterUserController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/vershealthcheck', function (): JsonResponse {
+$healthcheckHandler = function (): JsonResponse {
     return response()->json([
         'status' => 'ok',
         'message' => 'API is healthy',
@@ -14,4 +15,9 @@ Route::get('/vershealthcheck', function (): JsonResponse {
         ],
         'timestamp' => now()->toIso8601String(),
     ]);
-});
+};
+
+Route::get('/healthcheck', $healthcheckHandler);
+Route::get('/vershealthcheck', $healthcheckHandler);
+
+Route::post('/users/register', RegisterUserController::class);
