@@ -8,7 +8,7 @@ class HealthcheckApiTest extends TestCase
 {
     public function test_healthcheck_api_returns_version_information(): void
     {
-        $response = $this->getJson('/api/healthcheck');
+        $response = $this->getJson('/api/vershealthcheck');
 
         $response
             ->assertOk()

@@ -3,7 +3,7 @@
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/healthcheck', function (): JsonResponse {
+Route::get('/vershealthcheck', function (): JsonResponse {
     return response()->json([
         'status' => 'ok',
         'message' => 'API is healthy',
