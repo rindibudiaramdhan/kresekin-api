@@ -17,7 +17,5 @@ $healthcheckHandler = function (): JsonResponse {
     ]);
 };
 
-Route::get('/healthcheck', $healthcheckHandler);
 Route::get('/vershealthcheck', $healthcheckHandler);
-
 Route::post('/users/register', RegisterUserController::class);

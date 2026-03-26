@@ -70,7 +70,6 @@ npm run build
 
 ## Current API
 
-- `GET /api/healthcheck`
 - `GET /api/vershealthcheck`
 - `POST /api/users/register`
 
