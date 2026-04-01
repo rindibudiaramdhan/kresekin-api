@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'total_amount',
     'delivery_method',
     'delivery_method_code',
+    'pickup_time_option',
+    'pickup_scheduled_at',
     'payment_method',
     'payment_method_code',
     'payment_method_option_code',

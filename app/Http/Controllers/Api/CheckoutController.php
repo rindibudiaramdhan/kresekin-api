@@ -36,6 +36,12 @@ class CheckoutController extends Controller
 
         $paymentMethod = PaymentMethodCatalog::find($validated['payment_method_code']);
         $paymentOption = $this->resolvePaymentOption($paymentMethod, $validated['payment_method_option_code'] ?? null);
+        $pickupTimeOption = $deliveryMethod['code'] === DeliveryMethodCatalog::PICKUP
+            ? ($validated['pickup_time_option'] ?? null)
+            : null;
+        $pickupScheduledAt = $pickupTimeOption === 'jadwalkan'
+            ? ($validated['pickup_scheduled_at'] ?? null)
+            : null;
 
         $cartItems = CartItem::query()
             ->with('product')
@@ -59,6 +65,8 @@ class CheckoutController extends Controller
             $deliveryMethod,
             $paymentMethod,
             $paymentOption,
+            $pickupTimeOption,
+            $pickupScheduledAt,
             $subtotal,
             $deliveryFee,
             $grandTotal
@@ -72,6 +80,8 @@ class CheckoutController extends Controller
                 'total_amount' => $grandTotal,
                 'delivery_method' => $deliveryMethod['name'],
                 'delivery_method_code' => $deliveryMethod['code'],
+                'pickup_time_option' => $pickupTimeOption,
+                'pickup_scheduled_at' => $pickupScheduledAt,
                 'payment_method' => $paymentMethod['name'],
                 'payment_method_code' => $paymentMethod['code'],
                 'payment_method_option_code' => $paymentOption['code'] ?? null,
@@ -124,6 +134,8 @@ class CheckoutController extends Controller
                 'total_amount' => $transaction->total_amount,
                 'total_amount_label' => $this->moneyLabel($transaction->total_amount),
                 'delivery_method' => $transaction->delivery_method,
+                'pickup_time_option' => $transaction->pickup_time_option,
+                'pickup_scheduled_at' => $transaction->pickup_scheduled_at,
                 'payment_method' => $transaction->payment_method,
                 'payment_method_option_name' => $transaction->payment_method_option_name,
                 'transaction_at' => $transaction->transaction_at?->toIso8601String(),

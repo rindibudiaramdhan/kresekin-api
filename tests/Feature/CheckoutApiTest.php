@@ -65,6 +65,124 @@ class CheckoutApiTest extends TestCase
         ]);
     }
 
+    public function test_checkout_with_pickup_can_store_pickup_time_now(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+
+        Cart::query()->create([
+            'user_id' => $user->id,
+            'delivery_method_code' => 'pickup',
+        ]);
+
+        CartItem::query()->create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/checkout', [
+                'payment_method_code' => 'qr_payment',
+                'pickup_time_option' => 'sekarang',
+            ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('data.delivery_method', 'Ambil ke Toko')
+            ->assertJsonPath('data.pickup_time_option', 'sekarang')
+            ->assertJsonPath('data.pickup_scheduled_at', null)
+            ->assertJsonPath('data.delivery_fee', 0);
+    }
+
+    public function test_checkout_with_pickup_schedule_requires_pickup_time_payload(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+
+        Cart::query()->create([
+            'user_id' => $user->id,
+            'delivery_method_code' => 'pickup',
+        ]);
+
+        CartItem::query()->create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/checkout', [
+                'payment_method_code' => 'cod',
+            ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['pickup_time_option']);
+    }
+
+    public function test_checkout_with_pickup_schedule_requires_scheduled_time_when_option_is_jadwalkan(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+
+        Cart::query()->create([
+            'user_id' => $user->id,
+            'delivery_method_code' => 'pickup',
+        ]);
+
+        CartItem::query()->create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/checkout', [
+                'payment_method_code' => 'cod',
+                'pickup_time_option' => 'jadwalkan',
+            ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['pickup_scheduled_at']);
+    }
+
+    public function test_checkout_with_pickup_schedule_can_store_scheduled_time(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+
+        Cart::query()->create([
+            'user_id' => $user->id,
+            'delivery_method_code' => 'pickup',
+        ]);
+
+        CartItem::query()->create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/checkout', [
+                'payment_method_code' => 'cod',
+                'pickup_time_option' => 'jadwalkan',
+                'pickup_scheduled_at' => '10:30',
+            ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('data.pickup_time_option', 'jadwalkan')
+            ->assertJsonPath('data.pickup_scheduled_at', '10:30');
+
+        $this->assertDatabaseHas('transactions', [
+            'user_id' => $user->id,
+            'pickup_time_option' => 'jadwalkan',
+            'pickup_scheduled_at' => '10:30',
+        ]);
+    }
+
     public function test_checkout_requires_delivery_method_selected_in_cart(): void
     {
         [$user, $token] = $this->createAuthenticatedUser();
