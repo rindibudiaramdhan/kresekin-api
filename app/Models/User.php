@@ -7,10 +7,22 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'phone', 'type', 'password', 'otp_code', 'otp_sent_at'])]
+#[Fillable([
+    'name',
+    'email',
+    'phone',
+    'type',
+    'password',
+    'otp_code',
+    'otp_sent_at',
+    'housing_area',
+    'address',
+    'landmark',
+])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
 class User extends Authenticatable
 {
@@ -29,5 +41,10 @@ class User extends Authenticatable
             'password' => 'hashed',
             'otp_sent_at' => 'datetime',
         ];
+    }
+
+    public function sessionTokens(): HasMany
+    {
+        return $this->hasMany(UserSessionToken::class);
     }
 }

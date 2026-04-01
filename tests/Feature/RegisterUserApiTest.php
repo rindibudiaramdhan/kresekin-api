@@ -150,4 +150,98 @@ class RegisterUserApiTest extends TestCase
 
         $this->assertDatabaseCount('user_session_tokens', 0);
     }
+
+    public function test_authenticated_user_can_update_profile(): void
+    {
+        $user = User::query()->create([
+            'name' => null,
+            'email' => 'old@example.com',
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $plainTextToken = 'session-token-for-test';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->putJson('/api/users/profile', [
+                'name' => 'Budi Santoso',
+                'email' => 'budi@example.com',
+                'phone' => '+628111111111',
+                'housing_area' => 'Komplek Melati Indah',
+                'address' => 'Jl. Mawar No. 10, Blok A2',
+                'landmark' => 'Dekat portal komplek',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Budi Santoso')
+            ->assertJsonPath('data.email', 'budi@example.com')
+            ->assertJsonPath('data.phone', '+628111111111')
+            ->assertJsonPath('data.housing_area', 'Komplek Melati Indah')
+            ->assertJsonPath('data.address', 'Jl. Mawar No. 10, Blok A2')
+            ->assertJsonPath('data.landmark', 'Dekat portal komplek');
+
+        $user->refresh();
+
+        $this->assertSame('Budi Santoso', $user->name);
+        $this->assertSame('budi@example.com', $user->email);
+        $this->assertSame('+628111111111', $user->phone);
+        $this->assertSame('Komplek Melati Indah', $user->housing_area);
+        $this->assertSame('Jl. Mawar No. 10, Blok A2', $user->address);
+        $this->assertSame('Dekat portal komplek', $user->landmark);
+    }
+
+    public function test_update_profile_requires_authentication(): void
+    {
+        $response = $this->putJson('/api/users/profile', [
+            'name' => 'Budi Santoso',
+            'email' => 'budi@example.com',
+            'housing_area' => 'Komplek Melati Indah',
+            'address' => 'Jl. Mawar No. 10, Blok A2',
+        ]);
+
+        $response
+            ->assertUnauthorized()
+            ->assertJsonPath('message', 'Unauthenticated.');
+    }
+
+    public function test_update_profile_requires_required_fields_from_form(): void
+    {
+        $user = User::query()->create([
+            'name' => null,
+            'email' => 'old@example.com',
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $plainTextToken = 'session-token-for-validation';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->putJson('/api/users/profile', [
+                'phone' => '+628111111111',
+                'landmark' => 'Dekat portal komplek',
+            ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['name', 'email', 'housing_area', 'address']);
+    }
 }
