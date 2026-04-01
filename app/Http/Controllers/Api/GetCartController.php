@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\CartItem;
+use App\Support\DeliveryMethodCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,6 +13,10 @@ class GetCartController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
+        $cart = Cart::query()->firstOrCreate([
+            'user_id' => $request->user()->id,
+        ]);
+
         $cartItems = CartItem::query()
             ->with(['product.tenant'])
             ->where('user_id', $request->user()->id)
@@ -18,6 +24,9 @@ class GetCartController extends Controller
             ->get();
 
         $subtotal = $cartItems->sum(fn (CartItem $item): int => $item->quantity * $item->product->price);
+        $deliveryMethod = DeliveryMethodCatalog::find($cart->delivery_method_code);
+        $deliveryFee = $deliveryMethod['fee'] ?? 0;
+        $grandTotal = $subtotal + $deliveryFee;
 
         return response()->json([
             'message' => 'Keranjang berhasil diambil.',
@@ -38,8 +47,20 @@ class GetCartController extends Controller
                     'line_total' => $item->quantity * $item->product->price,
                     'line_total_label' => $this->moneyLabel($item->quantity * $item->product->price),
                 ])->values(),
+                'delivery_method' => $deliveryMethod ? [
+                    'id' => $deliveryMethod['id'],
+                    'code' => $deliveryMethod['code'],
+                    'name' => $deliveryMethod['name'],
+                    'description' => $deliveryMethod['description'],
+                    'fee' => $deliveryMethod['fee'],
+                    'fee_label' => $this->moneyLabel($deliveryMethod['fee']),
+                ] : null,
                 'subtotal' => $subtotal,
                 'subtotal_label' => $this->moneyLabel($subtotal),
+                'delivery_fee' => $deliveryFee,
+                'delivery_fee_label' => $this->moneyLabel($deliveryFee),
+                'grand_total' => $grandTotal,
+                'grand_total_label' => $this->moneyLabel($grandTotal),
                 'total_items' => $cartItems->sum('quantity'),
             ],
         ]);

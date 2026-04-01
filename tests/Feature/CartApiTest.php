@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\Tenant;
@@ -37,8 +38,11 @@ class CartApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.items.0.product.id', $product->id)
             ->assertJsonPath('data.items.0.quantity', 2)
+            ->assertJsonPath('data.delivery_method', null)
             ->assertJsonPath('data.total_items', 2)
-            ->assertJsonPath('data.subtotal', 19998);
+            ->assertJsonPath('data.subtotal', 19998)
+            ->assertJsonPath('data.delivery_fee', 0)
+            ->assertJsonPath('data.grand_total', 19998);
 
         $this->assertDatabaseHas('cart_items', [
             'user_id' => $user->id,
@@ -105,10 +109,50 @@ class CartApiTest extends TestCase
         ]);
     }
 
+    public function test_authenticated_user_can_select_delivery_method_for_cart(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+
+        CartItem::query()->create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 2,
+        ]);
+
+        $updateResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/cart/delivery-method', [
+                'delivery_method_code' => 'store_courier',
+            ]);
+
+        $updateResponse
+            ->assertOk()
+            ->assertJsonPath('data.delivery_method.code', 'store_courier')
+            ->assertJsonPath('data.delivery_method.fee', 2500);
+
+        $cartResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/cart');
+
+        $cartResponse
+            ->assertOk()
+            ->assertJsonPath('data.delivery_method.code', 'store_courier')
+            ->assertJsonPath('data.delivery_fee', 2500)
+            ->assertJsonPath('data.grand_total', 22498);
+
+        $this->assertDatabaseHas('carts', [
+            'user_id' => $user->id,
+            'delivery_method_code' => 'store_courier',
+        ]);
+    }
+
     public function test_cart_endpoints_require_authentication(): void
     {
         $this->getJson('/api/cart')
             ->assertUnauthorized();
+
+        $this->patchJson('/api/cart/delivery-method', [
+            'delivery_method_code' => 'store_courier',
+        ])->assertUnauthorized();
 
         $this->postJson('/api/cart/items', [
             'product_id' => 1,
