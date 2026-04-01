@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Contracts\WhatsappOtpSender;
 use App\Models\User;
 use App\Models\UserSessionToken;
+use App\Notifications\LoginOtpNotification;
 use App\Notifications\RegistrationOtpNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -88,6 +89,86 @@ class RegisterUserApiTest extends TestCase
         $response
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['phone']);
+    }
+
+    public function test_user_can_login_with_email_and_receive_otp_notification(): void
+    {
+        Notification::fake();
+
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'user@example.com',
+            'phone' => null,
+            'type' => 'email',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $response = $this->postJson('/api/users/login', [
+            'type' => 'email',
+            'email' => 'user@example.com',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.id', $user->id)
+            ->assertJsonPath('data.email', 'user@example.com')
+            ->assertJsonPath('data.type', 'email');
+
+        $user->refresh();
+        $this->assertNotNull($user->otp_code);
+        $this->assertNotNull($user->otp_sent_at);
+
+        Notification::assertSentTo($user, LoginOtpNotification::class);
+    }
+
+    public function test_user_can_login_with_phone_and_receive_otp_via_whatsapp_sender(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => null,
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $whatsappOtpSender = Mockery::mock(WhatsappOtpSender::class);
+        $whatsappOtpSender
+            ->shouldReceive('send')
+            ->once()
+            ->withArgs(fn (string $phone, string $otp): bool => $phone === '+6281234567890' && preg_match('/^\d{6}$/', $otp) === 1);
+
+        $this->app->instance(WhatsappOtpSender::class, $whatsappOtpSender);
+
+        $response = $this->postJson('/api/users/login', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.id', $user->id)
+            ->assertJsonPath('data.phone', '+6281234567890')
+            ->assertJsonPath('data.type', 'phone');
+
+        $user->refresh();
+        $this->assertNotNull($user->otp_code);
+        $this->assertNotNull($user->otp_sent_at);
+    }
+
+    public function test_login_returns_not_found_when_user_does_not_exist(): void
+    {
+        $response = $this->postJson('/api/users/login', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+        ]);
+
+        $response
+            ->assertNotFound()
+            ->assertJsonPath('message', 'User tidak ditemukan.');
     }
 
     public function test_user_can_verify_phone_otp_and_receive_session_token(): void

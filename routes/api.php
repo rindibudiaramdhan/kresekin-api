@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\LoginUserController;
 use App\Http\Controllers\Api\RegisterUserController;
 use App\Http\Controllers\Api\UpdateUserProfileController;
 use App\Http\Controllers\Api\VerifyOtpController;
@@ -20,6 +21,7 @@ $healthcheckHandler = function (): JsonResponse {
 };
 
 Route::get('/vershealthcheck', $healthcheckHandler);
+Route::post('/users/login', LoginUserController::class);
 Route::post('/users/register', RegisterUserController::class);
 Route::post('/users/verify-otp', VerifyOtpController::class);
 Route::put('/users/profile', UpdateUserProfileController::class)->middleware('session.token');
