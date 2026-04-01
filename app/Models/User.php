@@ -22,6 +22,8 @@ use Illuminate\Notifications\Notifiable;
     'housing_area',
     'address',
     'landmark',
+    'latitude',
+    'longitude',
 ])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
 class User extends Authenticatable
@@ -40,6 +42,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'otp_sent_at' => 'datetime',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
     }
 
