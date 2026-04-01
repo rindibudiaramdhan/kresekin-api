@@ -639,6 +639,102 @@ class RegisterUserApiTest extends TestCase
         $this->assertCount(3, $response->json('data'));
     }
 
+    public function test_tenant_list_can_be_filtered_by_category_and_sorted_by_nearest_distance(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'budi@example.com',
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+            'latitude' => -6.2000000,
+            'longitude' => 106.8160000,
+        ]);
+
+        $plainTextToken = 'tenant-category-token';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        Tenant::query()->create([
+            'name' => 'Toko Far',
+            'profile_picture_url' => 'https://example.com/far.png',
+            'rating' => 4.2,
+            'category' => Tenant::CATEGORY_TOILETRIES,
+            'latitude' => -6.2400000,
+            'longitude' => 106.8500000,
+        ]);
+
+        Tenant::query()->create([
+            'name' => 'Toko Near',
+            'profile_picture_url' => 'https://example.com/near.png',
+            'rating' => 4.9,
+            'category' => Tenant::CATEGORY_TOILETRIES,
+            'latitude' => -6.2010000,
+            'longitude' => 106.8170000,
+        ]);
+
+        Tenant::query()->create([
+            'name' => 'Toko Sembako',
+            'profile_picture_url' => 'https://example.com/grocery.png',
+            'rating' => 5.0,
+            'category' => Tenant::CATEGORY_GROCERIES,
+            'latitude' => -6.2005000,
+            'longitude' => 106.8165000,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/tenants?category='.urlencode(Tenant::CATEGORY_TOILETRIES));
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('meta.total', 2)
+            ->assertJsonPath('data.0.name', 'Toko Near')
+            ->assertJsonPath('data.1.name', 'Toko Far')
+            ->assertJsonPath('data.0.category', Tenant::CATEGORY_TOILETRIES)
+            ->assertJsonPath('data.1.category', Tenant::CATEGORY_TOILETRIES);
+
+        $this->assertLessThan(
+            $response->json('data.1.distance_km'),
+            $response->json('data.0.distance_km')
+        );
+    }
+
+    public function test_tenant_list_returns_validation_error_for_unknown_category(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'budi@example.com',
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+            'latitude' => -6.2000000,
+            'longitude' => 106.8160000,
+        ]);
+
+        $plainTextToken = 'tenant-invalid-category-token';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/tenants?category=Elektronik');
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['category']);
+    }
+
     public function test_tenant_list_requires_authentication(): void
     {
         $response = $this->getJson('/api/tenants');
