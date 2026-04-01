@@ -762,7 +762,11 @@ class RegisterUserApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.name', Tenant::CATEGORY_VEGETABLES)
             ->assertJsonPath('data.0.slug', 'sayur')
+            ->assertJsonPath('data.0.icon_key', 'vegetables')
+            ->assertJsonPath('data.0.background_color', '#E7F6EB')
+            ->assertJsonPath('data.0.icon_color', '#67B97A')
             ->assertJsonPath('data.3.name', Tenant::CATEGORY_TOILETRIES)
+            ->assertJsonPath('data.3.icon_key', 'toiletries')
             ->assertJsonPath('data.14.name', Tenant::CATEGORY_GROCERIES);
 
         $this->assertCount(count(Tenant::CATEGORIES), $response->json('data'));
