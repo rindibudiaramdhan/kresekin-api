@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\GetTenantCategoriesController;
 use App\Http\Controllers\Api\GetTenantListController;
 use App\Http\Controllers\Api\GetUserTransactionHistoryController;
 use App\Http\Controllers\Api\GetUserTransactionDetailController;
@@ -28,6 +29,7 @@ Route::post('/users/login', LoginUserController::class);
 Route::post('/users/register', RegisterUserController::class);
 Route::post('/users/verify-otp', VerifyOtpController::class);
 Route::put('/users/profile', UpdateUserProfileController::class)->middleware('session.token');
+Route::get('/tenants/categories', GetTenantCategoriesController::class)->middleware('session.token');
 Route::get('/tenants', GetTenantListController::class)->middleware('session.token');
 Route::get('/users/transactions', GetUserTransactionHistoryController::class)->middleware('session.token');
 Route::get('/users/transactions/{transactionId}', GetUserTransactionDetailController::class)->middleware('session.token');

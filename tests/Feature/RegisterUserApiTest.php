@@ -735,9 +735,51 @@ class RegisterUserApiTest extends TestCase
             ->assertJsonValidationErrors(['category']);
     }
 
+    public function test_authenticated_user_can_get_tenant_categories(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'budi@example.com',
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $plainTextToken = 'tenant-categories-token';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/tenants/categories');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.0.name', Tenant::CATEGORY_VEGETABLES)
+            ->assertJsonPath('data.0.slug', 'sayur')
+            ->assertJsonPath('data.3.name', Tenant::CATEGORY_TOILETRIES)
+            ->assertJsonPath('data.14.name', Tenant::CATEGORY_GROCERIES);
+
+        $this->assertCount(count(Tenant::CATEGORIES), $response->json('data'));
+    }
+
     public function test_tenant_list_requires_authentication(): void
     {
         $response = $this->getJson('/api/tenants');
+
+        $response
+            ->assertUnauthorized()
+            ->assertJsonPath('message', 'Unauthenticated.');
+    }
+
+    public function test_tenant_categories_requires_authentication(): void
+    {
+        $response = $this->getJson('/api/tenants/categories');
 
         $response
             ->assertUnauthorized()
