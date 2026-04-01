@@ -63,11 +63,15 @@ class TenantApiTest extends TestCase
             ->assertJsonPath('data.0.category_icon_key', 'toiletries')
             ->assertJsonPath('data.0.category_background_color', '#FFF5DF')
             ->assertJsonPath('data.0.category_icon_color', '#F4B544')
+            ->assertJsonPath('data.0.latitude', -6.2)
+            ->assertJsonPath('data.0.longitude', 106.821)
             ->assertJsonPath('data.0.is_open', true)
             ->assertJsonPath('data.0.store_status', 'Buka')
             ->assertJsonPath('data.0.open_time', '07:00')
             ->assertJsonPath('data.0.close_time', '21:00')
             ->assertJsonPath('data.0.operating_hours_label', 'Buka 07:00 sd 21:00')
+            ->assertJsonPath('data.0.map_marker.title', 'Tenant 01')
+            ->assertJsonPath('data.0.map_marker.subtitle', Tenant::CATEGORY_TOILETRIES)
             ->assertJsonPath('data.0.rating', 4.5);
 
         $this->assertCount(10, $response->json('data'));

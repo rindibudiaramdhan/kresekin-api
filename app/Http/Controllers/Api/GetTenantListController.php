@@ -55,6 +55,8 @@ class GetTenantListController extends Controller
                     'id' => $tenant->id,
                     'profile_picture_url' => $tenant->profile_picture_url,
                     'name' => $tenant->name,
+                    'latitude' => $tenant->latitude,
+                    'longitude' => $tenant->longitude,
                     'distance_km' => $distanceKm,
                     'distance_label' => $this->formatDistanceLabel($distanceKm),
                     'rating' => round((float) $tenant->rating, 1),
@@ -68,6 +70,13 @@ class GetTenantListController extends Controller
                     'open_time' => $tenant->open_time,
                     'close_time' => $tenant->close_time,
                     'operating_hours_label' => $tenant->operatingHoursLabel(),
+                    'map_marker' => [
+                        'title' => $tenant->name,
+                        'subtitle' => $tenant->category,
+                        'latitude' => $tenant->latitude,
+                        'longitude' => $tenant->longitude,
+                        'is_open' => $isOpen,
+                    ],
                 ];
             })
             ->sortBy([
