@@ -587,6 +587,10 @@ class RegisterUserApiTest extends TestCase
             ->assertJsonPath('meta.per_page', 10)
             ->assertJsonPath('meta.total', 12)
             ->assertJsonPath('data.0.category', Tenant::CATEGORY_TOILETRIES)
+            ->assertJsonPath('data.0.category_slug', 'toiletries')
+            ->assertJsonPath('data.0.category_icon_key', 'toiletries')
+            ->assertJsonPath('data.0.category_background_color', '#FFF5DF')
+            ->assertJsonPath('data.0.category_icon_color', '#F4B544')
             ->assertJsonPath('data.0.rating', 4.5);
 
         $this->assertCount(10, $response->json('data'));
@@ -634,7 +638,9 @@ class RegisterUserApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('meta.per_page', 3)
             ->assertJsonPath('meta.total', 5)
-            ->assertJsonPath('data.0.category', Tenant::CATEGORY_GROCERIES);
+            ->assertJsonPath('data.0.category', Tenant::CATEGORY_GROCERIES)
+            ->assertJsonPath('data.0.category_slug', 'sembako')
+            ->assertJsonPath('data.0.category_icon_key', 'groceries');
 
         $this->assertCount(3, $response->json('data'));
     }

@@ -47,6 +47,7 @@ class GetTenantListController extends Controller
                     $tenant->latitude,
                     $tenant->longitude,
                 );
+                $categoryUiMetadata = Tenant::categoryUiMetadata($tenant->category);
 
                 return [
                     'id' => $tenant->id,
@@ -56,6 +57,10 @@ class GetTenantListController extends Controller
                     'distance_label' => $this->formatDistanceLabel($distanceKm),
                     'rating' => round((float) $tenant->rating, 1),
                     'category' => $tenant->category,
+                    'category_slug' => str($tenant->category)->slug()->toString(),
+                    'category_icon_key' => $categoryUiMetadata['icon_key'],
+                    'category_background_color' => $categoryUiMetadata['background_color'],
+                    'category_icon_color' => $categoryUiMetadata['icon_color'],
                 ];
             })
             ->sortBy([
