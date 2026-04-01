@@ -32,6 +32,7 @@ class GetTenantListController extends Controller
         $limit = (int) ($validated['limit'] ?? 10);
         $page = (int) ($validated['page'] ?? 1);
         $user = $request->user();
+        $currentTime = now('Asia/Jakarta')->format('H:i');
 
         $tenantItems = Tenant::query()
             ->when(
@@ -40,7 +41,7 @@ class GetTenantListController extends Controller
             )
             ->orderByDesc('created_at')
             ->get()
-            ->map(function (Tenant $tenant) use ($user): array {
+            ->map(function (Tenant $tenant) use ($user, $currentTime): array {
                 $distanceKm = $this->calculateDistanceKm(
                     $user->latitude,
                     $user->longitude,
@@ -48,6 +49,7 @@ class GetTenantListController extends Controller
                     $tenant->longitude,
                 );
                 $categoryUiMetadata = Tenant::categoryUiMetadata($tenant->category);
+                $isOpen = $tenant->isOpenAt($currentTime);
 
                 return [
                     'id' => $tenant->id,
@@ -61,6 +63,11 @@ class GetTenantListController extends Controller
                     'category_icon_key' => $categoryUiMetadata['icon_key'],
                     'category_background_color' => $categoryUiMetadata['background_color'],
                     'category_icon_color' => $categoryUiMetadata['icon_color'],
+                    'is_open' => $isOpen,
+                    'store_status' => $isOpen ? 'Buka' : 'Tutup',
+                    'open_time' => $tenant->open_time,
+                    'close_time' => $tenant->close_time,
+                    'operating_hours_label' => $tenant->operatingHoursLabel(),
                 ];
             })
             ->sortBy([

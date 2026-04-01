@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserSessionToken;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,6 +15,8 @@ class TenantApiTest extends TestCase
 
     public function test_authenticated_user_can_get_paginated_tenant_list_with_default_limit(): void
     {
+        Carbon::setTestNow('2026-04-01 10:00:00');
+
         $user = User::query()->create([
             'name' => 'Budi',
             'email' => 'budi@example.com',
@@ -42,6 +45,8 @@ class TenantApiTest extends TestCase
                 'category' => Tenant::CATEGORY_TOILETRIES,
                 'latitude' => -6.2000000,
                 'longitude' => 106.8200000 + ($index / 1000),
+                'open_time' => '07:00',
+                'close_time' => '21:00',
             ]);
         }
 
@@ -58,15 +63,24 @@ class TenantApiTest extends TestCase
             ->assertJsonPath('data.0.category_icon_key', 'toiletries')
             ->assertJsonPath('data.0.category_background_color', '#FFF5DF')
             ->assertJsonPath('data.0.category_icon_color', '#F4B544')
+            ->assertJsonPath('data.0.is_open', true)
+            ->assertJsonPath('data.0.store_status', 'Buka')
+            ->assertJsonPath('data.0.open_time', '07:00')
+            ->assertJsonPath('data.0.close_time', '21:00')
+            ->assertJsonPath('data.0.operating_hours_label', 'Buka 07:00 sd 21:00')
             ->assertJsonPath('data.0.rating', 4.5);
 
         $this->assertCount(10, $response->json('data'));
         $this->assertNotNull($response->json('data.0.distance_km'));
         $this->assertSame('km', substr((string) $response->json('data.0.distance_label'), -2));
+
+        Carbon::setTestNow();
     }
 
     public function test_tenant_list_respects_limit_query_parameter(): void
     {
+        Carbon::setTestNow('2026-04-01 22:00:00');
+
         $user = User::query()->create([
             'name' => 'Budi',
             'email' => 'budi@example.com',
@@ -95,6 +109,8 @@ class TenantApiTest extends TestCase
                 'category' => Tenant::CATEGORY_GROCERIES,
                 'latitude' => -6.2100000,
                 'longitude' => 106.8260000 + ($index / 1000),
+                'open_time' => '07:00',
+                'close_time' => '21:00',
             ]);
         }
 
@@ -107,9 +123,13 @@ class TenantApiTest extends TestCase
             ->assertJsonPath('meta.total', 5)
             ->assertJsonPath('data.0.category', Tenant::CATEGORY_GROCERIES)
             ->assertJsonPath('data.0.category_slug', 'sembako')
-            ->assertJsonPath('data.0.category_icon_key', 'groceries');
+            ->assertJsonPath('data.0.category_icon_key', 'groceries')
+            ->assertJsonPath('data.0.is_open', false)
+            ->assertJsonPath('data.0.store_status', 'Tutup');
 
         $this->assertCount(3, $response->json('data'));
+
+        Carbon::setTestNow();
     }
 
     public function test_tenant_list_can_be_filtered_by_category_and_sorted_by_nearest_distance(): void
@@ -141,6 +161,8 @@ class TenantApiTest extends TestCase
             'category' => Tenant::CATEGORY_TOILETRIES,
             'latitude' => -6.2400000,
             'longitude' => 106.8500000,
+            'open_time' => '07:00',
+            'close_time' => '21:00',
         ]);
 
         Tenant::query()->create([
@@ -150,6 +172,8 @@ class TenantApiTest extends TestCase
             'category' => Tenant::CATEGORY_TOILETRIES,
             'latitude' => -6.2010000,
             'longitude' => 106.8170000,
+            'open_time' => '07:00',
+            'close_time' => '21:00',
         ]);
 
         Tenant::query()->create([
@@ -159,6 +183,8 @@ class TenantApiTest extends TestCase
             'category' => Tenant::CATEGORY_GROCERIES,
             'latitude' => -6.2005000,
             'longitude' => 106.8165000,
+            'open_time' => '07:00',
+            'close_time' => '21:00',
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)

@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'category',
     'latitude',
     'longitude',
+    'open_time',
+    'close_time',
 ])]
 class Tenant extends Model
 {
@@ -135,6 +137,28 @@ class Tenant extends Model
             'latitude' => 'float',
             'longitude' => 'float',
         ];
+    }
+
+    public function isOpenAt(string $currentTime): bool
+    {
+        if (! $this->open_time || ! $this->close_time) {
+            return false;
+        }
+
+        if ($this->open_time <= $this->close_time) {
+            return $currentTime >= $this->open_time && $currentTime <= $this->close_time;
+        }
+
+        return $currentTime >= $this->open_time || $currentTime <= $this->close_time;
+    }
+
+    public function operatingHoursLabel(): ?string
+    {
+        if (! $this->open_time || ! $this->close_time) {
+            return null;
+        }
+
+        return sprintf('Buka %s sd %s', $this->open_time, $this->close_time);
     }
 
     public function products(): HasMany

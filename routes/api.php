@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AddCartItemController;
 use App\Http\Controllers\Api\DeleteCartItemController;
+use App\Http\Controllers\Api\GetDeliveryMethodsController;
 use App\Http\Controllers\Api\GetCartController;
 use App\Http\Controllers\Api\GetProductDetailController;
 use App\Http\Controllers\Api\GetProductListController;
@@ -35,6 +36,7 @@ Route::post('/users/login', LoginUserController::class);
 Route::post('/users/register', RegisterUserController::class);
 Route::post('/users/verify-otp', VerifyOtpController::class);
 Route::put('/users/profile', UpdateUserProfileController::class)->middleware('session.token');
+Route::get('/delivery-methods', GetDeliveryMethodsController::class)->middleware('session.token');
 Route::get('/cart', GetCartController::class)->middleware('session.token');
 Route::post('/cart/items', AddCartItemController::class)->middleware('session.token');
 Route::patch('/cart/items/{id}', UpdateCartItemController::class)->middleware('session.token');
