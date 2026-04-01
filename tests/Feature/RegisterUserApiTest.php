@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Contracts\WhatsappOtpSender;
 use App\Models\User;
+use App\Models\UserSessionToken;
 use App\Notifications\RegistrationOtpNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Mockery;
 use Tests\TestCase;
@@ -86,5 +88,66 @@ class RegisterUserApiTest extends TestCase
         $response
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['phone']);
+    }
+
+    public function test_user_can_verify_phone_otp_and_receive_session_token(): void
+    {
+        $user = User::query()->create([
+            'name' => null,
+            'email' => null,
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => Hash::make('123456'),
+            'otp_sent_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/users/verify-otp', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+            'otp' => '123456',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.token_type', 'Bearer')
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user.phone', '+6281234567890');
+
+        $user->refresh();
+        $this->assertNull($user->otp_code);
+        $this->assertNull($user->otp_sent_at);
+
+        $plainTextToken = $response->json('data.token');
+        $sessionToken = UserSessionToken::query()->where('user_id', $user->id)->first();
+
+        $this->assertNotNull($plainTextToken);
+        $this->assertNotNull($sessionToken);
+        $this->assertSame(hash('sha256', $plainTextToken), $sessionToken->token);
+    }
+
+    public function test_verify_otp_returns_error_when_code_is_invalid(): void
+    {
+        User::query()->create([
+            'name' => null,
+            'email' => null,
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => Hash::make('123456'),
+            'otp_sent_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/users/verify-otp', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+            'otp' => '654321',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Kode OTP tidak valid.');
+
+        $this->assertDatabaseCount('user_session_tokens', 0);
     }
 }
