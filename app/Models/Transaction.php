@@ -12,9 +12,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'order_number',
     'status',
     'transaction_at',
+    'subtotal_amount',
+    'delivery_fee',
     'total_amount',
     'delivery_method',
+    'delivery_method_code',
     'payment_method',
+    'payment_method_code',
+    'payment_method_option_code',
+    'payment_method_option_name',
 ])]
 class Transaction extends Model
 {
@@ -33,6 +39,8 @@ class Transaction extends Model
     {
         return [
             'transaction_at' => 'datetime',
+            'subtotal_amount' => 'integer',
+            'delivery_fee' => 'integer',
             'total_amount' => 'integer',
         ];
     }
@@ -45,5 +53,10 @@ class Transaction extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(TransactionStatusHistory::class)->orderBy('sequence')->orderBy('status_at');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(TransactionItem::class);
     }
 }
