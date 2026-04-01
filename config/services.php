@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'whatsapp_otp' => [
+        'driver' => env('WHATSAPP_OTP_DRIVER', 'log'),
+        'base_url' => env('WHATSAPP_OTP_BASE_URL'),
+        'api_key' => env('WHATSAPP_OTP_API_KEY'),
+        'sender' => env('WHATSAPP_OTP_SENDER'),
+        'timeout' => (int) env('WHATSAPP_OTP_TIMEOUT', 10),
+    ],
+
 ];
