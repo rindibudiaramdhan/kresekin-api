@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Contracts\WhatsappOtpSender;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\UserSessionToken;
 use App\Notifications\LoginOtpNotification;
@@ -324,5 +325,75 @@ class RegisterUserApiTest extends TestCase
         $response
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['name', 'email', 'housing_area', 'address']);
+    }
+
+    public function test_authenticated_user_can_get_transaction_history_sorted_by_latest_and_paginated(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'budi@example.com',
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $otherUser = User::query()->create([
+            'name' => 'Siti',
+            'email' => 'siti@example.com',
+            'phone' => '+6282222222222',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $plainTextToken = 'transaction-history-token';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        foreach (range(1, 12) as $index) {
+            Transaction::query()->create([
+                'user_id' => $user->id,
+                'order_number' => sprintf('TRX%04d', $index),
+                'status' => 'Pesanan Selesai',
+                'transaction_at' => now()->subMinutes(12 - $index),
+            ]);
+        }
+
+        Transaction::query()->create([
+            'user_id' => $otherUser->id,
+            'order_number' => 'OTHER0001',
+            'status' => 'Dalam perjalanan',
+            'transaction_at' => now()->addMinute(),
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/users/transactions');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.per_page', 10)
+            ->assertJsonPath('meta.total', 12)
+            ->assertJsonPath('data.0.order_number', 'TRX0012')
+            ->assertJsonPath('data.1.order_number', 'TRX0011')
+            ->assertJsonPath('data.9.order_number', 'TRX0003');
+
+        $this->assertCount(10, $response->json('data'));
+    }
+
+    public function test_transaction_history_requires_authentication(): void
+    {
+        $response = $this->getJson('/api/users/transactions');
+
+        $response
+            ->assertUnauthorized()
+            ->assertJsonPath('message', 'Unauthenticated.');
     }
 }
