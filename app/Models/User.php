@@ -17,6 +17,7 @@ use Illuminate\Notifications\Notifiable;
     'email',
     'phone',
     'type',
+    'role',
     'password',
     'otp_code',
     'otp_sent_at',
@@ -29,6 +30,11 @@ use Illuminate\Notifications\Notifiable;
 #[Hidden(['password', 'remember_token', 'otp_code'])]
 class User extends Authenticatable
 {
+    public const AUTH_TYPE_EMAIL = 'email';
+    public const AUTH_TYPE_PHONE = 'phone';
+    public const ROLE_BUYER = 'buyer';
+    public const ROLE_SELLER = 'seller';
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 

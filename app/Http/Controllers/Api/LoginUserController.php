@@ -19,7 +19,7 @@ class LoginUserController extends Controller
 
         $user = User::query()
             ->when(
-                $validated['type'] === 'email',
+                $validated['type'] === User::AUTH_TYPE_EMAIL,
                 fn ($query) => $query->where('email', $validated['email']),
                 fn ($query) => $query->where('phone', $validated['phone'])
             )
@@ -38,7 +38,7 @@ class LoginUserController extends Controller
             'otp_sent_at' => now(),
         ])->save();
 
-        if ($validated['type'] === 'email') {
+        if ($validated['type'] === User::AUTH_TYPE_EMAIL) {
             $user->notify(new LoginOtpNotification($otp));
         } else {
             $whatsappOtpSender->send($user->phone, $otp);
@@ -51,6 +51,7 @@ class LoginUserController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'type' => $user->type,
+                'role' => $user->role,
                 'otp_sent_at' => $user->otp_sent_at?->toIso8601String(),
             ],
         ]);

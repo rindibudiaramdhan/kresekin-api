@@ -30,7 +30,8 @@ class AuthApiTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.email', 'user@example.com')
             ->assertJsonPath('data.phone', null)
-            ->assertJsonPath('data.type', 'email');
+            ->assertJsonPath('data.type', 'email')
+            ->assertJsonPath('data.role', 'buyer');
 
         $user = User::query()->where('email', 'user@example.com')->firstOrFail();
 
@@ -60,7 +61,8 @@ class AuthApiTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.email', null)
             ->assertJsonPath('data.phone', '+6281234567890')
-            ->assertJsonPath('data.type', 'phone');
+            ->assertJsonPath('data.type', 'phone')
+            ->assertJsonPath('data.role', 'buyer');
 
         $user = User::query()->where('phone', '+6281234567890')->firstOrFail();
 
@@ -114,7 +116,8 @@ class AuthApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.id', $user->id)
             ->assertJsonPath('data.email', 'user@example.com')
-            ->assertJsonPath('data.type', 'email');
+            ->assertJsonPath('data.type', 'email')
+            ->assertJsonPath('data.role', 'buyer');
 
         $user->refresh();
         $this->assertNotNull($user->otp_code);
@@ -152,7 +155,8 @@ class AuthApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.id', $user->id)
             ->assertJsonPath('data.phone', '+6281234567890')
-            ->assertJsonPath('data.type', 'phone');
+            ->assertJsonPath('data.type', 'phone')
+            ->assertJsonPath('data.role', 'buyer');
 
         $user->refresh();
         $this->assertNotNull($user->otp_code);
@@ -193,7 +197,8 @@ class AuthApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.token_type', 'Bearer')
             ->assertJsonPath('data.user.id', $user->id)
-            ->assertJsonPath('data.user.phone', '+6281234567890');
+            ->assertJsonPath('data.user.phone', '+6281234567890')
+            ->assertJsonPath('data.user.role', 'buyer');
 
         $user->refresh();
         $this->assertNull($user->otp_code);
@@ -267,6 +272,7 @@ class AuthApiTest extends TestCase
             ->assertJsonPath('data.name', 'Budi Santoso')
             ->assertJsonPath('data.email', 'budi@example.com')
             ->assertJsonPath('data.phone', '+628111111111')
+            ->assertJsonPath('data.role', 'buyer')
             ->assertJsonPath('data.housing_area', 'Komplek Melati Indah')
             ->assertJsonPath('data.address', 'Jl. Mawar No. 10, Blok A2')
             ->assertJsonPath('data.landmark', 'Dekat portal komplek');
@@ -354,7 +360,8 @@ class AuthApiTest extends TestCase
             ->assertJsonPath('message', 'Sesi login berhasil diperbarui.')
             ->assertJsonPath('data.token_type', 'Bearer')
             ->assertJsonPath('data.user.id', $user->id)
-            ->assertJsonPath('data.user.email', 'refresh@example.com');
+            ->assertJsonPath('data.user.email', 'refresh@example.com')
+            ->assertJsonPath('data.user.role', 'buyer');
 
         $newPlainTextToken = $response->json('data.token');
 
@@ -377,5 +384,26 @@ class AuthApiTest extends TestCase
         $response
             ->assertUnauthorized()
             ->assertJsonPath('message', 'Unauthenticated.');
+    }
+
+    public function test_user_can_register_as_seller(): void
+    {
+        Notification::fake();
+
+        $response = $this->postJson('/api/users/register', [
+            'type' => 'email',
+            'role' => 'seller',
+            'email' => 'seller@example.com',
+        ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('data.email', 'seller@example.com')
+            ->assertJsonPath('data.role', 'seller');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'seller@example.com',
+            'role' => 'seller',
+        ]);
     }
 }

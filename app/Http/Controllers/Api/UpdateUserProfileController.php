@@ -22,6 +22,7 @@ class UpdateUserProfileController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'type' => $user->type,
+                'role' => $user->role,
                 'housing_area' => $user->housing_area,
                 'address' => $user->address,
                 'landmark' => $user->landmark,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,7 +16,8 @@ class RegisterUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', Rule::in(['email', 'phone'])],
+            'type' => ['required', Rule::in([User::AUTH_TYPE_EMAIL, User::AUTH_TYPE_PHONE])],
+            'role' => ['nullable', Rule::in([User::ROLE_BUYER, User::ROLE_SELLER])],
             'email' => [
                 'nullable',
                 'email',

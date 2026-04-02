@@ -19,15 +19,16 @@ class RegisterUserController extends Controller
 
         $user = User::create([
             'name' => null,
-            'email' => $validated['type'] === 'email' ? $validated['email'] : null,
-            'phone' => $validated['type'] === 'phone' ? $validated['phone'] : null,
+            'email' => $validated['type'] === User::AUTH_TYPE_EMAIL ? $validated['email'] : null,
+            'phone' => $validated['type'] === User::AUTH_TYPE_PHONE ? $validated['phone'] : null,
             'type' => $validated['type'],
+            'role' => $validated['role'] ?? User::ROLE_BUYER,
             'password' => null,
             'otp_code' => Hash::make($otp),
             'otp_sent_at' => now(),
         ]);
 
-        if ($user->type === 'email') {
+        if ($user->type === User::AUTH_TYPE_EMAIL) {
             $user->notify(new RegistrationOtpNotification($otp));
         } else {
             $whatsappOtpSender->send($user->phone, $otp);
@@ -40,6 +41,7 @@ class RegisterUserController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'type' => $user->type,
+                'role' => $user->role,
                 'otp_sent_at' => $user->otp_sent_at?->toIso8601String(),
             ],
         ], 201);

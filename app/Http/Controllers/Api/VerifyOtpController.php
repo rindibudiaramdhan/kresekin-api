@@ -19,7 +19,7 @@ class VerifyOtpController extends Controller
 
         $user = User::query()
             ->when(
-                $validated['type'] === 'email',
+                $validated['type'] === User::AUTH_TYPE_EMAIL,
                 fn ($query) => $query->where('email', $validated['email']),
                 fn ($query) => $query->where('phone', $validated['phone'])
             )
@@ -41,7 +41,7 @@ class VerifyOtpController extends Controller
         $user->forceFill([
             'otp_code' => null,
             'otp_sent_at' => null,
-            'email_verified_at' => $user->type === 'email' ? now() : $user->email_verified_at,
+            'email_verified_at' => $user->type === User::AUTH_TYPE_EMAIL ? now() : $user->email_verified_at,
         ])->save();
 
         return response()->json([
@@ -55,6 +55,7 @@ class VerifyOtpController extends Controller
                     'email' => $user->email,
                     'phone' => $user->phone,
                     'type' => $user->type,
+                    'role' => $user->role,
                 ],
             ],
         ]);

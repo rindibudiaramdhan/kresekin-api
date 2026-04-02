@@ -46,6 +46,7 @@ class RefreshUserSessionController extends Controller
                     'email' => $request->user()->email,
                     'phone' => $request->user()->phone,
                     'type' => $request->user()->type,
+                    'role' => $request->user()->role,
                 ],
             ],
         ]);
