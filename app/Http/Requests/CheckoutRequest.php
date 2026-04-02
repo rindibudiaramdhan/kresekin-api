@@ -44,18 +44,14 @@ class CheckoutRequest extends FormRequest
 
             if ($paymentMethod['requires_option'] && ! $optionCode) {
                 $validator->errors()->add('payment_method_option_code', 'The payment method option code field is required.');
-
-                return;
             }
 
-            if (! $paymentMethod['requires_option']) {
-                return;
-            }
+            if ($paymentMethod['requires_option'] && $optionCode) {
+                $validOptionCodes = collect($paymentMethod['options'])->pluck('code')->all();
 
-            $validOptionCodes = collect($paymentMethod['options'])->pluck('code')->all();
-
-            if (! in_array($optionCode, $validOptionCodes, true)) {
-                $validator->errors()->add('payment_method_option_code', 'The selected payment method option code is invalid.');
+                if (! in_array($optionCode, $validOptionCodes, true)) {
+                    $validator->errors()->add('payment_method_option_code', 'The selected payment method option code is invalid.');
+                }
             }
 
             if (! $isPickup) {

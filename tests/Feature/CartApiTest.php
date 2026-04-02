@@ -72,7 +72,7 @@ class CartApiTest extends TestCase
             ->assertJsonPath('data.name', 'Sawi Putih')
             ->assertJsonPath('data.price_label', 'Rp 9.999')
             ->assertJsonPath('data.tenant_name', 'Toko Aminah')
-            ->assertJsonPath('data.tenant_rating', 5.0)
+            ->assertJsonPath('data.tenant_rating', 5)
             ->assertJsonPath('data.delivery_estimate', '1-2 jam delivery')
             ->assertJsonPath('data.description', 'Sayur segar untuk kebutuhan harian.');
     }
@@ -143,6 +143,85 @@ class CartApiTest extends TestCase
             'user_id' => $user->id,
             'delivery_method_code' => 'store_courier',
         ]);
+    }
+
+    public function test_authenticated_user_can_get_empty_cart(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/cart');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.items', [])
+            ->assertJsonPath('data.subtotal', 0)
+            ->assertJsonPath('data.delivery_fee', 0)
+            ->assertJsonPath('data.grand_total', 0)
+            ->assertJsonPath('data.total_items', 0);
+
+        $this->assertDatabaseHas('carts', [
+            'user_id' => $user->id,
+            'delivery_method_code' => null,
+        ]);
+    }
+
+    public function test_authenticated_user_gets_not_found_when_updating_other_users_cart_item(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $otherUser = User::query()->create([
+            'name' => 'Sari',
+            'email' => 'sari@example.com',
+            'phone' => '+6281234567000',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+        $product = $this->createProduct();
+
+        $cartItem = CartItem::query()->create([
+            'user_id' => $otherUser->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/cart/items/'.$cartItem->id, [
+                'quantity' => 2,
+            ]);
+
+        $response
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Item keranjang tidak ditemukan.');
+    }
+
+    public function test_authenticated_user_gets_not_found_when_deleting_other_users_cart_item(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $otherUser = User::query()->create([
+            'name' => 'Sari',
+            'email' => 'sari@example.com',
+            'phone' => '+6281234567001',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+        $product = $this->createProduct();
+
+        $cartItem = CartItem::query()->create([
+            'user_id' => $otherUser->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->deleteJson('/api/cart/items/'.$cartItem->id);
+
+        $response
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Item keranjang tidak ditemukan.');
     }
 
     public function test_cart_endpoints_require_authentication(): void

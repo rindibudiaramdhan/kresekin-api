@@ -159,4 +159,41 @@ class ProductApiTest extends TestCase
             ->assertUnauthorized()
             ->assertJsonPath('message', 'Unauthenticated.');
     }
+
+    public function test_authenticated_user_gets_not_found_when_product_detail_does_not_exist(): void
+    {
+        [, $token] = $this->createAuthenticatedUser();
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/products/999999');
+
+        $response
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Barang tidak ditemukan.');
+    }
+
+    private function createAuthenticatedUser(): array
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'budi@example.com',
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+            'latitude' => -6.2000000,
+            'longitude' => 106.8160000,
+        ]);
+
+        $plainTextToken = 'product-detail-token';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        return [$user, $plainTextToken];
+    }
 }
