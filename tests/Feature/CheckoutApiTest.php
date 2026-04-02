@@ -235,6 +235,78 @@ class CheckoutApiTest extends TestCase
             ->assertJsonValidationErrors(['payment_method_option_code']);
     }
 
+    public function test_checkout_rejects_invalid_payment_method_code(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+
+        Cart::query()->create([
+            'user_id' => $user->id,
+            'delivery_method_code' => 'store_courier',
+        ]);
+
+        CartItem::query()->create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/checkout', [
+                'payment_method_code' => 'invalid_method',
+            ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['payment_method_code']);
+    }
+
+    public function test_checkout_rejects_invalid_payment_method_option_code(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+
+        Cart::query()->create([
+            'user_id' => $user->id,
+            'delivery_method_code' => 'store_courier',
+        ]);
+
+        CartItem::query()->create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/checkout', [
+                'payment_method_code' => 'bank_transfer',
+                'payment_method_option_code' => 'invalid_bank',
+            ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['payment_method_option_code']);
+    }
+
+    public function test_checkout_rejects_empty_cart(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+
+        Cart::query()->create([
+            'user_id' => $user->id,
+            'delivery_method_code' => 'store_courier',
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/checkout', [
+                'payment_method_code' => 'qr_payment',
+            ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Keranjang kosong.');
+    }
+
     public function test_checkout_requires_authentication(): void
     {
         $response = $this->postJson('/api/checkout', [

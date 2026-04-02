@@ -172,6 +172,63 @@ class ProductApiTest extends TestCase
             ->assertJsonPath('message', 'Barang tidak ditemukan.');
     }
 
+    public function test_product_list_returns_validation_error_for_invalid_tenant_filter(): void
+    {
+        [, $token] = $this->createAuthenticatedUser();
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/products?tenant_id=999999');
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'The given data was invalid.')
+            ->assertJsonValidationErrors(['tenant_id']);
+    }
+
+    public function test_product_list_and_detail_return_null_discount_when_original_price_is_not_higher(): void
+    {
+        [, $token] = $this->createAuthenticatedUser();
+
+        $tenant = Tenant::query()->create([
+            'name' => 'Toko Null Distance',
+            'profile_picture_url' => 'https://example.com/null-distance.png',
+            'rating' => 4.2,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'latitude' => null,
+            'longitude' => null,
+        ]);
+
+        $product = Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Kubis',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'image_url' => 'https://example.com/kubis.png',
+            'price' => 14000,
+            'original_price' => 14000,
+            'weight_label' => '1kg',
+            'description' => 'Sayur harian.',
+            'delivery_estimate' => '2 jam delivery',
+        ]);
+
+        $listResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/products?name=Kubis');
+
+        $listResponse
+            ->assertOk()
+            ->assertJsonPath('data.0.discount_percentage', null)
+            ->assertJsonPath('data.0.discount_label', null)
+            ->assertJsonPath('data.0.original_price_label', 'Rp 14.000');
+
+        $detailResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/products/'.$product->id);
+
+        $detailResponse
+            ->assertOk()
+            ->assertJsonPath('data.discount_percentage', null)
+            ->assertJsonPath('data.distance_km', null)
+            ->assertJsonPath('data.distance_label', null);
+    }
+
     private function createAuthenticatedUser(): array
     {
         $user = User::query()->create([

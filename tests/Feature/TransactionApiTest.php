@@ -228,4 +228,70 @@ class TransactionApiTest extends TestCase
             ->assertNotFound()
             ->assertJsonPath('message', 'Transaksi tidak ditemukan.');
     }
+
+    public function test_transaction_detail_formats_remaining_status_labels_correctly(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'budi2@example.com',
+            'phone' => '+6281333333333',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $plainTextToken = 'transaction-detail-labels-token';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $onTheWayTransaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'ONTHEWAY001',
+            'status' => Transaction::STATUS_ON_THE_WAY,
+            'total_amount' => 15000,
+            'delivery_method' => 'Antar Kurir Toko',
+            'payment_method' => Transaction::PAYMENT_METHOD_QRIS,
+            'transaction_at' => now(),
+        ]);
+
+        $completedTransaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'COMPLETED001',
+            'status' => Transaction::STATUS_COMPLETED,
+            'total_amount' => 16000,
+            'delivery_method' => 'Antar Kurir Toko',
+            'payment_method' => Transaction::PAYMENT_METHOD_QRIS,
+            'transaction_at' => now(),
+        ]);
+
+        $canceledTransaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'CANCELED001',
+            'status' => Transaction::STATUS_CANCELED,
+            'total_amount' => 17000,
+            'delivery_method' => 'Antar Kurir Toko',
+            'payment_method' => Transaction::PAYMENT_METHOD_QRIS,
+            'transaction_at' => now(),
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/users/transactions/'.$onTheWayTransaction->id)
+            ->assertOk()
+            ->assertJsonPath('data.status_label', 'Dalam Perjalanan');
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/users/transactions/'.$completedTransaction->id)
+            ->assertOk()
+            ->assertJsonPath('data.status_label', 'Pesanan Selesai');
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/users/transactions/'.$canceledTransaction->id)
+            ->assertOk()
+            ->assertJsonPath('data.status_label', 'Pesanan Dibatalkan');
+    }
 }
