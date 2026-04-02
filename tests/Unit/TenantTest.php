@@ -2,11 +2,32 @@
 
 namespace Tests\Unit;
 
+use App\Models\Product;
 use App\Models\Tenant;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Tests\TestCase;
 
 class TenantTest extends TestCase
 {
+    public function test_tenant_defines_expected_casts_and_products_relation(): void
+    {
+        $tenant = new Tenant();
+        $tenant->forceFill([
+            'rating' => '4.5',
+            'latitude' => '-6.2',
+            'longitude' => '106.8',
+        ]);
+
+        $this->assertSame('float', $tenant->getCasts()['rating']);
+        $this->assertSame('float', $tenant->getCasts()['latitude']);
+        $this->assertSame('float', $tenant->getCasts()['longitude']);
+        $this->assertSame(4.5, $tenant->rating);
+        $this->assertSame(-6.2, $tenant->latitude);
+        $this->assertSame(106.8, $tenant->longitude);
+        $this->assertInstanceOf(HasMany::class, $tenant->products());
+        $this->assertInstanceOf(Product::class, $tenant->products()->getRelated());
+    }
+
     public function test_is_open_at_returns_false_when_operating_hours_are_missing(): void
     {
         $tenant = new Tenant();

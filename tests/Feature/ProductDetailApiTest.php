@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserSessionToken;

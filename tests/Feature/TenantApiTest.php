@@ -238,6 +238,67 @@ class TenantApiTest extends TestCase
             ->assertJsonValidationErrors(['category']);
     }
 
+    public function test_tenant_without_coordinates_has_null_distance_and_is_sorted_last(): void
+    {
+        Carbon::setTestNow('2026-04-01 10:00:00');
+
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'budi-null-distance@example.com',
+            'phone' => '+6281234567002',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+            'latitude' => -6.2000000,
+            'longitude' => 106.8160000,
+        ]);
+
+        $plainTextToken = 'tenant-null-distance-token';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        Tenant::query()->create([
+            'name' => 'Toko Tanpa Koordinat',
+            'profile_picture_url' => 'https://example.com/no-coordinates.png',
+            'rating' => 4.1,
+            'category' => Tenant::CATEGORY_FOOD,
+            'latitude' => null,
+            'longitude' => null,
+            'open_time' => '07:00',
+            'close_time' => '21:00',
+        ]);
+
+        Tenant::query()->create([
+            'name' => 'Toko Dekat',
+            'profile_picture_url' => 'https://example.com/near.png',
+            'rating' => 4.8,
+            'category' => Tenant::CATEGORY_FOOD,
+            'latitude' => -6.2010000,
+            'longitude' => 106.8170000,
+            'open_time' => '07:00',
+            'close_time' => '21:00',
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/tenants');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Toko Dekat')
+            ->assertJsonPath('data.1.name', 'Toko Tanpa Koordinat')
+            ->assertJsonPath('data.1.distance_km', null)
+            ->assertJsonPath('data.1.distance_label', null)
+            ->assertJsonPath('data.1.map_marker.latitude', null)
+            ->assertJsonPath('data.1.map_marker.longitude', null);
+
+        Carbon::setTestNow();
+    }
+
     public function test_authenticated_user_can_get_tenant_categories(): void
     {
         $user = User::query()->create([
