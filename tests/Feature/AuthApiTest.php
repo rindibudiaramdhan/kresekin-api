@@ -325,4 +325,57 @@ class AuthApiTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['name', 'email', 'housing_area', 'address']);
     }
+
+    public function test_authenticated_user_can_refresh_session_token(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'refresh@example.com',
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $oldPlainTextToken = 'old-session-token-for-refresh';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $oldPlainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$oldPlainTextToken)
+            ->postJson('/api/users/refresh-session');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('message', 'Sesi login berhasil diperbarui.')
+            ->assertJsonPath('data.token_type', 'Bearer')
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user.email', 'refresh@example.com');
+
+        $newPlainTextToken = $response->json('data.token');
+
+        $this->assertNotSame($oldPlainTextToken, $newPlainTextToken);
+        $this->assertDatabaseMissing('user_session_tokens', [
+            'user_id' => $user->id,
+            'token' => hash('sha256', $oldPlainTextToken),
+        ]);
+        $this->assertDatabaseHas('user_session_tokens', [
+            'user_id' => $user->id,
+            'token' => hash('sha256', $newPlainTextToken),
+        ]);
+        $this->assertSame(1, UserSessionToken::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_refresh_session_requires_authentication(): void
+    {
+        $response = $this->postJson('/api/users/refresh-session');
+
+        $response
+            ->assertUnauthorized()
+            ->assertJsonPath('message', 'Unauthenticated.');
+    }
 }
