@@ -13,6 +13,24 @@ class VerifyOtpRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('type') !== User::AUTH_TYPE_PHONE) {
+            return;
+        }
+
+        $phone = (string) $this->input('phone', '');
+        $normalizedPhone = preg_replace('/\s+/', '', $phone) ?? '';
+
+        if (str_starts_with($normalizedPhone, '0')) {
+            $normalizedPhone = '+62'.substr($normalizedPhone, 1);
+        }
+
+        $this->merge([
+            'phone' => $normalizedPhone,
+        ]);
+    }
+
     public function rules(): array
     {
         return [
