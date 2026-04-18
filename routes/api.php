@@ -2,12 +2,16 @@
 
 use App\Http\Controllers\Api\AddCartItemController;
 use App\Http\Controllers\Api\CheckoutController;
+use App\Http\Controllers\Api\CreateSellerProductController;
+use App\Http\Controllers\Api\CreateSellerTenantController;
 use App\Http\Controllers\Api\DeleteCartItemController;
 use App\Http\Controllers\Api\GetDeliveryMethodsController;
 use App\Http\Controllers\Api\GetCartController;
 use App\Http\Controllers\Api\GetPaymentMethodsController;
 use App\Http\Controllers\Api\GetProductDetailController;
 use App\Http\Controllers\Api\GetProductListController;
+use App\Http\Controllers\Api\GetSellerProductListController;
+use App\Http\Controllers\Api\GetSellerTenantListController;
 use App\Http\Controllers\Api\GetTenantCategoriesController;
 use App\Http\Controllers\Api\GetTenantListController;
 use App\Http\Controllers\Api\GetUserTransactionHistoryController;
@@ -43,17 +47,27 @@ Route::post('/users/verify-otp', VerifyOtpController::class);
 Route::post('/users/devices', RegisterUserDeviceController::class)->middleware('session.token');
 Route::post('/users/refresh-session', RefreshUserSessionController::class)->middleware('session.token');
 Route::put('/users/profile', UpdateUserProfileController::class)->middleware('session.token');
-Route::post('/checkout', CheckoutController::class)->middleware('session.token');
-Route::get('/delivery-methods', GetDeliveryMethodsController::class)->middleware('session.token');
-Route::get('/payment-methods', GetPaymentMethodsController::class)->middleware('session.token');
-Route::get('/cart', GetCartController::class)->middleware('session.token');
-Route::patch('/cart/delivery-method', UpdateCartDeliveryMethodController::class)->middleware('session.token');
-Route::post('/cart/items', AddCartItemController::class)->middleware('session.token');
-Route::patch('/cart/items/{id}', UpdateCartItemController::class)->middleware('session.token');
-Route::delete('/cart/items/{id}', DeleteCartItemController::class)->middleware('session.token');
-Route::get('/products/{id}', GetProductDetailController::class)->middleware('session.token');
-Route::get('/products', GetProductListController::class)->middleware('session.token');
-Route::get('/tenants/categories', GetTenantCategoriesController::class)->middleware('session.token');
-Route::get('/tenants', GetTenantListController::class)->middleware('session.token');
-Route::get('/users/transactions', GetUserTransactionHistoryController::class)->middleware('session.token');
-Route::get('/users/transactions/{transactionId}', GetUserTransactionDetailController::class)->middleware('session.token');
+
+Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
+    Route::post('/checkout', CheckoutController::class);
+    Route::get('/delivery-methods', GetDeliveryMethodsController::class);
+    Route::get('/payment-methods', GetPaymentMethodsController::class);
+    Route::get('/cart', GetCartController::class);
+    Route::patch('/cart/delivery-method', UpdateCartDeliveryMethodController::class);
+    Route::post('/cart/items', AddCartItemController::class);
+    Route::patch('/cart/items/{id}', UpdateCartItemController::class);
+    Route::delete('/cart/items/{id}', DeleteCartItemController::class);
+    Route::get('/products/{id}', GetProductDetailController::class);
+    Route::get('/products', GetProductListController::class);
+    Route::get('/tenants/categories', GetTenantCategoriesController::class);
+    Route::get('/tenants', GetTenantListController::class);
+    Route::get('/users/transactions', GetUserTransactionHistoryController::class);
+    Route::get('/users/transactions/{transactionId}', GetUserTransactionDetailController::class);
+});
+
+Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(function (): void {
+    Route::get('/tenants', GetSellerTenantListController::class);
+    Route::post('/tenants', CreateSellerTenantController::class);
+    Route::get('/products', GetSellerProductListController::class);
+    Route::post('/products', CreateSellerProductController::class);
+});

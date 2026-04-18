@@ -64,6 +64,11 @@ class User extends Authenticatable
         return $this->hasMany(Transaction::class);
     }
 
+    public function ownedTenants(): HasMany
+    {
+        return $this->hasMany(Tenant::class, 'owner_user_id');
+    }
+
     public function devices(): HasMany
     {
         return $this->hasMany(UserDevice::class);
