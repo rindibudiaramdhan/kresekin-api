@@ -1,9 +1,12 @@
 <?php
 
-use App\Providers\Filament\SellerPanelProvider;
 use App\Providers\AppServiceProvider;
 
 return [
     AppServiceProvider::class,
-    SellerPanelProvider::class,
+    ...(
+        class_exists(\Filament\PanelProvider::class)
+            ? [App\Providers\Filament\SellerPanelProvider::class]
+            : []
+    ),
 ];
