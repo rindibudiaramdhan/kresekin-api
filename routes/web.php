@@ -9,6 +9,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/login', [SellerAuthController::class, 'create'])->name('login');
+
 Route::prefix('seller')->name('seller.')->group(function (): void {
     Route::middleware('guest')->group(function (): void {
         Route::get('/login', [SellerAuthController::class, 'create'])->name('login');
