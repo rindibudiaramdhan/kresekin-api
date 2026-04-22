@@ -17,7 +17,7 @@ class RegisterUserRequest extends FormRequest
     {
         return [
             'type' => ['required', Rule::in([User::AUTH_TYPE_EMAIL, User::AUTH_TYPE_PHONE])],
-            'role' => ['nullable', Rule::in([User::ROLE_BUYER, User::ROLE_SELLER])],
+            'role' => ['nullable', Rule::in([User::ROLE_BUYER, User::ROLE_SELLER, User::ROLE_AGENT])],
             'email' => [
                 'nullable',
                 'email',

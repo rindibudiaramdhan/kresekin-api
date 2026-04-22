@@ -3,6 +3,7 @@
 use App\Http\Controllers\Web\SellerAuthController;
 use App\Http\Controllers\Web\SellerDashboardController;
 use App\Http\Controllers\Web\SellerProductController;
+use App\Http\Controllers\Web\AgentRegistrationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -10,6 +11,13 @@ Route::get('/', function () {
 });
 
 Route::get('/login', [SellerAuthController::class, 'create'])->name('login');
+
+Route::prefix('agent')->name('agent.')->group(function (): void {
+    Route::middleware('guest')->group(function (): void {
+        Route::get('/register', [AgentRegistrationController::class, 'create'])->name('register');
+        Route::post('/register', [AgentRegistrationController::class, 'store'])->name('register.store');
+    });
+});
 
 Route::prefix('seller')->name('seller.')->group(function (): void {
     Route::middleware('guest')->group(function (): void {
