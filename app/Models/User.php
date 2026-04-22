@@ -30,12 +30,13 @@ use Filament\Panel;
     'longitude',
 ])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable
 {
     public const AUTH_TYPE_EMAIL = 'email';
     public const AUTH_TYPE_PHONE = 'phone';
     public const ROLE_BUYER = 'buyer';
     public const ROLE_SELLER = 'seller';
+    public const ROLE_AGENT = 'agent';
 
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -84,10 +85,5 @@ class User extends Authenticatable implements FilamentUser
     public function cart(): HasOne
     {
         return $this->hasOne(Cart::class);
-    }
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $this->role === self::ROLE_SELLER;
     }
 }
