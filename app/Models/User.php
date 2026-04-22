@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
 #[Fillable([
     'name',
@@ -28,7 +30,7 @@ use Illuminate\Notifications\Notifiable;
     'longitude',
 ])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     public const AUTH_TYPE_EMAIL = 'email';
     public const AUTH_TYPE_PHONE = 'phone';
@@ -82,5 +84,10 @@ class User extends Authenticatable
     public function cart(): HasOne
     {
         return $this->hasOne(Cart::class);
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->role === self::ROLE_SELLER;
     }
 }
