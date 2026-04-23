@@ -15,7 +15,7 @@
     </div>
 </div>
 
-<div class="grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+<div class="grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
     <div class="card">
         <div class="muted">Total Tenant</div>
         <div style="font-size:40px; font-weight:700;">{{ $tenantCount }}</div>
@@ -26,20 +26,10 @@
     </div>
 </div>
 
-<div class="grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top:16px;">
-    <div class="card">
-        <div class="muted">Buyer</div>
-        <div style="font-size:28px; font-weight:700;">{{ $buyerCount }}</div>
-    </div>
-    <div class="card">
-        <div class="muted">Seller</div>
-        <div style="font-size:28px; font-weight:700;">{{ $sellerCount }}</div>
-    </div>
-</div>
-
 <div class="card" style="margin-top:16px;">
     <div class="actions">
         <a class="btn btn-secondary" href="{{ route('agent.tenants.index') }}">Kelola Tenant</a>
+        <a class="btn btn-secondary" href="{{ route('agent.tenants.create') }}">Tambah Tenant</a>
     </div>
 </div>
 

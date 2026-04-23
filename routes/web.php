@@ -29,6 +29,7 @@ Route::prefix('agent')->name('agent.')->group(function (): void {
         Route::get('/tenants', [AgentTenantController::class, 'index'])->name('tenants.index');
         Route::get('/tenants/create', [AgentTenantController::class, 'create'])->name('tenants.create');
         Route::post('/tenants', [AgentTenantController::class, 'store'])->name('tenants.store');
+        Route::get('/tenants/{id}', [AgentTenantController::class, 'show'])->name('tenants.show');
         Route::get('/tenants/{id}/edit', [AgentTenantController::class, 'edit'])->name('tenants.edit');
         Route::put('/tenants/{id}', [AgentTenantController::class, 'update'])->name('tenants.update');
         Route::delete('/tenants/{id}', [AgentTenantController::class, 'destroy'])->name('tenants.destroy');

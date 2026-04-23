@@ -12,6 +12,33 @@
     </div>
 </div>
 
+<div class="card" style="margin-bottom:16px;">
+    <form method="GET" action="{{ route('agent.tenants.index') }}" class="grid grid-3" style="align-items:end;">
+        <div>
+            <label for="seller">Filter Seller</label>
+            <select id="seller" name="seller">
+                <option value="">Semua seller</option>
+                @foreach ($sellers as $seller)
+                    <option value="{{ $seller->id }}" @selected((string) $selectedSeller === (string) $seller->id)>{{ $seller->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <label for="category">Filter Kategori</label>
+            <select id="category" name="category">
+                <option value="">Semua kategori</option>
+                @foreach ($categories as $category)
+                    <option value="{{ $category }}" @selected($selectedCategory === $category)>{{ $category }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="actions">
+            <button class="btn" type="submit">Terapkan</button>
+            <a class="btn btn-secondary" href="{{ route('agent.tenants.index') }}">Reset</a>
+        </div>
+    </form>
+</div>
+
 @if (session('status'))
     <div class="alert">{{ session('status') }}</div>
 @endif
@@ -43,6 +70,7 @@
                     <td>{{ $tenant->operatingHoursLabel() ?? '-' }}</td>
                     <td>
                         <div class="actions">
+                            <a class="btn btn-secondary" href="{{ route('agent.tenants.show', $tenant->id) }}">Detail</a>
                             <a class="btn btn-secondary" href="{{ route('agent.tenants.edit', $tenant->id) }}">Edit</a>
                             <form method="POST" action="{{ route('agent.tenants.destroy', $tenant->id) }}" onsubmit="return confirm('Hapus tenant ini?');">
                                 @csrf

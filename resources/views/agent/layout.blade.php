@@ -11,6 +11,8 @@
         .wrap { max-width: 1120px; margin: 0 auto; padding: 24px; }
         .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
         .grid { display: grid; gap: 16px; }
+        .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .btn { display: inline-block; border: 0; background: #0f766e; color: #fff; padding: 10px 14px; border-radius: 10px; cursor: pointer; }
         .btn-secondary { background: #e5e7eb; color: #111827; }
         .btn-danger { background: #b91c1c; }

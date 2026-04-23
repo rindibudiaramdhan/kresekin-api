@@ -17,8 +17,6 @@ class AgentDashboardController extends Controller
         return view('agent.dashboard', [
             'agentName' => auth()->user()?->name,
             'agentEmail' => auth()->user()?->email,
-            'buyerCount' => User::query()->where('role', User::ROLE_BUYER)->count(),
-            'sellerCount' => User::query()->where('role', User::ROLE_SELLER)->count(),
             'tenantCount' => Tenant::query()->count(),
             'productCount' => Product::query()->count(),
             'recentTenants' => Tenant::query()->latest()->limit(5)->get(),
