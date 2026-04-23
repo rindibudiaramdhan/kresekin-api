@@ -1,27 +1,29 @@
 @extends('seller.layout', ['title' => 'Seller Login'])
 
 @section('content')
-<div class="card" style="max-width: 480px; margin: 64px auto;">
-    <h1 style="margin-top:0;">Seller Login</h1>
-    <p class="muted">Masuk dengan akun seller untuk mengelola produk.</p>
+<div class="card shadow-sm mx-auto mt-5" style="max-width: 480px;">
+    <div class="card-body">
+    <h1 class="h3 mb-2">Seller Login</h1>
+    <p class="text-secondary">Masuk dengan akun seller untuk mengelola produk.</p>
 
     @if ($errors->any())
-        <div class="alert" style="background:#fef2f2;color:#991b1b;border-color:#fecaca;">
+        <div class="alert alert-danger">
             {{ $errors->first() }}
         </div>
     @endif
 
-    <form method="POST" action="{{ route('seller.login.store') }}" class="grid" style="gap:14px;">
+    <form method="POST" action="{{ route('seller.login.store') }}" class="vstack gap-3">
         @csrf
         <div>
-            <label for="email">Email</label>
-            <input class="input" id="email" name="email" type="email" value="{{ old('email') }}" required autofocus>
+            <label for="email" class="form-label">Email</label>
+            <input class="form-control" id="email" name="email" type="email" value="{{ old('email') }}" required autofocus>
         </div>
         <div>
-            <label for="password">Password</label>
-            <input class="input" id="password" name="password" type="password" required>
+            <label for="password" class="form-label">Password</label>
+            <input class="form-control" id="password" name="password" type="password" required>
         </div>
-        <button class="btn" type="submit">Login</button>
+        <button class="btn btn-success" type="submit">Login</button>
     </form>
+    </div>
 </div>
 @endsection
