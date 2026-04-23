@@ -17,9 +17,11 @@ class AgentTenantController extends Controller
     {
         $selectedSeller = $request->filled('seller') ? (int) $request->query('seller') : null;
         $selectedCategory = $request->filled('category') ? (string) $request->query('category') : null;
+        $agentId = $request->user()->id;
 
         $query = Tenant::query()
             ->with('owner')
+            ->where('agent_user_id', $agentId)
             ->when($selectedSeller, fn ($query) => $query->where('owner_user_id', $selectedSeller))
             ->when($selectedCategory, fn ($query) => $query->where('category', $selectedCategory))
             ->latest();
@@ -48,6 +50,7 @@ class AgentTenantController extends Controller
     {
         Tenant::query()->create([
             ...$request->validated(),
+            'agent_user_id' => $request->user()->id,
             'rating' => $request->validated()['rating'] ?? 0,
         ]);
 
@@ -58,7 +61,9 @@ class AgentTenantController extends Controller
 
     public function edit(int $id): View
     {
-        $tenant = Tenant::query()->findOrFail($id);
+        $tenant = Tenant::query()
+            ->where('agent_user_id', auth()->id())
+            ->findOrFail($id);
 
         return view('agent.tenants.form', [
             'tenant' => $tenant,
@@ -71,6 +76,7 @@ class AgentTenantController extends Controller
     {
         $tenant = Tenant::query()
             ->with(['owner', 'products'])
+            ->where('agent_user_id', auth()->id())
             ->findOrFail($id);
 
         return view('agent.tenants.show', [
@@ -81,7 +87,9 @@ class AgentTenantController extends Controller
 
     public function update(AgentTenantRequest $request, int $id): RedirectResponse
     {
-        $tenant = Tenant::query()->findOrFail($id);
+        $tenant = Tenant::query()
+            ->where('agent_user_id', $request->user()->id)
+            ->findOrFail($id);
         $tenant->update([
             ...$request->validated(),
             'rating' => $request->validated()['rating'] ?? 0,
@@ -94,7 +102,10 @@ class AgentTenantController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        Tenant::query()->findOrFail($id)->delete();
+        Tenant::query()
+            ->where('agent_user_id', auth()->id())
+            ->findOrFail($id)
+            ->delete();
 
         return redirect()
             ->route('agent.tenants.index')

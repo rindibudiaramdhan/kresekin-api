@@ -17,10 +17,17 @@ class AgentDashboardController extends Controller
         return view('agent.dashboard', [
             'agentName' => auth()->user()?->name,
             'agentEmail' => auth()->user()?->email,
-            'tenantCount' => Tenant::query()->count(),
-            'productCount' => Product::query()->count(),
-            'recentTenants' => Tenant::query()->latest()->limit(5)->get(),
-            'recentProducts' => Product::query()->with('tenant')->latest()->limit(5)->get(),
+            'tenantCount' => Tenant::query()->where('agent_user_id', $agentId)->count(),
+            'productCount' => Product::query()
+                ->whereHas('tenant', fn ($query) => $query->where('agent_user_id', $agentId))
+                ->count(),
+            'recentTenants' => Tenant::query()->where('agent_user_id', $agentId)->latest()->limit(5)->get(),
+            'recentProducts' => Product::query()
+                ->with('tenant')
+                ->whereHas('tenant', fn ($query) => $query->where('agent_user_id', $agentId))
+                ->latest()
+                ->limit(5)
+                ->get(),
             'agentId' => $agentId,
         ]);
     }
