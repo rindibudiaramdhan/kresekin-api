@@ -17,11 +17,16 @@ class AgentTenantRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'owner_mode' => ['nullable', Rule::in(['existing', 'new'])],
             'owner_user_id' => [
-                'required',
+                'nullable',
                 'integer',
                 Rule::exists('users', 'id')->where('role', User::ROLE_SELLER),
+                'required_if:owner_mode,existing',
             ],
+            'seller_name' => ['nullable', 'string', 'max:255', 'required_if:owner_mode,new'],
+            'seller_email' => ['nullable', 'email', 'max:255', 'required_if:owner_mode,new', Rule::unique('users', 'email')],
+            'seller_password' => ['nullable', 'string', 'min:8', 'required_if:owner_mode,new'],
             'name' => ['required', 'string', 'max:255'],
             'profile_picture_url' => ['nullable', 'url', 'max:255'],
             'category' => ['required', 'string', Rule::in(Tenant::CATEGORIES)],

@@ -18,17 +18,58 @@
             @method('PUT')
         @endif
 
-        <div class="grid grid-2">
-            <div>
-                <label for="owner_user_id">Owner Seller</label>
-                <select id="owner_user_id" name="owner_user_id" required>
-                    <option value="">Pilih seller</option>
-                    @foreach ($sellers as $seller)
-                        <option value="{{ $seller->id }}" @selected(old('owner_user_id', $tenant->owner_user_id) == $seller->id)>{{ $seller->name }} ({{ $seller->email }})</option>
-                    @endforeach
-                </select>
-                @error('owner_user_id')<div class="error">{{ $message }}</div>@enderror
+        <div class="card" style="background:#f9fafb; border-style:dashed;">
+            <div style="font-weight:700; margin-bottom:8px;">Owner Seller</div>
+            <div class="grid" style="gap:12px;">
+                <div class="actions">
+                    <label style="margin:0; font-weight:600;">
+                        <input type="radio" name="owner_mode" value="existing" {{ old('owner_mode', $ownerMode ?? 'existing') === 'existing' ? 'checked' : '' }}>
+                        Pilih seller existing
+                    </label>
+                    <label style="margin:0; font-weight:600;">
+                        <input type="radio" name="owner_mode" value="new" {{ old('owner_mode', $ownerMode ?? 'existing') === 'new' ? 'checked' : '' }}>
+                        Buat seller baru
+                    </label>
+                </div>
+
+                <div>
+                    <label for="owner_user_id">Owner Seller Existing</label>
+                    <select id="owner_user_id" name="owner_user_id">
+                        <option value="">Pilih seller</option>
+                        @foreach ($sellers as $seller)
+                            <option value="{{ $seller->id }}" @selected(old('owner_user_id', $tenant->owner_user_id) == $seller->id)>{{ $seller->name }} ({{ $seller->email }})</option>
+                        @endforeach
+                    </select>
+                    @error('owner_user_id')<div class="error">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="grid grid-2">
+                    <div>
+                        <label for="seller_name">Nama Seller Baru</label>
+                        <input class="input" id="seller_name" name="seller_name" value="{{ old('seller_name') }}">
+                        @error('seller_name')<div class="error">{{ $message }}</div>@enderror
+                    </div>
+                    <div>
+                        <label for="seller_email">Email Seller Baru</label>
+                        <input class="input" id="seller_email" name="seller_email" type="email" value="{{ old('seller_email') }}">
+                        @error('seller_email')<div class="error">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <div>
+                        <label for="seller_password">Password Seller Baru</label>
+                        <input class="input" id="seller_password" name="seller_password" type="password">
+                        @error('seller_password')<div class="error">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="muted" style="display:flex; align-items:end;">
+                        Jika memilih seller baru, sistem akan membuat akun seller sekaligus.
+                    </div>
+                </div>
             </div>
+        </div>
+
+        <div class="grid grid-2">
             <div>
                 <label for="category">Kategori</label>
                 <select id="category" name="category" required>
