@@ -282,7 +282,7 @@ class AuthApiTest extends TestCase
         $this->assertSame('Budi Santoso', $user->name);
         $this->assertSame('budi@example.com', $user->email);
         $this->assertSame('+628111111111', $user->phone);
-        $this->assertSame('Komplek Melati Indah', $user->housing_area);
+        $this->assertSame('Komplek Melati Indah', $user->housingArea->name);
         $this->assertSame('Jl. Mawar No. 10, Blok A2', $user->address);
         $this->assertSame('Dekat portal komplek', $user->landmark);
     }

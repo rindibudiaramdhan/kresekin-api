@@ -23,7 +23,7 @@ class UpdateUserProfileController extends Controller
                 'phone' => $user->phone,
                 'type' => $user->type,
                 'role' => $user->role,
-                'housing_area_id' => $user->housing_area_id,
+                'housing_area' => $user->housingArea,
                 'address' => $user->address,
                 'landmark' => $user->landmark,
             ],
