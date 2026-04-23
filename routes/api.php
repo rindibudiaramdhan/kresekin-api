@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\GetTenantCategoriesController;
 use App\Http\Controllers\Api\GetTenantListController;
 use App\Http\Controllers\Api\GetUserTransactionHistoryController;
 use App\Http\Controllers\Api\GetUserTransactionDetailController;
+use App\Http\Controllers\Api\GetUserProfileController;
 use App\Http\Controllers\Api\LoginUserController;
 use App\Http\Controllers\Api\LogoutUserController;
 use App\Http\Controllers\Api\RegisterUserController;
@@ -51,6 +52,7 @@ Route::post('/users/verify-otp', VerifyOtpController::class);
 Route::post('/users/logout', LogoutUserController::class)->middleware('session.token');
 Route::post('/users/devices', RegisterUserDeviceController::class)->middleware('session.token');
 Route::post('/users/refresh-session', RefreshUserSessionController::class)->middleware('session.token');
+Route::get('/users/profile', GetUserProfileController::class)->middleware('session.token');
 Route::put('/users/profile', UpdateUserProfileController::class)->middleware('session.token');
 
 Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
