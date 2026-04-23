@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\GetSellerProductListController;
 use App\Http\Controllers\Api\GetSellerTenantListController;
 use App\Http\Controllers\Api\GetTenantCategoriesController;
 use App\Http\Controllers\Api\GetTenantListController;
+use App\Http\Controllers\Api\GetHousingAreaListController;
 use App\Http\Controllers\Api\GetUserTransactionHistoryController;
 use App\Http\Controllers\Api\GetUserTransactionDetailController;
 use App\Http\Controllers\Api\GetUserProfileController;
@@ -54,6 +55,7 @@ Route::post('/users/devices', RegisterUserDeviceController::class)->middleware('
 Route::post('/users/refresh-session', RefreshUserSessionController::class)->middleware('session.token');
 Route::get('/users/profile', GetUserProfileController::class)->middleware('session.token');
 Route::put('/users/profile', UpdateUserProfileController::class)->middleware('session.token');
+Route::get('/housing-areas', GetHousingAreaListController::class)->middleware('session.token');
 
 Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::post('/checkout', CheckoutController::class);

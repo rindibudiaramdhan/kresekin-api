@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Models\HousingArea;
 
 class UpdateUserProfileRequest extends FormRequest
 {
@@ -31,7 +32,7 @@ class UpdateUserProfileRequest extends FormRequest
                 'regex:/^\+?[0-9]{8,15}$/',
                 Rule::unique('users', 'phone')->ignore($userId),
             ],
-            'housing_area' => ['required', 'string', 'max:255'],
+            'housing_area_id' => ['required', 'integer', Rule::exists('housing_areas', 'id')],
             'address' => ['required', 'string', 'max:1000'],
             'landmark' => ['nullable', 'string', 'max:255'],
         ];
