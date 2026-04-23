@@ -23,5 +23,10 @@
         </div>
         <button class="btn" type="submit">Login</button>
     </form>
+
+    <div style="margin-top:16px;" class="muted">
+        Belum punya akun?
+        <a href="{{ route('agent.register') }}" style="font-weight:600;">Daftar agent</a>
+    </div>
 </div>
 @endsection
