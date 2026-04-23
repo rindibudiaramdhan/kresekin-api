@@ -37,7 +37,7 @@ class AgentRegistrationController extends Controller
         ]);
 
         return redirect()
-            ->route('agent.register')
-            ->with('status', 'Akun agent berhasil dibuat. Silakan login lewat akses yang disediakan admin.');
+            ->route('agent.login')
+            ->with('status', 'Akun agent berhasil dibuat. Silakan login dengan akun Anda.');
     }
 }
