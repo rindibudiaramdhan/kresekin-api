@@ -6,6 +6,7 @@ use App\Http\Controllers\Web\SellerProductController;
 use App\Http\Controllers\Web\AgentAuthController;
 use App\Http\Controllers\Web\AgentDashboardController;
 use App\Http\Controllers\Web\AgentRegistrationController;
+use App\Http\Controllers\Web\AgentTenantController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -25,6 +26,12 @@ Route::prefix('agent')->name('agent.')->group(function (): void {
     Route::middleware(['auth', 'role:agent'])->group(function (): void {
         Route::post('/logout', [AgentAuthController::class, 'destroy'])->name('logout');
         Route::get('/', AgentDashboardController::class)->name('dashboard');
+        Route::get('/tenants', [AgentTenantController::class, 'index'])->name('tenants.index');
+        Route::get('/tenants/create', [AgentTenantController::class, 'create'])->name('tenants.create');
+        Route::post('/tenants', [AgentTenantController::class, 'store'])->name('tenants.store');
+        Route::get('/tenants/{id}/edit', [AgentTenantController::class, 'edit'])->name('tenants.edit');
+        Route::put('/tenants/{id}', [AgentTenantController::class, 'update'])->name('tenants.update');
+        Route::delete('/tenants/{id}', [AgentTenantController::class, 'destroy'])->name('tenants.destroy');
     });
 });
 
