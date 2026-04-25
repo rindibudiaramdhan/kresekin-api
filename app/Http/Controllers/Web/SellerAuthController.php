@@ -34,7 +34,7 @@ class SellerAuthController extends Controller
             Auth::logout();
 
             return back()
-                ->withErrors(['email' => 'Akun ini bukan seller.'])
+                ->withErrors(['email' => 'Akun ini bukan penjual.'])
                 ->onlyInput('email');
         }
 

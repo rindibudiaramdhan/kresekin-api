@@ -43,7 +43,7 @@ class AuthenticateUserSessionToken
     private function unauthorizedResponse(): JsonResponse
     {
         return response()->json([
-            'message' => 'Unauthenticated.',
+            'message' => 'Tidak terautentikasi.',
         ], Response::HTTP_UNAUTHORIZED);
     }
 }

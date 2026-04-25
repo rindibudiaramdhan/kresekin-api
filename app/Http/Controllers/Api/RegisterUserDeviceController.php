@@ -28,7 +28,7 @@ class RegisterUserDeviceController extends Controller
         $device->save();
 
         return response()->json([
-            'message' => 'Device user berhasil diregistrasi.',
+            'message' => 'Perangkat pengguna berhasil didaftarkan.',
             'data' => [
                 'id' => $device->id,
                 'user_id' => $device->user_id,

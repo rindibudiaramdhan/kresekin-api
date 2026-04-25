@@ -43,14 +43,14 @@ class CheckoutRequest extends FormRequest
             $optionCode = $this->input('payment_method_option_code');
 
             if ($paymentMethod['requires_option'] && ! $optionCode) {
-                $validator->errors()->add('payment_method_option_code', 'The payment method option code field is required.');
+                $validator->errors()->add('payment_method_option_code', 'Kolom kode opsi metode pembayaran wajib diisi.');
             }
 
             if ($paymentMethod['requires_option'] && $optionCode) {
                 $validOptionCodes = collect($paymentMethod['options'])->pluck('code')->all();
 
                 if (! in_array($optionCode, $validOptionCodes, true)) {
-                    $validator->errors()->add('payment_method_option_code', 'The selected payment method option code is invalid.');
+                    $validator->errors()->add('payment_method_option_code', 'Kode opsi metode pembayaran yang dipilih tidak valid.');
                 }
             }
 
@@ -61,13 +61,13 @@ class CheckoutRequest extends FormRequest
             $pickupTimeOption = $this->input('pickup_time_option');
 
             if (! $pickupTimeOption) {
-                $validator->errors()->add('pickup_time_option', 'The pickup time option field is required.');
+                $validator->errors()->add('pickup_time_option', 'Kolom opsi waktu pengambilan wajib diisi.');
 
                 return;
             }
 
             if ($pickupTimeOption === 'jadwalkan' && ! $this->input('pickup_scheduled_at')) {
-                $validator->errors()->add('pickup_scheduled_at', 'The pickup scheduled at field is required.');
+                $validator->errors()->add('pickup_scheduled_at', 'Kolom jadwal waktu pengambilan wajib diisi.');
             }
         });
     }

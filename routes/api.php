@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\Route;
 $healthcheckHandler = function (): JsonResponse {
     return response()->json([
         'status' => 'ok',
-        'message' => 'API is healthy',
+        'message' => 'API sehat',
         'version' => config('api.version'),
         'framework' => [
             'name' => 'Laravel',

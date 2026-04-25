@@ -11,7 +11,7 @@ class GetHousingAreaListController extends Controller
     public function __invoke(): JsonResponse
     {
         return response()->json([
-            'message' => 'Daftar housing area berhasil diambil.',
+            'message' => 'Daftar area perumahan berhasil diambil.',
             'data' => HousingArea::query()
                 ->orderBy('name')
                 ->get()

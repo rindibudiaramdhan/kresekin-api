@@ -15,7 +15,7 @@ class UpdateUserProfileController extends Controller
         $user->save();
 
         return response()->json([
-            'message' => 'Profil user berhasil diperbarui.',
+            'message' => 'Profil pengguna berhasil diperbarui.',
             'data' => [
                 'id' => $user->id,
                 'name' => $user->name,

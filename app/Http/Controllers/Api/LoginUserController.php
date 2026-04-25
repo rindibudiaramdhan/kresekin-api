@@ -27,7 +27,7 @@ class LoginUserController extends Controller
 
         if (! $user) {
             return response()->json([
-                'message' => 'User tidak ditemukan.',
+                'message' => 'Pengguna tidak ditemukan.',
             ], Response::HTTP_NOT_FOUND);
         }
 

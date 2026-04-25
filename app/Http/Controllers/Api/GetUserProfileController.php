@@ -12,7 +12,7 @@ class GetUserProfileController extends Controller
         $user = request()->user();
 
         return response()->json([
-            'message' => 'Profil user berhasil diambil.',
+            'message' => 'Profil pengguna berhasil diambil.',
             'data' => [
                 'id' => $user->id,
                 'name' => $user->name,

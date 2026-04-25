@@ -21,7 +21,7 @@ class EnsureUserRole
     private function forbiddenResponse(string $role): JsonResponse
     {
         return response()->json([
-            'message' => sprintf('Endpoint ini hanya dapat diakses oleh user dengan role %s.', $role),
+            'message' => sprintf('Endpoint ini hanya dapat diakses oleh pengguna dengan role %s.', $role),
         ], Response::HTTP_FORBIDDEN);
     }
 }
