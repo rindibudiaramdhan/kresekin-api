@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\GetCartController;
 use App\Http\Controllers\Api\GetSellerProductDetailController;
 use App\Http\Controllers\Api\GetPaymentMethodsController;
 use App\Http\Controllers\Api\GetProductDetailController;
+use App\Http\Controllers\Api\GetProductCategoriesController;
 use App\Http\Controllers\Api\GetProductListController;
 use App\Http\Controllers\Api\GetSellerProductListController;
 use App\Http\Controllers\Api\GetSellerTenantListController;
@@ -68,6 +69,7 @@ Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::delete('/cart/items/{id}', DeleteCartItemController::class);
     Route::get('/products/{id}', GetProductDetailController::class);
     Route::get('/products', GetProductListController::class);
+    Route::get('/product-categories', GetProductCategoriesController::class);
     Route::get('/tenants/categories', GetTenantCategoriesController::class);
     Route::get('/tenants', GetTenantListController::class);
     Route::get('/users/transactions', GetUserTransactionHistoryController::class);
