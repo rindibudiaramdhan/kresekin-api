@@ -169,6 +169,17 @@ class Tenant extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function productCategories(): array
+    {
+        return $this->products()
+            ->select('category')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category')
+            ->values()
+            ->all();
+    }
+
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_user_id');
