@@ -31,6 +31,7 @@ class GetBuyerTenantListController extends Controller
         $validated = $validator->validated();
         $limit = (int) ($validated['limit'] ?? 10);
         $page = (int) ($validated['page'] ?? 1);
+        $currentTime = now('Asia/Jakarta')->format('H:i');
         $productCategory = isset($validated['product_category'])
             ? ProductCategory::query()->where('slug', $validated['product_category'])->first()
             : null;
@@ -48,8 +49,9 @@ class GetBuyerTenantListController extends Controller
             )
             ->latest()
             ->get()
-            ->map(function (Tenant $tenant): array {
+            ->map(function (Tenant $tenant) use ($currentTime): array {
                 $categoryUiMetadata = Tenant::categoryUiMetadata($tenant->category);
+                $isOpen = $tenant->isOpenAt($currentTime);
 
                 return [
                     'id' => $tenant->id,
@@ -73,8 +75,11 @@ class GetBuyerTenantListController extends Controller
                         ->values()
                         ->all(),
                     'product_count' => $tenant->products->count(),
+                    'is_open' => $isOpen,
+                    'store_status' => $isOpen ? 'Buka' : 'Tutup',
                     'open_time' => $tenant->open_time,
                     'close_time' => $tenant->close_time,
+                    'operating_hours_label' => $tenant->operatingHoursLabel(),
                 ];
             })
             ->values();

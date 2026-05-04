@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserSessionToken;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,6 +16,8 @@ class SellerApiTest extends TestCase
 
     public function test_seller_can_create_and_list_own_tenant(): void
     {
+        Carbon::setTestNow('2026-04-01 10:00:00');
+
         [$seller, $token] = $this->createAuthenticatedUser('seller@example.com', '+6281200000001', 'seller-token', User::ROLE_SELLER);
 
         $createResponse = $this->withHeader('Authorization', 'Bearer '.$token)
@@ -39,7 +42,12 @@ class SellerApiTest extends TestCase
         $listResponse
             ->assertOk()
             ->assertJsonPath('data.0.owner_user_id', $seller->id)
-            ->assertJsonPath('data.0.name', 'Tenant Seller');
+            ->assertJsonPath('data.0.name', 'Tenant Seller')
+            ->assertJsonPath('data.0.is_open', true)
+            ->assertJsonPath('data.0.store_status', 'Buka')
+            ->assertJsonPath('data.0.operating_hours_label', 'Buka 07:00 sd 21:00');
+
+        Carbon::setTestNow();
     }
 
     public function test_seller_can_create_and_list_own_product(): void
@@ -114,7 +122,7 @@ class SellerApiTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/tenants')
             ->assertForbidden()
-            ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh user dengan role seller.');
+            ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh pengguna dengan role seller.');
     }
 
     public function test_seller_cannot_access_buyer_checkout_endpoint(): void
@@ -124,7 +132,7 @@ class SellerApiTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/cart')
             ->assertForbidden()
-            ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh user dengan role buyer.');
+            ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh pengguna dengan role buyer.');
     }
 
     private function createAuthenticatedUser(string $email, string $phone, string $plainTextToken, string $role): array
