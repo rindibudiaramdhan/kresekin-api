@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
 class GetProductListController extends Controller
@@ -17,7 +17,7 @@ class GetProductListController extends Controller
     {
         $validator = Validator::make($request->query(), [
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'category' => ['nullable', 'string', Rule::in(Tenant::CATEGORIES)],
+            'category' => ['nullable', 'string', 'exists:product_categories,slug'],
             'tenant_id' => ['nullable', 'integer', 'exists:tenants,id'],
             'name' => ['nullable', 'string', 'max:255'],
         ]);
@@ -31,12 +31,15 @@ class GetProductListController extends Controller
 
         $validated = $validator->validated();
         $limit = (int) ($validated['limit'] ?? 10);
+        $productCategory = isset($validated['category'])
+            ? ProductCategory::query()->where('slug', $validated['category'])->first()
+            : null;
 
         $products = Product::query()
             ->with('tenant')
             ->when(
-                isset($validated['category']),
-                fn ($query) => $query->where('category', $validated['category'])
+                $productCategory,
+                fn ($query) => $query->where('category', $productCategory->name)
             )
             ->when(
                 isset($validated['tenant_id']),

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserSessionToken;
@@ -104,6 +105,12 @@ class ProductApiTest extends TestCase
             'expires_at' => now()->addDays(30),
         ]);
 
+        ProductCategory::query()->create([
+            'name' => Tenant::CATEGORY_VEGETABLES,
+            'slug' => 'sayur',
+            'image_path' => 'images/ic_vegetable_category.svg',
+        ]);
+
         Product::query()->create([
             'tenant_id' => $tenantA->id,
             'name' => 'Pakcoy',
@@ -141,7 +148,7 @@ class ProductApiTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
-            ->getJson('/api/products?category='.urlencode(Tenant::CATEGORY_VEGETABLES).'&tenant_id='.$tenantA->id.'&name=pak');
+            ->getJson('/api/products?category=sayur&tenant_id='.$tenantA->id.'&name=pak');
 
         $response
             ->assertOk()
@@ -157,7 +164,7 @@ class ProductApiTest extends TestCase
 
         $response
             ->assertUnauthorized()
-            ->assertJsonPath('message', 'Unauthenticated.');
+            ->assertJsonPath('message', 'Tidak terautentikasi.');
     }
 
     public function test_authenticated_user_gets_not_found_when_product_detail_does_not_exist(): void
@@ -181,7 +188,7 @@ class ProductApiTest extends TestCase
 
         $response
             ->assertUnprocessable()
-            ->assertJsonPath('message', 'The given data was invalid.')
+            ->assertJsonPath('message', 'Data yang diberikan tidak valid.')
             ->assertJsonValidationErrors(['tenant_id']);
     }
 
