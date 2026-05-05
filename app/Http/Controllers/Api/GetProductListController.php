@@ -20,6 +20,7 @@ class GetProductListController extends Controller
             'category' => ['nullable', 'string', 'exists:product_categories,slug'],
             'tenant_id' => ['nullable', 'integer', 'exists:tenants,id'],
             'name' => ['nullable', 'string', 'max:255'],
+            'is_promo' => ['nullable', 'in:true,false,1,0'],
         ]);
 
         if ($validator->fails()) {
@@ -31,6 +32,9 @@ class GetProductListController extends Controller
 
         $validated = $validator->validated();
         $limit = (int) ($validated['limit'] ?? 10);
+        $isPromo = isset($validated['is_promo'])
+            ? filter_var($validated['is_promo'], FILTER_VALIDATE_BOOLEAN)
+            : null;
         $productCategory = isset($validated['category'])
             ? ProductCategory::query()->where('slug', $validated['category'])->first()
             : null;
@@ -48,6 +52,16 @@ class GetProductListController extends Controller
             ->when(
                 isset($validated['name']),
                 fn ($query) => $query->where('name', 'like', '%'.$validated['name'].'%')
+            )
+            ->when(
+                $isPromo !== null,
+                fn ($query) => $isPromo
+                    ? $query->whereNotNull('original_price')->whereColumn('original_price', '>', 'price')
+                    : $query->where(function ($query): void {
+                        $query
+                            ->whereNull('original_price')
+                            ->orWhereColumn('original_price', '<=', 'price');
+                    })
             )
             ->latest()
             ->paginate($limit)

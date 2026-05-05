@@ -192,6 +192,75 @@ class ProductApiTest extends TestCase
             ->assertJsonValidationErrors(['tenant_id']);
     }
 
+    public function test_product_list_can_be_filtered_by_promo_status(): void
+    {
+        [, $token] = $this->createAuthenticatedUser();
+
+        $tenant = Tenant::query()->create([
+            'name' => 'Toko Promo',
+            'profile_picture_url' => null,
+            'rating' => 4.8,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Bayam Promo',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'image_url' => null,
+            'price' => 8000,
+            'original_price' => 10000,
+            'weight_label' => '250gr',
+            'description' => 'Sayur promo.',
+            'delivery_estimate' => 'Hari ini',
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Kangkung Normal',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'image_url' => null,
+            'price' => 7000,
+            'original_price' => null,
+            'weight_label' => '250gr',
+            'description' => 'Sayur normal.',
+            'delivery_estimate' => 'Hari ini',
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Kubis Tanpa Diskon',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'image_url' => null,
+            'price' => 9000,
+            'original_price' => 9000,
+            'weight_label' => '500gr',
+            'description' => 'Harga normal.',
+            'delivery_estimate' => 'Hari ini',
+        ]);
+
+        $promoResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/products?is_promo=true');
+
+        $promoResponse
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.name', 'Bayam Promo')
+            ->assertJsonPath('data.0.discount_percentage', 20);
+
+        $nonPromoResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/products?is_promo=false');
+
+        $nonPromoResponse
+            ->assertOk()
+            ->assertJsonPath('meta.total', 2);
+
+        $this->assertEqualsCanonicalizing(
+            ['Kangkung Normal', 'Kubis Tanpa Diskon'],
+            collect($nonPromoResponse->json('data'))->pluck('name')->all()
+        );
+    }
+
     public function test_product_list_and_detail_return_null_discount_when_original_price_is_not_higher(): void
     {
         [, $token] = $this->createAuthenticatedUser();
