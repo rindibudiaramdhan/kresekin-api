@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             HousingAreaSeeder::class,
             ProductCategorySeeder::class,
             TenantSeeder::class,
+            PromoProductSeeder::class,
         ]);
 
         User::factory()->create([
