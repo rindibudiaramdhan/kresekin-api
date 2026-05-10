@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\OrderTimeOption;
 use App\Models\PromoCode;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionStatusHistory;
 use App\Support\DeliveryMethodCatalog;
-use App\Support\OrderTimeOptionCatalog;
 use App\Support\PaymentMethodCatalog;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -42,7 +42,8 @@ class CheckoutController extends Controller
         $pickupTimeOption = $deliveryMethod['code'] === DeliveryMethodCatalog::PICKUP
             ? ($validated['pickup_time_option'] ?? null)
             : null;
-        $pickupScheduledAt = $pickupTimeOption === OrderTimeOptionCatalog::SCHEDULED
+        $orderTimeOption = $this->resolveOrderTimeOption($pickupTimeOption);
+        $pickupScheduledAt = $orderTimeOption?->requires_schedule
             ? ($validated['pickup_scheduled_at'] ?? null)
             : null;
 
@@ -225,6 +226,18 @@ class CheckoutController extends Controller
         return PromoCode::query()
             ->available()
             ->where('code', strtoupper(trim($code)))
+            ->first();
+    }
+
+    private function resolveOrderTimeOption(?string $code): ?OrderTimeOption
+    {
+        if (! $code) {
+            return null;
+        }
+
+        return OrderTimeOption::query()
+            ->active()
+            ->where('code', strtolower(trim($code)))
             ->first();
     }
 

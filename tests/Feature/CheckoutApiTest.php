@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\OrderTimeOption;
 use App\Models\Product;
 use App\Models\PromoCode;
 use App\Models\Tenant;
@@ -16,6 +17,28 @@ use Tests\TestCase;
 class CheckoutApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        OrderTimeOption::query()->create([
+            'code' => 'sekarang',
+            'name' => 'Sekarang',
+            'description' => 'estimasi 15-30 menit',
+            'requires_schedule' => false,
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+        OrderTimeOption::query()->create([
+            'code' => 'jadwalkan',
+            'name' => 'Jadwalkan',
+            'description' => null,
+            'requires_schedule' => true,
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+    }
 
     public function test_authenticated_user_can_checkout_cart_into_transaction(): void
     {

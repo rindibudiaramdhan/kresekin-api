@@ -3,8 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\Cart;
+use App\Models\OrderTimeOption;
 use App\Support\DeliveryMethodCatalog;
-use App\Support\OrderTimeOptionCatalog;
 use App\Support\PaymentMethodCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -22,7 +22,11 @@ class CheckoutRequest extends FormRequest
         return [
             'payment_method_code' => ['required', 'string', Rule::in(PaymentMethodCatalog::codes())],
             'payment_method_option_code' => ['nullable', 'string', 'max:50'],
-            'pickup_time_option' => ['nullable', 'string', Rule::in(OrderTimeOptionCatalog::codes())],
+            'pickup_time_option' => [
+                'nullable',
+                'string',
+                Rule::exists('order_time_options', 'code')->where('is_active', true),
+            ],
             'pickup_scheduled_at' => ['nullable', 'date_format:H:i'],
             'promo_code' => ['nullable', 'string', 'max:50'],
         ];
@@ -68,7 +72,12 @@ class CheckoutRequest extends FormRequest
                 return;
             }
 
-            if ($pickupTimeOption === OrderTimeOptionCatalog::SCHEDULED && ! $this->input('pickup_scheduled_at')) {
+            $orderTimeOption = OrderTimeOption::query()
+                ->active()
+                ->where('code', strtolower(trim($pickupTimeOption)))
+                ->first();
+
+            if ($orderTimeOption?->requires_schedule && ! $this->input('pickup_scheduled_at')) {
                 $validator->errors()->add('pickup_scheduled_at', 'Kolom jadwal waktu pengambilan wajib diisi.');
             }
         });
