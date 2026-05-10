@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateCartDeliveryMethodRequest;
 use App\Models\Cart;
-use App\Support\DeliveryMethodCatalog;
+use App\Models\DeliveryMethod;
 use Illuminate\Http\JsonResponse;
 
 class UpdateCartDeliveryMethodController extends Controller
@@ -21,18 +21,22 @@ class UpdateCartDeliveryMethodController extends Controller
         $cart->delivery_method_code = $deliveryMethodCode;
         $cart->save();
 
-        $deliveryMethod = DeliveryMethodCatalog::find($deliveryMethodCode);
+        $deliveryMethod = DeliveryMethod::query()
+            ->active()
+            ->where('code', strtolower(trim($deliveryMethodCode)))
+            ->firstOrFail();
 
         return response()->json([
             'message' => 'Metode pengiriman keranjang berhasil diperbarui.',
             'data' => [
                 'delivery_method' => [
-                    'id' => $deliveryMethod['id'],
-                    'code' => $deliveryMethod['code'],
-                    'name' => $deliveryMethod['name'],
-                    'description' => $deliveryMethod['description'],
-                    'fee' => $deliveryMethod['fee'],
-                    'fee_label' => $this->moneyLabel($deliveryMethod['fee']),
+                    'id' => $deliveryMethod->id,
+                    'code' => $deliveryMethod->code,
+                    'name' => $deliveryMethod->name,
+                    'description' => $deliveryMethod->description,
+                    'fee' => $deliveryMethod->fee,
+                    'fee_label' => $this->moneyLabel($deliveryMethod->fee),
+                    'requires_order_time' => $deliveryMethod->requires_order_time,
                 ],
             ],
         ]);

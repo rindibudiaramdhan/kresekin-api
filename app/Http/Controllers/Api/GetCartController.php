@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
-use App\Support\DeliveryMethodCatalog;
+use App\Models\DeliveryMethod;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -24,8 +24,13 @@ class GetCartController extends Controller
             ->get();
 
         $subtotal = $cartItems->sum(fn (CartItem $item): int => $item->quantity * $item->product->price);
-        $deliveryMethod = DeliveryMethodCatalog::find($cart->delivery_method_code);
-        $deliveryFee = $deliveryMethod['fee'] ?? 0;
+        $deliveryMethod = $cart->delivery_method_code
+            ? DeliveryMethod::query()
+                ->active()
+                ->where('code', $cart->delivery_method_code)
+                ->first()
+            : null;
+        $deliveryFee = $deliveryMethod->fee ?? 0;
         $grandTotal = $subtotal + $deliveryFee;
 
         return response()->json([
@@ -48,12 +53,13 @@ class GetCartController extends Controller
                     'line_total_label' => $this->moneyLabel($item->quantity * $item->product->price),
                 ])->values(),
                 'delivery_method' => $deliveryMethod ? [
-                    'id' => $deliveryMethod['id'],
-                    'code' => $deliveryMethod['code'],
-                    'name' => $deliveryMethod['name'],
-                    'description' => $deliveryMethod['description'],
-                    'fee' => $deliveryMethod['fee'],
-                    'fee_label' => $this->moneyLabel($deliveryMethod['fee']),
+                    'id' => $deliveryMethod->id,
+                    'code' => $deliveryMethod->code,
+                    'name' => $deliveryMethod->name,
+                    'description' => $deliveryMethod->description,
+                    'fee' => $deliveryMethod->fee,
+                    'fee_label' => $this->moneyLabel($deliveryMethod->fee),
+                    'requires_order_time' => $deliveryMethod->requires_order_time,
                 ] : null,
                 'subtotal' => $subtotal,
                 'subtotal_label' => $this->moneyLabel($subtotal),

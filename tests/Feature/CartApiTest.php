@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\DeliveryMethod;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
@@ -14,6 +14,30 @@ use Tests\TestCase;
 class CartApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        DeliveryMethod::query()->create([
+            'code' => 'store_courier',
+            'name' => 'Antar Kurir Toko',
+            'description' => 'Diantar hari ini',
+            'fee' => 2500,
+            'requires_order_time' => false,
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+        DeliveryMethod::query()->create([
+            'code' => 'pickup',
+            'name' => 'Ambil ke Toko',
+            'description' => null,
+            'fee' => 0,
+            'requires_order_time' => true,
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+    }
 
     public function test_authenticated_user_can_add_product_to_cart_and_view_cart(): void
     {

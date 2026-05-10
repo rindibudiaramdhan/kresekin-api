@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\DeliveryMethod;
 use App\Models\OrderTimeOption;
 use App\Models\PaymentMethod;
 use App\Models\Product;
@@ -80,6 +81,26 @@ class CheckoutApiTest extends TestCase
             'icon_key' => 'cod',
             'requires_option' => false,
             'sort_order' => 3,
+            'is_active' => true,
+        ]);
+
+        DeliveryMethod::query()->create([
+            'code' => 'store_courier',
+            'name' => 'Antar Kurir Toko',
+            'description' => 'Diantar hari ini',
+            'fee' => 2500,
+            'requires_order_time' => false,
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        DeliveryMethod::query()->create([
+            'code' => 'pickup',
+            'name' => 'Ambil ke Toko',
+            'description' => null,
+            'fee' => 0,
+            'requires_order_time' => true,
+            'sort_order' => 2,
             'is_active' => true,
         ]);
     }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\DeliveryMethod;
 use App\Models\User;
 use App\Models\UserSessionToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +14,34 @@ class DeliveryMethodApiTest extends TestCase
 
     public function test_authenticated_user_can_get_delivery_methods(): void
     {
+        DeliveryMethod::query()->create([
+            'code' => 'store_courier',
+            'name' => 'Antar Kurir Toko',
+            'description' => 'Diantar hari ini',
+            'fee' => 2500,
+            'requires_order_time' => false,
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+        DeliveryMethod::query()->create([
+            'code' => 'pickup',
+            'name' => 'Ambil ke Toko',
+            'description' => null,
+            'fee' => 0,
+            'requires_order_time' => true,
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+        DeliveryMethod::query()->create([
+            'code' => 'inactive',
+            'name' => 'Inactive',
+            'description' => null,
+            'fee' => 1000,
+            'requires_order_time' => false,
+            'sort_order' => 3,
+            'is_active' => false,
+        ]);
+
         $user = User::query()->create([
             'name' => 'Budi',
             'email' => 'budi@example.com',
@@ -41,10 +70,12 @@ class DeliveryMethodApiTest extends TestCase
             ->assertJsonPath('data.0.description', 'Diantar hari ini')
             ->assertJsonPath('data.0.fee', 2500)
             ->assertJsonPath('data.0.fee_label', 'Rp 2.500')
+            ->assertJsonPath('data.0.requires_order_time', false)
             ->assertJsonPath('data.1.code', 'pickup')
             ->assertJsonPath('data.1.name', 'Ambil ke Toko')
             ->assertJsonPath('data.1.fee', 0)
-            ->assertJsonPath('data.1.fee_label', 'Rp 0');
+            ->assertJsonPath('data.1.fee_label', 'Rp 0')
+            ->assertJsonPath('data.1.requires_order_time', true);
 
         $this->assertCount(2, $response->json('data'));
     }
@@ -55,6 +86,6 @@ class DeliveryMethodApiTest extends TestCase
 
         $response
             ->assertUnauthorized()
-            ->assertJsonPath('message', 'Unauthenticated.');
+            ->assertJsonPath('message', 'Tidak terautentikasi.');
     }
 }

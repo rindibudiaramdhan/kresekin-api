@@ -3,9 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Models\Cart;
+use App\Models\DeliveryMethod;
 use App\Models\OrderTimeOption;
 use App\Models\PaymentMethod;
-use App\Support\DeliveryMethodCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -42,7 +42,12 @@ class CheckoutRequest extends FormRequest
             $cart = Cart::query()->firstOrCreate([
                 'user_id' => $this->user()->id,
             ]);
-            $isPickup = $cart->delivery_method_code === DeliveryMethodCatalog::PICKUP;
+            $deliveryMethod = $cart->delivery_method_code
+                ? DeliveryMethod::query()
+                    ->active()
+                    ->where('code', $cart->delivery_method_code)
+                    ->first()
+                : null;
 
             $paymentMethod = PaymentMethod::query()
                 ->active()
@@ -68,7 +73,7 @@ class CheckoutRequest extends FormRequest
                 }
             }
 
-            if (! $isPickup) {
+            if (! $deliveryMethod?->requires_order_time) {
                 return;
             }
 

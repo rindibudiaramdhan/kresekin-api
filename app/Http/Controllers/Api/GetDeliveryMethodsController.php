@@ -3,24 +3,29 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Support\DeliveryMethodCatalog;
+use App\Models\DeliveryMethod;
 use Illuminate\Http\JsonResponse;
 
 class GetDeliveryMethodsController extends Controller
 {
     public function __invoke(): JsonResponse
     {
-        $deliveryMethods = DeliveryMethodCatalog::all();
+        $deliveryMethods = DeliveryMethod::query()
+            ->active()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
 
         return response()->json([
             'message' => 'Daftar metode pengiriman berhasil diambil.',
-            'data' => collect($deliveryMethods)->values()->map(fn (array $method): array => [
-                'id' => $method['id'],
-                'code' => $method['code'],
-                'name' => $method['name'],
-                'description' => $method['description'],
-                'fee' => $method['fee'],
-                'fee_label' => $this->moneyLabel($method['fee']),
+            'data' => $deliveryMethods->map(fn (DeliveryMethod $method): array => [
+                'id' => $method->id,
+                'code' => $method->code,
+                'name' => $method->name,
+                'description' => $method->description,
+                'fee' => $method->fee,
+                'fee_label' => $this->moneyLabel($method->fee),
+                'requires_order_time' => $method->requires_order_time,
             ])->values(),
         ]);
     }

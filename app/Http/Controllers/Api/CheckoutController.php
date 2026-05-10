@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\DeliveryMethod;
 use App\Models\OrderTimeOption;
 use App\Models\PaymentMethod;
 use App\Models\PaymentMethodOption;
@@ -13,7 +14,6 @@ use App\Models\PromoCode;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionStatusHistory;
-use App\Support\DeliveryMethodCatalog;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +30,7 @@ class CheckoutController extends Controller
             'user_id' => $user->id,
         ]);
 
-        $deliveryMethod = DeliveryMethodCatalog::find($cart->delivery_method_code);
+        $deliveryMethod = $this->resolveDeliveryMethod($cart->delivery_method_code);
 
         if (! $deliveryMethod) {
             return response()->json([
@@ -40,7 +40,7 @@ class CheckoutController extends Controller
 
         $paymentMethod = $this->resolvePaymentMethod($validated['payment_method_code']);
         $paymentOption = $this->resolvePaymentOption($paymentMethod, $validated['payment_method_option_code'] ?? null);
-        $pickupTimeOption = $deliveryMethod['code'] === DeliveryMethodCatalog::PICKUP
+        $pickupTimeOption = $deliveryMethod->requires_order_time
             ? ($validated['pickup_time_option'] ?? null)
             : null;
         $orderTimeOption = $this->resolveOrderTimeOption($pickupTimeOption);
@@ -60,7 +60,7 @@ class CheckoutController extends Controller
         }
 
         $subtotal = $cartItems->sum(fn (CartItem $item): int => $item->quantity * $item->product->price);
-        $deliveryFee = $deliveryMethod['fee'];
+        $deliveryFee = $deliveryMethod->fee;
         $promo = $this->resolvePromoCode($validated['promo_code'] ?? null);
 
         if (($validated['promo_code'] ?? null) && ! $promo) {
@@ -113,8 +113,8 @@ class CheckoutController extends Controller
                 'subtotal_amount' => $subtotal,
                 'delivery_fee' => $deliveryFee,
                 'total_amount' => $grandTotal,
-                'delivery_method' => $deliveryMethod['name'],
-                'delivery_method_code' => $deliveryMethod['code'],
+                'delivery_method' => $deliveryMethod->name,
+                'delivery_method_code' => $deliveryMethod->code,
                 'pickup_time_option' => $pickupTimeOption,
                 'pickup_scheduled_at' => $pickupScheduledAt,
                 'payment_method' => $paymentMethod->name,
@@ -201,6 +201,18 @@ class CheckoutController extends Controller
             ->with('activeOptions')
             ->where('code', strtolower(trim($code)))
             ->firstOrFail();
+    }
+
+    private function resolveDeliveryMethod(?string $code): ?DeliveryMethod
+    {
+        if (! $code) {
+            return null;
+        }
+
+        return DeliveryMethod::query()
+            ->active()
+            ->where('code', strtolower(trim($code)))
+            ->first();
     }
 
     private function resolvePaymentOption(PaymentMethod $paymentMethod, ?string $optionCode): ?PaymentMethodOption
