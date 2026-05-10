@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\PaymentMethod;
 use App\Models\User;
 use App\Models\UserSessionToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +14,8 @@ class PaymentMethodApiTest extends TestCase
 
     public function test_authenticated_user_can_get_payment_methods(): void
     {
+        $this->seedPaymentMethods();
+
         $user = User::query()->create([
             'name' => 'Budi',
             'email' => 'budi@example.com',
@@ -55,6 +58,53 @@ class PaymentMethodApiTest extends TestCase
 
         $response
             ->assertUnauthorized()
-            ->assertJsonPath('message', 'Unauthenticated.');
+            ->assertJsonPath('message', 'Tidak terautentikasi.');
+    }
+
+    private function seedPaymentMethods(): void
+    {
+        $bankTransfer = PaymentMethod::query()->create([
+            'code' => PaymentMethod::BANK_TRANSFER,
+            'name' => 'Transfer Bank',
+            'icon_key' => 'bank_transfer',
+            'requires_option' => true,
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $bankTransfer->options()->createMany([
+            [
+                'code' => 'bca',
+                'name' => 'BCA',
+                'icon_key' => 'bank_bca',
+                'sort_order' => 1,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'mandiri',
+                'name' => 'Mandiri',
+                'icon_key' => 'bank_mandiri',
+                'sort_order' => 2,
+                'is_active' => true,
+            ],
+        ]);
+
+        PaymentMethod::query()->create([
+            'code' => PaymentMethod::QR_PAYMENT,
+            'name' => 'QR Payment',
+            'icon_key' => 'qris',
+            'requires_option' => false,
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+
+        PaymentMethod::query()->create([
+            'code' => PaymentMethod::COD,
+            'name' => 'COD',
+            'icon_key' => 'cod',
+            'requires_option' => false,
+            'sort_order' => 3,
+            'is_active' => true,
+        ]);
     }
 }

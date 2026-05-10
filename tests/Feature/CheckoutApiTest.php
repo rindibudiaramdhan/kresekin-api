@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\OrderTimeOption;
+use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\PromoCode;
 use App\Models\Tenant;
@@ -36,6 +37,49 @@ class CheckoutApiTest extends TestCase
             'description' => null,
             'requires_schedule' => true,
             'sort_order' => 2,
+            'is_active' => true,
+        ]);
+
+        $bankTransfer = PaymentMethod::query()->create([
+            'code' => PaymentMethod::BANK_TRANSFER,
+            'name' => 'Transfer Bank',
+            'icon_key' => 'bank_transfer',
+            'requires_option' => true,
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+        $bankTransfer->options()->createMany([
+            [
+                'code' => 'bca',
+                'name' => 'BCA',
+                'icon_key' => 'bank_bca',
+                'sort_order' => 1,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'mandiri',
+                'name' => 'Mandiri',
+                'icon_key' => 'bank_mandiri',
+                'sort_order' => 2,
+                'is_active' => true,
+            ],
+        ]);
+
+        PaymentMethod::query()->create([
+            'code' => PaymentMethod::QR_PAYMENT,
+            'name' => 'QR Payment',
+            'icon_key' => 'qris',
+            'requires_option' => false,
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+
+        PaymentMethod::query()->create([
+            'code' => PaymentMethod::COD,
+            'name' => 'COD',
+            'icon_key' => 'cod',
+            'requires_option' => false,
+            'sort_order' => 3,
             'is_active' => true,
         ]);
     }

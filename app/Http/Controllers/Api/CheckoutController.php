@@ -7,12 +7,13 @@ use App\Http\Requests\CheckoutRequest;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\OrderTimeOption;
+use App\Models\PaymentMethod;
+use App\Models\PaymentMethodOption;
 use App\Models\PromoCode;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionStatusHistory;
 use App\Support\DeliveryMethodCatalog;
-use App\Support\PaymentMethodCatalog;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class CheckoutController extends Controller
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $paymentMethod = PaymentMethodCatalog::find($validated['payment_method_code']);
+        $paymentMethod = $this->resolvePaymentMethod($validated['payment_method_code']);
         $paymentOption = $this->resolvePaymentOption($paymentMethod, $validated['payment_method_option_code'] ?? null);
         $pickupTimeOption = $deliveryMethod['code'] === DeliveryMethodCatalog::PICKUP
             ? ($validated['pickup_time_option'] ?? null)
@@ -116,10 +117,10 @@ class CheckoutController extends Controller
                 'delivery_method_code' => $deliveryMethod['code'],
                 'pickup_time_option' => $pickupTimeOption,
                 'pickup_scheduled_at' => $pickupScheduledAt,
-                'payment_method' => $paymentMethod['name'],
-                'payment_method_code' => $paymentMethod['code'],
-                'payment_method_option_code' => $paymentOption['code'] ?? null,
-                'payment_method_option_name' => $paymentOption['name'] ?? null,
+                'payment_method' => $paymentMethod->name,
+                'payment_method_code' => $paymentMethod->code,
+                'payment_method_option_code' => $paymentOption?->code,
+                'payment_method_option_name' => $paymentOption?->name,
                 'promo_code_id' => $promo?->id,
                 'promo_code' => $promo?->code,
                 'promo_name' => $promo?->name,
@@ -193,14 +194,23 @@ class CheckoutController extends Controller
         ], Response::HTTP_CREATED);
     }
 
-    private function resolvePaymentOption(array $paymentMethod, ?string $optionCode): ?array
+    private function resolvePaymentMethod(string $code): PaymentMethod
     {
-        if (! $paymentMethod['requires_option']) {
+        return PaymentMethod::query()
+            ->active()
+            ->with('activeOptions')
+            ->where('code', strtolower(trim($code)))
+            ->firstOrFail();
+    }
+
+    private function resolvePaymentOption(PaymentMethod $paymentMethod, ?string $optionCode): ?PaymentMethodOption
+    {
+        if (! $paymentMethod->requires_option) {
             return null;
         }
 
-        foreach ($paymentMethod['options'] as $option) {
-            if ($option['code'] === $optionCode) {
+        foreach ($paymentMethod->activeOptions as $option) {
+            if ($option->code === strtolower(trim((string) $optionCode))) {
                 return $option;
             }
         }
@@ -208,13 +218,13 @@ class CheckoutController extends Controller
         return null;
     }
 
-    private function paymentStatusTitle(array $paymentMethod, ?array $paymentOption): string
+    private function paymentStatusTitle(PaymentMethod $paymentMethod, ?PaymentMethodOption $paymentOption): string
     {
-        if ($paymentMethod['code'] === PaymentMethodCatalog::BANK_TRANSFER && $paymentOption) {
-            return 'Menunggu pembayaran '.$paymentOption['name'];
+        if ($paymentMethod->code === PaymentMethod::BANK_TRANSFER && $paymentOption) {
+            return 'Menunggu pembayaran '.$paymentOption->name;
         }
 
-        return 'Menunggu pembayaran '.$paymentMethod['name'];
+        return 'Menunggu pembayaran '.$paymentMethod->name;
     }
 
     private function resolvePromoCode(?string $code): ?PromoCode

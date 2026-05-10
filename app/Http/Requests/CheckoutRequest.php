@@ -4,8 +4,8 @@ namespace App\Http\Requests;
 
 use App\Models\Cart;
 use App\Models\OrderTimeOption;
+use App\Models\PaymentMethod;
 use App\Support\DeliveryMethodCatalog;
-use App\Support\PaymentMethodCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -20,7 +20,11 @@ class CheckoutRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_method_code' => ['required', 'string', Rule::in(PaymentMethodCatalog::codes())],
+            'payment_method_code' => [
+                'required',
+                'string',
+                Rule::exists('payment_methods', 'code')->where('is_active', true),
+            ],
             'payment_method_option_code' => ['nullable', 'string', 'max:50'],
             'pickup_time_option' => [
                 'nullable',
@@ -40,7 +44,11 @@ class CheckoutRequest extends FormRequest
             ]);
             $isPickup = $cart->delivery_method_code === DeliveryMethodCatalog::PICKUP;
 
-            $paymentMethod = PaymentMethodCatalog::find($this->input('payment_method_code'));
+            $paymentMethod = PaymentMethod::query()
+                ->active()
+                ->with('activeOptions')
+                ->where('code', strtolower(trim((string) $this->input('payment_method_code'))))
+                ->first();
 
             if (! $paymentMethod) {
                 return;
@@ -48,14 +56,14 @@ class CheckoutRequest extends FormRequest
 
             $optionCode = $this->input('payment_method_option_code');
 
-            if ($paymentMethod['requires_option'] && ! $optionCode) {
+            if ($paymentMethod->requires_option && ! $optionCode) {
                 $validator->errors()->add('payment_method_option_code', 'Kolom kode opsi metode pembayaran wajib diisi.');
             }
 
-            if ($paymentMethod['requires_option'] && $optionCode) {
-                $validOptionCodes = collect($paymentMethod['options'])->pluck('code')->all();
+            if ($paymentMethod->requires_option && $optionCode) {
+                $validOptionCodes = $paymentMethod->activeOptions->pluck('code')->all();
 
-                if (! in_array($optionCode, $validOptionCodes, true)) {
+                if (! in_array(strtolower(trim($optionCode)), $validOptionCodes, true)) {
                     $validator->errors()->add('payment_method_option_code', 'Kode opsi metode pembayaran yang dipilih tidak valid.');
                 }
             }

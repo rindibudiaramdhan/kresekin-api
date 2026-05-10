@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             PromoProductSeeder::class,
             PromoCodeSeeder::class,
             OrderTimeOptionSeeder::class,
+            PaymentMethodSeeder::class,
         ]);
 
         User::factory()->create([
