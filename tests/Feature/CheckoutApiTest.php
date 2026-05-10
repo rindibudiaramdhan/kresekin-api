@@ -123,6 +123,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'store_courier',
                 'payment_method_code' => 'bank_transfer',
                 'payment_method_option_code' => 'bca',
             ]);
@@ -187,6 +188,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'store_courier',
                 'payment_method_code' => 'bank_transfer',
                 'payment_method_option_code' => 'bca',
                 'promo_code' => 'hemat10',
@@ -233,6 +235,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'store_courier',
                 'payment_method_code' => 'qr_payment',
                 'promo_code' => 'TIDAKADA',
             ]);
@@ -269,6 +272,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'store_courier',
                 'payment_method_code' => 'qr_payment',
                 'promo_code' => 'MIN50K',
             ]);
@@ -296,6 +300,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'pickup',
                 'payment_method_code' => 'qr_payment',
                 'pickup_time_option' => 'sekarang',
             ]);
@@ -326,6 +331,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'pickup',
                 'payment_method_code' => 'cod',
             ]);
 
@@ -352,6 +358,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'pickup',
                 'payment_method_code' => 'cod',
                 'pickup_time_option' => 'jadwalkan',
             ]);
@@ -379,6 +386,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'pickup',
                 'payment_method_code' => 'cod',
                 'pickup_time_option' => 'jadwalkan',
                 'pickup_scheduled_at' => '10:30',
@@ -396,7 +404,7 @@ class CheckoutApiTest extends TestCase
         ]);
     }
 
-    public function test_checkout_requires_delivery_method_selected_in_cart(): void
+    public function test_checkout_requires_delivery_method_code(): void
     {
         [$user, $token] = $this->createAuthenticatedUser();
         $product = $this->createProduct();
@@ -419,7 +427,7 @@ class CheckoutApiTest extends TestCase
 
         $response
             ->assertUnprocessable()
-            ->assertJsonPath('message', 'Metode pengiriman belum dipilih di keranjang.');
+            ->assertJsonValidationErrors(['delivery_method_code']);
     }
 
     public function test_checkout_requires_payment_option_for_bank_transfer(): void
@@ -440,6 +448,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'store_courier',
                 'payment_method_code' => 'bank_transfer',
             ]);
 
@@ -466,6 +475,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'store_courier',
                 'payment_method_code' => 'invalid_method',
             ]);
 
@@ -492,6 +502,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'store_courier',
                 'payment_method_code' => 'bank_transfer',
                 'payment_method_option_code' => 'invalid_bank',
             ]);
@@ -512,6 +523,7 @@ class CheckoutApiTest extends TestCase
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/checkout', [
+                'delivery_method_code' => 'store_courier',
                 'payment_method_code' => 'qr_payment',
             ]);
 
@@ -523,6 +535,7 @@ class CheckoutApiTest extends TestCase
     public function test_checkout_requires_authentication(): void
     {
         $response = $this->postJson('/api/checkout', [
+            'delivery_method_code' => 'store_courier',
             'payment_method_code' => 'cod',
         ]);
 

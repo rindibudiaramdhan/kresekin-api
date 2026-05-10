@@ -4,10 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
-use App\Models\Cart;
 use App\Models\CartItem;
-use App\Models\DeliveryMethod;
-use App\Models\OrderTimeOption;
 use App\Models\PaymentMethod;
 use App\Models\PaymentMethodOption;
 use App\Models\PromoCode;
@@ -17,66 +14,24 @@ use App\Models\TransactionStatusHistory;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpFoundation\Response;
 
 class CheckoutController extends Controller
 {
     public function __invoke(CheckoutRequest $request): JsonResponse
     {
         $user = $request->user();
-        $validated = $request->validated();
-
-        $cart = Cart::query()->firstOrCreate([
-            'user_id' => $user->id,
-        ]);
-
-        $deliveryMethod = $this->resolveDeliveryMethod($cart->delivery_method_code);
-
-        if (! $deliveryMethod) {
-            return response()->json([
-                'message' => 'Metode pengiriman belum dipilih di keranjang.',
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $paymentMethod = $this->resolvePaymentMethod($validated['payment_method_code']);
-        $paymentOption = $this->resolvePaymentOption($paymentMethod, $validated['payment_method_option_code'] ?? null);
-        $pickupTimeOption = $deliveryMethod->requires_order_time
-            ? ($validated['pickup_time_option'] ?? null)
-            : null;
-        $orderTimeOption = $this->resolveOrderTimeOption($pickupTimeOption);
-        $pickupScheduledAt = $orderTimeOption?->requires_schedule
-            ? ($validated['pickup_scheduled_at'] ?? null)
-            : null;
-
-        $cartItems = CartItem::query()
-            ->with('product')
-            ->where('user_id', $user->id)
-            ->get();
-
-        if ($cartItems->isEmpty()) {
-            return response()->json([
-                'message' => 'Keranjang kosong.',
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $subtotal = $cartItems->sum(fn (CartItem $item): int => $item->quantity * $item->product->price);
-        $deliveryFee = $deliveryMethod->fee;
-        $promo = $this->resolvePromoCode($validated['promo_code'] ?? null);
-
-        if (($validated['promo_code'] ?? null) && ! $promo) {
-            return response()->json([
-                'message' => 'Promo tidak ditemukan.',
-            ], Response::HTTP_NOT_FOUND);
-        }
-
-        if ($promo && $subtotal < $promo->minimum_order_amount) {
-            return response()->json([
-                'message' => 'Minimal belanja untuk promo belum terpenuhi.',
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $discountAmount = $promo ? $this->discountAmount($promo, $subtotal) : 0;
-        $grandTotal = max($subtotal + $deliveryFee - $discountAmount, 0);
+        $cart = $request->cart();
+        $cartItems = $request->cartItems();
+        $deliveryMethod = $request->deliveryMethod();
+        $paymentMethod = $request->paymentMethod();
+        $paymentOption = $request->paymentOption();
+        $pickupTimeOption = $request->pickupTimeOption();
+        $pickupScheduledAt = $request->pickupScheduledAt();
+        $promo = $request->promoCode();
+        $subtotal = $request->subtotal();
+        $deliveryFee = $request->deliveryFee();
+        $discountAmount = $request->discountAmount();
+        $grandTotal = $request->grandTotal();
 
         $transaction = DB::transaction(function () use (
             $user,
@@ -102,7 +57,7 @@ class CheckoutController extends Controller
                 if (! $promo) {
                     throw new HttpResponseException(response()->json([
                         'message' => 'Promo tidak ditemukan.',
-                    ], Response::HTTP_NOT_FOUND));
+                    ], 404));
                 }
             }
 
@@ -191,43 +146,7 @@ class CheckoutController extends Controller
                 'promo_discount_value' => $transaction->promo_discount_value,
                 'transaction_at' => $transaction->transaction_at?->toIso8601String(),
             ],
-        ], Response::HTTP_CREATED);
-    }
-
-    private function resolvePaymentMethod(string $code): PaymentMethod
-    {
-        return PaymentMethod::query()
-            ->active()
-            ->with('activeOptions')
-            ->where('code', strtolower(trim($code)))
-            ->firstOrFail();
-    }
-
-    private function resolveDeliveryMethod(?string $code): ?DeliveryMethod
-    {
-        if (! $code) {
-            return null;
-        }
-
-        return DeliveryMethod::query()
-            ->active()
-            ->where('code', strtolower(trim($code)))
-            ->first();
-    }
-
-    private function resolvePaymentOption(PaymentMethod $paymentMethod, ?string $optionCode): ?PaymentMethodOption
-    {
-        if (! $paymentMethod->requires_option) {
-            return null;
-        }
-
-        foreach ($paymentMethod->activeOptions as $option) {
-            if ($option->code === strtolower(trim((string) $optionCode))) {
-                return $option;
-            }
-        }
-
-        return null;
+        ], 201);
     }
 
     private function paymentStatusTitle(PaymentMethod $paymentMethod, ?PaymentMethodOption $paymentOption): string
@@ -237,45 +156,6 @@ class CheckoutController extends Controller
         }
 
         return 'Menunggu pembayaran '.$paymentMethod->name;
-    }
-
-    private function resolvePromoCode(?string $code): ?PromoCode
-    {
-        if (! $code) {
-            return null;
-        }
-
-        return PromoCode::query()
-            ->available()
-            ->where('code', strtoupper(trim($code)))
-            ->first();
-    }
-
-    private function resolveOrderTimeOption(?string $code): ?OrderTimeOption
-    {
-        if (! $code) {
-            return null;
-        }
-
-        return OrderTimeOption::query()
-            ->active()
-            ->where('code', strtolower(trim($code)))
-            ->first();
-    }
-
-    private function discountAmount(PromoCode $promo, int $subtotal): int
-    {
-        if ($promo->discount_type === PromoCode::DISCOUNT_TYPE_PERCENTAGE) {
-            $discountAmount = (int) floor($subtotal * $promo->discount_value / 100);
-
-            if ($promo->maximum_discount_amount !== null) {
-                $discountAmount = min($discountAmount, $promo->maximum_discount_amount);
-            }
-
-            return min($discountAmount, $subtotal);
-        }
-
-        return min($promo->discount_value, $subtotal);
     }
 
     private function moneyLabel(int $amount): string
