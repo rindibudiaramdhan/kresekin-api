@@ -10,6 +10,7 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionStatusHistory;
 use App\Support\DeliveryMethodCatalog;
+use App\Support\OrderTimeOptionCatalog;
 use App\Support\PaymentMethodCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +40,7 @@ class CheckoutController extends Controller
         $pickupTimeOption = $deliveryMethod['code'] === DeliveryMethodCatalog::PICKUP
             ? ($validated['pickup_time_option'] ?? null)
             : null;
-        $pickupScheduledAt = $pickupTimeOption === 'jadwalkan'
+        $pickupScheduledAt = $pickupTimeOption === OrderTimeOptionCatalog::SCHEDULED
             ? ($validated['pickup_scheduled_at'] ?? null)
             : null;
 

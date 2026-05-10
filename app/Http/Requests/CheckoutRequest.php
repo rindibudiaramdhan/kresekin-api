@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Cart;
 use App\Support\DeliveryMethodCatalog;
+use App\Support\OrderTimeOptionCatalog;
 use App\Support\PaymentMethodCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -21,7 +22,7 @@ class CheckoutRequest extends FormRequest
         return [
             'payment_method_code' => ['required', 'string', Rule::in(PaymentMethodCatalog::codes())],
             'payment_method_option_code' => ['nullable', 'string', 'max:50'],
-            'pickup_time_option' => ['nullable', 'string', Rule::in(['sekarang', 'jadwalkan'])],
+            'pickup_time_option' => ['nullable', 'string', Rule::in(OrderTimeOptionCatalog::codes())],
             'pickup_scheduled_at' => ['nullable', 'date_format:H:i'],
         ];
     }

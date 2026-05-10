@@ -237,6 +237,68 @@ class AuthApiTest extends TestCase
         $this->assertDatabaseCount('user_session_tokens', 0);
     }
 
+    public function test_resending_login_otp_invalidates_previous_code(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => null,
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $sentOtps = [];
+        $whatsappOtpSender = Mockery::mock(WhatsappOtpSender::class);
+        $whatsappOtpSender
+            ->shouldReceive('send')
+            ->twice()
+            ->withArgs(function (string $phone, string $otp) use (&$sentOtps): bool {
+                $sentOtps[] = $otp;
+
+                return $phone === '+6281234567890' && preg_match('/^\d{6}$/', $otp) === 1;
+            });
+
+        $this->app->instance(WhatsappOtpSender::class, $whatsappOtpSender);
+
+        $this->postJson('/api/users/login', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+        ])->assertOk();
+
+        $firstOtp = $sentOtps[0];
+        $firstOtpHash = $user->refresh()->otp_code;
+
+        $this->postJson('/api/users/login', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+        ])->assertOk();
+
+        $secondOtp = $sentOtps[1];
+
+        $user->refresh();
+        $this->assertNotSame($firstOtpHash, $user->otp_code);
+        $this->assertFalse(Hash::check($firstOtp, $user->otp_code));
+        $this->assertTrue(Hash::check($secondOtp, $user->otp_code));
+
+        $this->postJson('/api/users/verify-otp', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+            'otp' => $firstOtp,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Kode OTP tidak valid.');
+
+        $this->assertDatabaseCount('user_session_tokens', 0);
+
+        $this->postJson('/api/users/verify-otp', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+            'otp' => $secondOtp,
+        ])->assertOk();
+    }
+
     public function test_authenticated_user_can_update_profile(): void
     {
         $user = User::query()->create([
