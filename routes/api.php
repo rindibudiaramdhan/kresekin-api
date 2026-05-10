@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\UpdateCartDeliveryMethodController;
 use App\Http\Controllers\Api\UpdateCartItemController;
 use App\Http\Controllers\Api\UpdateSellerProductController;
 use App\Http\Controllers\Api\UpdateUserProfileController;
+use App\Http\Controllers\Api\ValidatePromoCodeController;
 use App\Http\Controllers\Api\VerifyOtpController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
@@ -61,6 +62,7 @@ Route::get('/housing-areas', GetHousingAreaListController::class)->middleware('s
 
 Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::post('/checkout', CheckoutController::class);
+    Route::post('/promo-codes/validate', ValidatePromoCodeController::class);
     Route::get('/delivery-methods', GetDeliveryMethodsController::class);
     Route::get('/order-time-options', GetOrderTimeOptionsController::class);
     Route::get('/payment-methods', GetPaymentMethodsController::class);
