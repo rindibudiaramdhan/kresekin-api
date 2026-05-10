@@ -7,7 +7,6 @@ use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\Transaction;
-use App\Models\TransactionItem;
 use App\Models\User;
 use App\Models\UserSessionToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -315,7 +314,7 @@ class CheckoutApiTest extends TestCase
 
         $response
             ->assertUnauthorized()
-            ->assertJsonPath('message', 'Unauthenticated.');
+            ->assertJsonPath('message', 'Tidak terautentikasi.');
     }
 
     private function createAuthenticatedUser(): array

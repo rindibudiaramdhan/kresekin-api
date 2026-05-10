@@ -67,7 +67,7 @@ class CheckoutRequest extends FormRequest
                 return;
             }
 
-            if ($pickupTimeOption === 'jadwalkan' && ! $this->input('pickup_scheduled_at')) {
+            if ($pickupTimeOption === OrderTimeOptionCatalog::SCHEDULED && ! $this->input('pickup_scheduled_at')) {
                 $validator->errors()->add('pickup_scheduled_at', 'Kolom jadwal waktu pengambilan wajib diisi.');
             }
         });
