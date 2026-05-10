@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
+use App\Models\PromoCode;
 use App\Models\Tenant;
 use App\Models\Transaction;
 use App\Models\User;
@@ -43,10 +44,12 @@ class CheckoutApiTest extends TestCase
             ->assertJsonPath('data.status', Transaction::STATUS_PENDING_PAYMENT)
             ->assertJsonPath('data.subtotal_amount', 19998)
             ->assertJsonPath('data.delivery_fee', 2500)
+            ->assertJsonPath('data.discount_amount', 0)
             ->assertJsonPath('data.total_amount', 22498)
             ->assertJsonPath('data.delivery_method', 'Antar Kurir Toko')
             ->assertJsonPath('data.payment_method', 'Transfer Bank')
-            ->assertJsonPath('data.payment_method_option_name', 'BCA');
+            ->assertJsonPath('data.payment_method_option_name', 'BCA')
+            ->assertJsonPath('data.promo_code', null);
 
         $transaction = Transaction::query()->where('user_id', $user->id)->first();
 
@@ -62,6 +65,129 @@ class CheckoutApiTest extends TestCase
             'user_id' => $user->id,
             'delivery_method_code' => null,
         ]);
+    }
+
+    public function test_checkout_can_apply_optional_promo_code(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+        $promoCode = PromoCode::query()->create([
+            'code' => 'HEMAT10',
+            'name' => 'Hemat 10%',
+            'description' => 'Diskon 10% untuk pesanan minimal Rp 10.000.',
+            'discount_type' => PromoCode::DISCOUNT_TYPE_PERCENTAGE,
+            'discount_value' => 10,
+            'minimum_order_amount' => 10000,
+            'maximum_discount_amount' => 10000,
+            'quantity' => 5,
+            'used_quantity' => 2,
+            'starts_at' => now()->subDay(),
+            'ends_at' => now()->addDay(),
+            'is_active' => true,
+        ]);
+
+        Cart::query()->create([
+            'user_id' => $user->id,
+            'delivery_method_code' => 'store_courier',
+        ]);
+
+        CartItem::query()->create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 2,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/checkout', [
+                'payment_method_code' => 'bank_transfer',
+                'payment_method_option_code' => 'bca',
+                'promo_code' => 'hemat10',
+            ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('data.subtotal_amount', 19998)
+            ->assertJsonPath('data.delivery_fee', 2500)
+            ->assertJsonPath('data.discount_amount', 1999)
+            ->assertJsonPath('data.discount_amount_label', 'Rp 1.999')
+            ->assertJsonPath('data.total_amount', 20499)
+            ->assertJsonPath('data.promo_code', 'HEMAT10')
+            ->assertJsonPath('data.promo_name', 'Hemat 10%')
+            ->assertJsonPath('data.promo_discount_type', PromoCode::DISCOUNT_TYPE_PERCENTAGE)
+            ->assertJsonPath('data.promo_discount_value', 10);
+
+        $this->assertDatabaseHas('transactions', [
+            'user_id' => $user->id,
+            'promo_code_id' => $promoCode->id,
+            'promo_code' => 'HEMAT10',
+            'promo_name' => 'Hemat 10%',
+            'discount_amount' => 1999,
+            'total_amount' => 20499,
+        ]);
+        $this->assertSame(3, $promoCode->fresh()->used_quantity);
+    }
+
+    public function test_checkout_rejects_unknown_promo_code(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+
+        Cart::query()->create([
+            'user_id' => $user->id,
+            'delivery_method_code' => 'store_courier',
+        ]);
+
+        CartItem::query()->create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/checkout', [
+                'payment_method_code' => 'qr_payment',
+                'promo_code' => 'TIDAKADA',
+            ]);
+
+        $response
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Promo tidak ditemukan.');
+    }
+
+    public function test_checkout_rejects_promo_code_when_minimum_order_is_not_met(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+
+        PromoCode::query()->create([
+            'code' => 'MIN50K',
+            'name' => 'Minimal 50K',
+            'discount_type' => PromoCode::DISCOUNT_TYPE_FIXED_AMOUNT,
+            'discount_value' => 5000,
+            'minimum_order_amount' => 50000,
+            'is_active' => true,
+        ]);
+
+        Cart::query()->create([
+            'user_id' => $user->id,
+            'delivery_method_code' => 'store_courier',
+        ]);
+
+        CartItem::query()->create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/checkout', [
+                'payment_method_code' => 'qr_payment',
+                'promo_code' => 'MIN50K',
+            ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Minimal belanja untuk promo belum terpenuhi.');
     }
 
     public function test_checkout_with_pickup_can_store_pickup_time_now(): void

@@ -24,6 +24,7 @@ class CheckoutRequest extends FormRequest
             'payment_method_option_code' => ['nullable', 'string', 'max:50'],
             'pickup_time_option' => ['nullable', 'string', Rule::in(OrderTimeOptionCatalog::codes())],
             'pickup_scheduled_at' => ['nullable', 'date_format:H:i'],
+            'promo_code' => ['nullable', 'string', 'max:50'],
         ];
     }
 

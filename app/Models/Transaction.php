@@ -23,18 +23,31 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'payment_method_code',
     'payment_method_option_code',
     'payment_method_option_name',
+    'promo_code_id',
+    'promo_code',
+    'promo_name',
+    'promo_discount_type',
+    'promo_discount_value',
+    'discount_amount',
 ])]
 class Transaction extends Model
 {
     public const STATUS_PENDING_PAYMENT = 'menunggu pembayaran';
+
     public const STATUS_ACCEPTED_BY_STORE = 'diterima toko';
+
     public const STATUS_PROCESSING = 'sedang diproses';
+
     public const STATUS_ON_THE_WAY = 'dalam perjalanan';
+
     public const STATUS_COMPLETED = 'pesanan selesai';
+
     public const STATUS_CANCELED = 'pesanan dibatalkan';
 
     public const PAYMENT_METHOD_BANK_TRANSFER = 'Transfer Bank';
+
     public const PAYMENT_METHOD_QRIS = 'QRIS';
+
     public const PAYMENT_METHOD_VIRTUAL_ACCOUNT = 'Virtual Account';
 
     protected function casts(): array
@@ -44,6 +57,8 @@ class Transaction extends Model
             'subtotal_amount' => 'integer',
             'delivery_fee' => 'integer',
             'total_amount' => 'integer',
+            'promo_discount_value' => 'integer',
+            'discount_amount' => 'integer',
         ];
     }
 
