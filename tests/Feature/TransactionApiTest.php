@@ -68,10 +68,68 @@ class TransactionApiTest extends TestCase
             ->assertJsonPath('meta.per_page', 10)
             ->assertJsonPath('meta.total', 12)
             ->assertJsonPath('data.0.order_number', 'TRX0012')
+            ->assertJsonPath('data.0.status_code', Transaction::STATUS_CODE_COMPLETED)
             ->assertJsonPath('data.1.order_number', 'TRX0011')
             ->assertJsonPath('data.9.order_number', 'TRX0003');
 
         $this->assertCount(10, $response->json('data'));
+    }
+
+    public function test_transaction_history_can_be_filtered_by_status_code(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'budi-filter@example.com',
+            'phone' => '+6281234567891',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $plainTextToken = 'transaction-filter-token';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'PENDING001',
+            'status' => Transaction::STATUS_PENDING_PAYMENT,
+            'transaction_at' => now()->subMinute(),
+        ]);
+
+        Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'COMPLETED001',
+            'status' => Transaction::STATUS_COMPLETED,
+            'transaction_at' => now(),
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/users/transactions?status_code=completed');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.order_number', 'COMPLETED001')
+            ->assertJsonPath('data.0.status', Transaction::STATUS_COMPLETED)
+            ->assertJsonPath('data.0.status_code', Transaction::STATUS_CODE_COMPLETED);
+    }
+
+    public function test_transaction_history_rejects_invalid_status_code_filter(): void
+    {
+        [, $plainTextToken] = $this->createAuthenticatedUser('transaction-invalid-filter-token');
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/users/transactions?status_code=invalid');
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['status_code']);
     }
 
     public function test_transaction_history_requires_authentication(): void
@@ -80,7 +138,7 @@ class TransactionApiTest extends TestCase
 
         $response
             ->assertUnauthorized()
-            ->assertJsonPath('message', 'Unauthenticated.');
+            ->assertJsonPath('message', 'Tidak terautentikasi.');
     }
 
     public function test_authenticated_user_can_get_transaction_detail(): void
@@ -168,11 +226,13 @@ class TransactionApiTest extends TestCase
             ->assertJsonPath('data.id', $transaction->id)
             ->assertJsonPath('data.order_number', '26032301CATSYR')
             ->assertJsonPath('data.status', Transaction::STATUS_PROCESSING)
+            ->assertJsonPath('data.status_code', Transaction::STATUS_CODE_PROCESSING)
             ->assertJsonPath('data.status_label', 'Sedang Diproses')
             ->assertJsonPath('data.total_amount', 9999999)
             ->assertJsonPath('data.total_amount_label', 'Rp. 9.999.999')
             ->assertJsonPath('data.delivery_method', 'Antar Kurir Toko')
             ->assertJsonPath('data.payment_method', 'Transfer Bank')
+            ->assertJsonPath('data.status_timelines.0.status_code', Transaction::STATUS_CODE_PENDING_PAYMENT)
             ->assertJsonPath('data.status_timelines.0.title', 'Pembayaran Transfer Bank Lunas')
             ->assertJsonPath('data.status_timelines.1.title', 'Pesanan diterima')
             ->assertJsonPath('data.status_timelines.2.title', 'Pesanan sedang diproses');
@@ -293,5 +353,26 @@ class TransactionApiTest extends TestCase
             ->getJson('/api/users/transactions/'.$canceledTransaction->id)
             ->assertOk()
             ->assertJsonPath('data.status_label', 'Pesanan Dibatalkan');
+    }
+
+    private function createAuthenticatedUser(string $plainTextToken): array
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => $plainTextToken.'@example.com',
+            'phone' => '+6281999999999',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        return [$user, $plainTextToken];
     }
 }

@@ -29,6 +29,7 @@ class GetUserTransactionDetailController extends Controller
                 'id' => $transaction->id,
                 'order_number' => $transaction->order_number,
                 'status' => $transaction->status,
+                'status_code' => $transaction->statusCode(),
                 'status_label' => $this->formatStatusLabel($transaction->status),
                 'total_amount' => $transaction->total_amount,
                 'total_amount_label' => 'Rp. '.number_format((int) $transaction->total_amount, 0, ',', '.'),
@@ -39,6 +40,7 @@ class GetUserTransactionDetailController extends Controller
                 'status_timelines' => $transaction->statusHistories->map(fn ($history) => [
                     'id' => $history->id,
                     'status' => $history->status,
+                    'status_code' => $this->statusCode($history->status),
                     'title' => $history->title,
                     'description' => $history->description,
                     'time' => $history->status_at?->timezone('Asia/Jakarta')->format('H:i'),
@@ -61,5 +63,18 @@ class GetUserTransactionDetailController extends Controller
             Transaction::STATUS_CANCELED => 'Pesanan Dibatalkan',
             default => ucfirst($status),
         };
+    }
+
+    private function statusCode(string $status): ?string
+    {
+        $normalizedStatus = strtolower($status);
+
+        foreach (Transaction::statusMap() as $code => $mappedStatus) {
+            if ($normalizedStatus === strtolower($mappedStatus)) {
+                return $code;
+            }
+        }
+
+        return null;
     }
 }

@@ -3,15 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class GetUserTransactionHistoryController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'status_code' => ['nullable', 'string', Rule::in(Transaction::statusCodes())],
+        ]);
+
+        $status = Transaction::statusFromCode($validated['status_code'] ?? null);
+
         $transactions = $request->user()
             ->transactions()
+            ->when($status, fn ($query) => $query->where('status', $status))
             ->orderByDesc('transaction_at')
             ->orderByDesc('id')
             ->paginate(10);
@@ -24,6 +33,7 @@ class GetUserTransactionHistoryController extends Controller
                 'transaction_at' => $transaction->transaction_at?->toIso8601String(),
                 'transaction_at_label' => $transaction->transaction_at?->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i').' WIB',
                 'status' => $transaction->status,
+                'status_code' => $transaction->statusCode(),
             ])->values(),
             'meta' => [
                 'current_page' => $transactions->currentPage(),

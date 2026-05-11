@@ -32,6 +32,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Transaction extends Model
 {
+    public const STATUS_CODE_PENDING_PAYMENT = 'pending_payment';
+
+    public const STATUS_CODE_ACCEPTED_BY_STORE = 'accepted_by_store';
+
+    public const STATUS_CODE_PROCESSING = 'processing';
+
+    public const STATUS_CODE_ON_THE_WAY = 'on_the_way';
+
+    public const STATUS_CODE_COMPLETED = 'completed';
+
+    public const STATUS_CODE_CANCELED = 'canceled';
+
     public const STATUS_PENDING_PAYMENT = 'menunggu pembayaran';
 
     public const STATUS_ACCEPTED_BY_STORE = 'diterima toko';
@@ -49,6 +61,45 @@ class Transaction extends Model
     public const PAYMENT_METHOD_QRIS = 'QRIS';
 
     public const PAYMENT_METHOD_VIRTUAL_ACCOUNT = 'Virtual Account';
+
+    public static function statusMap(): array
+    {
+        return [
+            self::STATUS_CODE_PENDING_PAYMENT => self::STATUS_PENDING_PAYMENT,
+            self::STATUS_CODE_ACCEPTED_BY_STORE => self::STATUS_ACCEPTED_BY_STORE,
+            self::STATUS_CODE_PROCESSING => self::STATUS_PROCESSING,
+            self::STATUS_CODE_ON_THE_WAY => self::STATUS_ON_THE_WAY,
+            self::STATUS_CODE_COMPLETED => self::STATUS_COMPLETED,
+            self::STATUS_CODE_CANCELED => self::STATUS_CANCELED,
+        ];
+    }
+
+    public static function statusCodes(): array
+    {
+        return array_keys(self::statusMap());
+    }
+
+    public static function statusFromCode(?string $code): ?string
+    {
+        if (! $code) {
+            return null;
+        }
+
+        return self::statusMap()[$code] ?? null;
+    }
+
+    public function statusCode(): ?string
+    {
+        $normalizedStatus = strtolower($this->status);
+
+        foreach (self::statusMap() as $code => $status) {
+            if ($normalizedStatus === strtolower($status)) {
+                return $code;
+            }
+        }
+
+        return null;
+    }
 
     protected function casts(): array
     {
