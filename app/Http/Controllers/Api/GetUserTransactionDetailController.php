@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Models\TransactionItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,7 +15,7 @@ class GetUserTransactionDetailController extends Controller
     {
         $transaction = $request->user()
             ->transactions()
-            ->with('statusHistories')
+            ->with(['items.tenant', 'statusHistories'])
             ->find($transactionId);
 
         if (! $transaction) {
@@ -28,11 +29,25 @@ class GetUserTransactionDetailController extends Controller
             'data' => [
                 'id' => $transaction->id,
                 'order_number' => $transaction->order_number,
+                'store_name' => $transaction->items->first()?->tenant?->name,
                 'status' => $transaction->status,
                 'status_code' => $transaction->statusCode(),
                 'status_label' => $this->formatStatusLabel($transaction->status),
                 'total_amount' => $transaction->total_amount,
-                'total_amount_label' => 'Rp. '.number_format((int) $transaction->total_amount, 0, ',', '.'),
+                'total_amount_label' => $this->moneyLabel((int) $transaction->total_amount),
+                'total_items' => $transaction->items->sum('quantity'),
+                'items' => $transaction->items->map(fn (TransactionItem $item) => [
+                    'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'tenant_id' => $item->tenant_id,
+                    'tenant_name' => $item->tenant?->name,
+                    'product_name' => $item->product_name,
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'unit_price_label' => $this->moneyLabel($item->unit_price),
+                    'line_total' => $item->line_total,
+                    'line_total_label' => $this->moneyLabel($item->line_total),
+                ])->values(),
                 'delivery_method' => $transaction->delivery_method,
                 'payment_method' => $transaction->payment_method,
                 'transaction_at' => $transaction->transaction_at?->toIso8601String(),
@@ -76,5 +91,10 @@ class GetUserTransactionDetailController extends Controller
         }
 
         return null;
+    }
+
+    private function moneyLabel(int $amount): string
+    {
+        return 'Rp. '.number_format($amount, 0, ',', '.');
     }
 }

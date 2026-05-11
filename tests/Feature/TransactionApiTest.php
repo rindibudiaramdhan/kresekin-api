@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Tenant;
 use App\Models\Transaction;
+use App\Models\TransactionItem;
 use App\Models\TransactionStatusHistory;
 use App\Models\User;
 use App\Models\UserSessionToken;
@@ -43,13 +45,29 @@ class TransactionApiTest extends TestCase
             'expires_at' => now()->addDays(30),
         ]);
 
+        $tenant = Tenant::query()->create([
+            'name' => 'Toko Aminah',
+            'category' => Tenant::CATEGORY_GROCERIES,
+        ]);
+
         foreach (range(1, 12) as $index) {
-            Transaction::query()->create([
+            $transaction = Transaction::query()->create([
                 'user_id' => $user->id,
                 'order_number' => sprintf('TRX%04d', $index),
                 'status' => 'Pesanan Selesai',
                 'transaction_at' => now()->subMinutes(12 - $index),
             ]);
+
+            if ($index === 12) {
+                TransactionItem::query()->create([
+                    'transaction_id' => $transaction->id,
+                    'tenant_id' => $tenant->id,
+                    'product_name' => 'Beras Pandan Wangi 5kg',
+                    'quantity' => 2,
+                    'unit_price' => 75000,
+                    'line_total' => 150000,
+                ]);
+            }
         }
 
         Transaction::query()->create([
@@ -69,6 +87,15 @@ class TransactionApiTest extends TestCase
             ->assertJsonPath('meta.total', 12)
             ->assertJsonPath('data.0.order_number', 'TRX0012')
             ->assertJsonPath('data.0.status_code', Transaction::STATUS_CODE_COMPLETED)
+            ->assertJsonPath('data.0.store_name', 'Toko Aminah')
+            ->assertJsonPath('data.0.total_items', 2)
+            ->assertJsonPath('data.0.items.0.tenant_name', 'Toko Aminah')
+            ->assertJsonPath('data.0.items.0.product_name', 'Beras Pandan Wangi 5kg')
+            ->assertJsonPath('data.0.items.0.quantity', 2)
+            ->assertJsonPath('data.0.items.0.unit_price', 75000)
+            ->assertJsonPath('data.0.items.0.unit_price_label', 'Rp. 75.000')
+            ->assertJsonPath('data.0.items.0.line_total', 150000)
+            ->assertJsonPath('data.0.items.0.line_total_label', 'Rp. 150.000')
             ->assertJsonPath('data.1.order_number', 'TRX0011')
             ->assertJsonPath('data.9.order_number', 'TRX0003');
 
@@ -181,6 +208,20 @@ class TransactionApiTest extends TestCase
             'transaction_at' => now()->setTimezone('Asia/Jakarta')->setDate(2026, 3, 23)->setTime(10, 0),
         ]);
 
+        $tenant = Tenant::query()->create([
+            'name' => 'Toko Segar Jaya',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        TransactionItem::query()->create([
+            'transaction_id' => $transaction->id,
+            'tenant_id' => $tenant->id,
+            'product_name' => 'Bayam Hijau',
+            'quantity' => 3,
+            'unit_price' => 5000,
+            'line_total' => 15000,
+        ]);
+
         TransactionStatusHistory::query()->create([
             'transaction_id' => $transaction->id,
             'status' => Transaction::STATUS_PENDING_PAYMENT,
@@ -225,11 +266,20 @@ class TransactionApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.id', $transaction->id)
             ->assertJsonPath('data.order_number', '26032301CATSYR')
+            ->assertJsonPath('data.store_name', 'Toko Segar Jaya')
             ->assertJsonPath('data.status', Transaction::STATUS_PROCESSING)
             ->assertJsonPath('data.status_code', Transaction::STATUS_CODE_PROCESSING)
             ->assertJsonPath('data.status_label', 'Sedang Diproses')
             ->assertJsonPath('data.total_amount', 9999999)
             ->assertJsonPath('data.total_amount_label', 'Rp. 9.999.999')
+            ->assertJsonPath('data.total_items', 3)
+            ->assertJsonPath('data.items.0.tenant_name', 'Toko Segar Jaya')
+            ->assertJsonPath('data.items.0.product_name', 'Bayam Hijau')
+            ->assertJsonPath('data.items.0.quantity', 3)
+            ->assertJsonPath('data.items.0.unit_price', 5000)
+            ->assertJsonPath('data.items.0.unit_price_label', 'Rp. 5.000')
+            ->assertJsonPath('data.items.0.line_total', 15000)
+            ->assertJsonPath('data.items.0.line_total_label', 'Rp. 15.000')
             ->assertJsonPath('data.delivery_method', 'Antar Kurir Toko')
             ->assertJsonPath('data.payment_method', 'Transfer Bank')
             ->assertJsonPath('data.status_timelines.0.status_code', Transaction::STATUS_CODE_PENDING_PAYMENT)

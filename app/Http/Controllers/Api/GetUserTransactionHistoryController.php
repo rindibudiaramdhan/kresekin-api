@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Models\TransactionItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,6 +21,7 @@ class GetUserTransactionHistoryController extends Controller
 
         $transactions = $request->user()
             ->transactions()
+            ->with('items.tenant')
             ->when($status, fn ($query) => $query->where('status', $status))
             ->orderByDesc('transaction_at')
             ->orderByDesc('id')
@@ -30,6 +32,20 @@ class GetUserTransactionHistoryController extends Controller
             'data' => $transactions->getCollection()->map(fn ($transaction) => [
                 'id' => $transaction->id,
                 'order_number' => $transaction->order_number,
+                'store_name' => $transaction->items->first()?->tenant?->name,
+                'total_items' => $transaction->items->sum('quantity'),
+                'items' => $transaction->items->map(fn (TransactionItem $item) => [
+                    'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'tenant_id' => $item->tenant_id,
+                    'tenant_name' => $item->tenant?->name,
+                    'product_name' => $item->product_name,
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'unit_price_label' => $this->moneyLabel($item->unit_price),
+                    'line_total' => $item->line_total,
+                    'line_total_label' => $this->moneyLabel($item->line_total),
+                ])->values(),
                 'transaction_at' => $transaction->transaction_at?->toIso8601String(),
                 'transaction_at_label' => $transaction->transaction_at?->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i').' WIB',
                 'status' => $transaction->status,
@@ -50,5 +66,10 @@ class GetUserTransactionHistoryController extends Controller
                 'next' => $transactions->nextPageUrl(),
             ],
         ]);
+    }
+
+    private function moneyLabel(int $amount): string
+    {
+        return 'Rp. '.number_format($amount, 0, ',', '.');
     }
 }
