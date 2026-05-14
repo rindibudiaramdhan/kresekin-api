@@ -16,8 +16,10 @@ class LoginUserController extends Controller
     public function __invoke(LoginUserRequest $request, WhatsappOtpSender $whatsappOtpSender): JsonResponse
     {
         $validated = $request->validated();
+        $role = $request->route('role');
 
         $user = User::query()
+            ->where('role', $role)
             ->when(
                 $validated['type'] === User::AUTH_TYPE_EMAIL,
                 fn ($query) => $query->where('email', $validated['email']),

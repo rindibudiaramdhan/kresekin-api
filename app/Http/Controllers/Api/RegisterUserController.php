@@ -15,6 +15,7 @@ class RegisterUserController extends Controller
     public function __invoke(RegisterUserRequest $request, WhatsappOtpSender $whatsappOtpSender): JsonResponse
     {
         $validated = $request->validated();
+        $role = $request->route('role');
         $otp = (string) random_int(100000, 999999);
 
         $user = User::create([
@@ -22,7 +23,7 @@ class RegisterUserController extends Controller
             'email' => $validated['type'] === User::AUTH_TYPE_EMAIL ? $validated['email'] : null,
             'phone' => $validated['type'] === User::AUTH_TYPE_PHONE ? $validated['phone'] : null,
             'type' => $validated['type'],
-            'role' => $validated['role'] ?? User::ROLE_BUYER,
+            'role' => $role,
             'password' => null,
             'otp_code' => Hash::make($otp),
             'otp_sent_at' => now(),

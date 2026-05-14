@@ -8,12 +8,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 
 #[Fillable([
     'name',
@@ -34,13 +32,29 @@ use Filament\Panel;
 class User extends Authenticatable
 {
     public const AUTH_TYPE_EMAIL = 'email';
+
     public const AUTH_TYPE_PHONE = 'phone';
+
     public const ROLE_BUYER = 'buyer';
+
     public const ROLE_SELLER = 'seller';
+
+    public const ROLE_FINANCE = 'finance';
+
     public const ROLE_AGENT = 'agent';
 
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    public static function roles(): array
+    {
+        return [
+            self::ROLE_BUYER,
+            self::ROLE_SELLER,
+            self::ROLE_FINANCE,
+            self::ROLE_AGENT,
+        ];
+    }
 
     /**
      * Get the attributes that should be cast.

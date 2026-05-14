@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Contracts\WhatsappOtpSender;
+use App\Models\HousingArea;
 use App\Models\User;
 use App\Models\UserSessionToken;
 use App\Notifications\LoginOtpNotification;
@@ -21,7 +22,7 @@ class AuthApiTest extends TestCase
     {
         Notification::fake();
 
-        $response = $this->postJson('/api/users/register', [
+        $response = $this->postJson('/api/users/buyer/register', [
             'type' => 'email',
             'email' => 'user@example.com',
         ]);
@@ -52,7 +53,7 @@ class AuthApiTest extends TestCase
 
         $this->app->instance(WhatsappOtpSender::class, $whatsappOtpSender);
 
-        $response = $this->postJson('/api/users/register', [
+        $response = $this->postJson('/api/users/buyer/register', [
             'type' => 'phone',
             'phone' => '+6281234567890',
         ]);
@@ -73,7 +74,7 @@ class AuthApiTest extends TestCase
 
     public function test_registration_requires_email_when_type_is_email(): void
     {
-        $response = $this->postJson('/api/users/register', [
+        $response = $this->postJson('/api/users/buyer/register', [
             'type' => 'email',
         ]);
 
@@ -84,7 +85,7 @@ class AuthApiTest extends TestCase
 
     public function test_registration_requires_phone_when_type_is_phone(): void
     {
-        $response = $this->postJson('/api/users/register', [
+        $response = $this->postJson('/api/users/buyer/register', [
             'type' => 'phone',
         ]);
 
@@ -107,7 +108,7 @@ class AuthApiTest extends TestCase
             'otp_sent_at' => null,
         ]);
 
-        $response = $this->postJson('/api/users/login', [
+        $response = $this->postJson('/api/users/buyer/login', [
             'type' => 'email',
             'email' => 'user@example.com',
         ]);
@@ -146,7 +147,7 @@ class AuthApiTest extends TestCase
 
         $this->app->instance(WhatsappOtpSender::class, $whatsappOtpSender);
 
-        $response = $this->postJson('/api/users/login', [
+        $response = $this->postJson('/api/users/buyer/login', [
             'type' => 'phone',
             'phone' => '+6281234567890',
         ]);
@@ -165,14 +166,14 @@ class AuthApiTest extends TestCase
 
     public function test_login_returns_not_found_when_user_does_not_exist(): void
     {
-        $response = $this->postJson('/api/users/login', [
+        $response = $this->postJson('/api/users/buyer/login', [
             'type' => 'phone',
             'phone' => '+6281234567890',
         ]);
 
         $response
             ->assertNotFound()
-            ->assertJsonPath('message', 'User tidak ditemukan.');
+            ->assertJsonPath('message', 'Pengguna tidak ditemukan.');
     }
 
     public function test_user_can_verify_phone_otp_and_receive_session_token(): void
@@ -262,7 +263,7 @@ class AuthApiTest extends TestCase
 
         $this->app->instance(WhatsappOtpSender::class, $whatsappOtpSender);
 
-        $this->postJson('/api/users/login', [
+        $this->postJson('/api/users/buyer/login', [
             'type' => 'phone',
             'phone' => '+6281234567890',
         ])->assertOk();
@@ -270,7 +271,7 @@ class AuthApiTest extends TestCase
         $firstOtp = $sentOtps[0];
         $firstOtpHash = $user->refresh()->otp_code;
 
-        $this->postJson('/api/users/login', [
+        $this->postJson('/api/users/buyer/login', [
             'type' => 'phone',
             'phone' => '+6281234567890',
         ])->assertOk();
@@ -301,6 +302,11 @@ class AuthApiTest extends TestCase
 
     public function test_authenticated_user_can_update_profile(): void
     {
+        $housingArea = HousingArea::query()->create([
+            'name' => 'Komplek Melati Indah',
+            'code' => 'melati-indah',
+        ]);
+
         $user = User::query()->create([
             'name' => null,
             'email' => 'old@example.com',
@@ -324,7 +330,7 @@ class AuthApiTest extends TestCase
                 'name' => 'Budi Santoso',
                 'email' => 'budi@example.com',
                 'phone' => '+628111111111',
-                'housing_area' => 'Komplek Melati Indah',
+                'housing_area_id' => $housingArea->id,
                 'address' => 'Jl. Mawar No. 10, Blok A2',
                 'landmark' => 'Dekat portal komplek',
             ]);
@@ -335,7 +341,8 @@ class AuthApiTest extends TestCase
             ->assertJsonPath('data.email', 'budi@example.com')
             ->assertJsonPath('data.phone', '+628111111111')
             ->assertJsonPath('data.role', 'buyer')
-            ->assertJsonPath('data.housing_area', 'Komplek Melati Indah')
+            ->assertJsonPath('data.housing_area.id', $housingArea->id)
+            ->assertJsonPath('data.housing_area.name', 'Komplek Melati Indah')
             ->assertJsonPath('data.address', 'Jl. Mawar No. 10, Blok A2')
             ->assertJsonPath('data.landmark', 'Dekat portal komplek');
 
@@ -360,7 +367,7 @@ class AuthApiTest extends TestCase
 
         $response
             ->assertUnauthorized()
-            ->assertJsonPath('message', 'Unauthenticated.');
+            ->assertJsonPath('message', 'Tidak terautentikasi.');
     }
 
     public function test_update_profile_requires_required_fields_from_form(): void
@@ -391,7 +398,7 @@ class AuthApiTest extends TestCase
 
         $response
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'email', 'housing_area', 'address']);
+            ->assertJsonValidationErrors(['name', 'email', 'housing_area_id', 'address']);
     }
 
     public function test_authenticated_user_can_refresh_session_token(): void
@@ -445,27 +452,58 @@ class AuthApiTest extends TestCase
 
         $response
             ->assertUnauthorized()
-            ->assertJsonPath('message', 'Unauthenticated.');
+            ->assertJsonPath('message', 'Tidak terautentikasi.');
     }
 
-    public function test_user_can_register_as_seller(): void
+    public function test_user_can_register_through_role_specific_endpoints(): void
     {
         Notification::fake();
 
-        $response = $this->postJson('/api/users/register', [
+        foreach (User::roles() as $role) {
+            $response = $this->postJson("/api/users/{$role}/register", [
+                'type' => 'email',
+                'email' => "{$role}@example.com",
+            ]);
+
+            $response
+                ->assertCreated()
+                ->assertJsonPath('data.email', "{$role}@example.com")
+                ->assertJsonPath('data.role', $role);
+
+            $this->assertDatabaseHas('users', [
+                'email' => "{$role}@example.com",
+                'role' => $role,
+            ]);
+        }
+    }
+
+    public function test_login_endpoint_only_finds_user_with_matching_role(): void
+    {
+        Notification::fake();
+
+        User::query()->create([
+            'name' => 'Seller',
+            'email' => 'same@example.com',
+            'phone' => null,
             'type' => 'email',
-            'role' => 'seller',
-            'email' => 'seller@example.com',
+            'role' => User::ROLE_SELLER,
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
         ]);
 
-        $response
-            ->assertCreated()
-            ->assertJsonPath('data.email', 'seller@example.com')
-            ->assertJsonPath('data.role', 'seller');
+        $this->postJson('/api/users/buyer/login', [
+            'type' => 'email',
+            'email' => 'same@example.com',
+        ])
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Pengguna tidak ditemukan.');
 
-        $this->assertDatabaseHas('users', [
-            'email' => 'seller@example.com',
-            'role' => 'seller',
-        ]);
+        $this->postJson('/api/users/seller/login', [
+            'type' => 'email',
+            'email' => 'same@example.com',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.role', User::ROLE_SELLER);
     }
 }

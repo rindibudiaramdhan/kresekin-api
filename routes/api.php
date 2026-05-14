@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\UpdateSellerProductController;
 use App\Http\Controllers\Api\UpdateUserProfileController;
 use App\Http\Controllers\Api\ValidatePromoCodeController;
 use App\Http\Controllers\Api\VerifyOtpController;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -50,8 +51,8 @@ $healthcheckHandler = function (): JsonResponse {
 };
 
 Route::get('/vershealthcheck', $healthcheckHandler);
-Route::post('/users/login', LoginUserController::class);
-Route::post('/users/register', RegisterUserController::class);
+Route::post('/users/{role}/login', LoginUserController::class)->whereIn('role', User::roles());
+Route::post('/users/{role}/register', RegisterUserController::class)->whereIn('role', User::roles());
 Route::post('/users/verify-otp', VerifyOtpController::class);
 Route::post('/users/logout', LogoutUserController::class)->middleware('session.token');
 Route::post('/users/devices', RegisterUserDeviceController::class)->middleware('session.token');
