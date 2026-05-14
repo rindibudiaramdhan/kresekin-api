@@ -2,10 +2,16 @@
 
 use App\Http\Controllers\Api\AddCartItemController;
 use App\Http\Controllers\Api\CheckoutController;
+use App\Http\Controllers\Api\CreateAgentCommissionWithdrawalController;
 use App\Http\Controllers\Api\CreateSellerProductController;
 use App\Http\Controllers\Api\CreateSellerTenantController;
 use App\Http\Controllers\Api\DeleteCartItemController;
 use App\Http\Controllers\Api\DeleteSellerProductController;
+use App\Http\Controllers\Api\GetAgentCommissionWithdrawalListController;
+use App\Http\Controllers\Api\GetAgentDashboardController;
+use App\Http\Controllers\Api\GetAgentProfileController;
+use App\Http\Controllers\Api\GetAgentSellerDetailController;
+use App\Http\Controllers\Api\GetAgentSellerListController;
 use App\Http\Controllers\Api\GetBuyerTenantListController;
 use App\Http\Controllers\Api\GetCartController;
 use App\Http\Controllers\Api\GetDeliveryMethodsController;
@@ -29,6 +35,7 @@ use App\Http\Controllers\Api\LogoutUserController;
 use App\Http\Controllers\Api\RefreshUserSessionController;
 use App\Http\Controllers\Api\RegisterUserController;
 use App\Http\Controllers\Api\RegisterUserDeviceController;
+use App\Http\Controllers\Api\UpdateAgentProfileController;
 use App\Http\Controllers\Api\UpdateCartDeliveryMethodController;
 use App\Http\Controllers\Api\UpdateCartItemController;
 use App\Http\Controllers\Api\UpdateSellerOrderStatusController;
@@ -54,6 +61,8 @@ $healthcheckHandler = function (): JsonResponse {
 };
 
 Route::get('/vershealthcheck', $healthcheckHandler);
+Route::post('/agent/login', LoginUserController::class)->defaults('role', User::ROLE_AGENT);
+Route::post('/agent/register', RegisterUserController::class)->defaults('role', User::ROLE_AGENT);
 Route::post('/users/{role}/login', LoginUserController::class)->whereIn('role', User::roles());
 Route::post('/users/{role}/register', RegisterUserController::class)->whereIn('role', User::roles());
 Route::post('/users/verify-otp', VerifyOtpController::class);
@@ -95,4 +104,14 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
     Route::get('/products/{id}', GetSellerProductDetailController::class);
     Route::put('/products/{id}', UpdateSellerProductController::class);
     Route::delete('/products/{id}', DeleteSellerProductController::class);
+});
+
+Route::middleware(['session.token', 'role:agent'])->prefix('agent')->group(function (): void {
+    Route::get('/dashboard', GetAgentDashboardController::class);
+    Route::get('/sellers', GetAgentSellerListController::class);
+    Route::get('/sellers/{sellerId}', GetAgentSellerDetailController::class);
+    Route::get('/profile', GetAgentProfileController::class);
+    Route::put('/profile', UpdateAgentProfileController::class);
+    Route::get('/commission-withdrawals', GetAgentCommissionWithdrawalListController::class);
+    Route::post('/commission-withdrawals', CreateAgentCommissionWithdrawalController::class);
 });

@@ -27,6 +27,9 @@ use Illuminate\Notifications\Notifiable;
     'landmark',
     'latitude',
     'longitude',
+    'bank_name',
+    'bank_account_name',
+    'bank_account_number',
 ])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
 class User extends Authenticatable
@@ -85,6 +88,16 @@ class User extends Authenticatable
     public function ownedTenants(): HasMany
     {
         return $this->hasMany(Tenant::class, 'owner_user_id');
+    }
+
+    public function agentTenants(): HasMany
+    {
+        return $this->hasMany(Tenant::class, 'agent_user_id');
+    }
+
+    public function agentCommissionWithdrawals(): HasMany
+    {
+        return $this->hasMany(AgentCommissionWithdrawal::class, 'agent_user_id');
     }
 
     public function devices(): HasMany
