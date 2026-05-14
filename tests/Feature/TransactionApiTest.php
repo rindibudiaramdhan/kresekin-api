@@ -204,6 +204,7 @@ class TransactionApiTest extends TestCase
             'status' => Transaction::STATUS_PROCESSING,
             'total_amount' => 9999999,
             'delivery_method' => 'Antar Kurir Toko',
+            'pickup_scheduled_at' => '15:00',
             'payment_method' => Transaction::PAYMENT_METHOD_BANK_TRANSFER,
             'transaction_at' => now()->setTimezone('Asia/Jakarta')->setDate(2026, 3, 23)->setTime(10, 0),
         ]);
@@ -281,6 +282,7 @@ class TransactionApiTest extends TestCase
             ->assertJsonPath('data.items.0.line_total', 15000)
             ->assertJsonPath('data.items.0.line_total_label', 'Rp. 15.000')
             ->assertJsonPath('data.delivery_method', 'Antar Kurir Toko')
+            ->assertJsonPath('data.pickup_scheduled_at', '15:00')
             ->assertJsonPath('data.payment_method', 'Transfer Bank')
             ->assertJsonPath('data.status_timelines.0.status_code', Transaction::STATUS_CODE_PENDING_PAYMENT)
             ->assertJsonPath('data.status_timelines.0.title', 'Pembayaran Transfer Bank Lunas')

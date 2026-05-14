@@ -49,6 +49,7 @@ class GetUserTransactionDetailController extends Controller
                     'line_total_label' => $this->moneyLabel($item->line_total),
                 ])->values(),
                 'delivery_method' => $transaction->delivery_method,
+                'pickup_scheduled_at' => $transaction->pickup_scheduled_at,
                 'payment_method' => $transaction->payment_method,
                 'transaction_at' => $transaction->transaction_at?->toIso8601String(),
                 'transaction_at_label' => $transaction->transaction_at?->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i').' WIB',
