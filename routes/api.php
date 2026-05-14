@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\GetPaymentMethodsController;
 use App\Http\Controllers\Api\GetProductCategoriesController;
 use App\Http\Controllers\Api\GetProductDetailController;
 use App\Http\Controllers\Api\GetProductListController;
+use App\Http\Controllers\Api\GetSellerOrderDetailController;
+use App\Http\Controllers\Api\GetSellerOrderListController;
 use App\Http\Controllers\Api\GetSellerProductDetailController;
 use App\Http\Controllers\Api\GetSellerProductListController;
 use App\Http\Controllers\Api\GetSellerTenantListController;
@@ -29,6 +31,7 @@ use App\Http\Controllers\Api\RegisterUserController;
 use App\Http\Controllers\Api\RegisterUserDeviceController;
 use App\Http\Controllers\Api\UpdateCartDeliveryMethodController;
 use App\Http\Controllers\Api\UpdateCartItemController;
+use App\Http\Controllers\Api\UpdateSellerOrderStatusController;
 use App\Http\Controllers\Api\UpdateSellerProductController;
 use App\Http\Controllers\Api\UpdateUserProfileController;
 use App\Http\Controllers\Api\ValidatePromoCodeController;
@@ -84,6 +87,9 @@ Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
 Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(function (): void {
     Route::get('/tenants', GetSellerTenantListController::class);
     Route::post('/tenants', CreateSellerTenantController::class);
+    Route::get('/orders', GetSellerOrderListController::class);
+    Route::get('/orders/{id}', GetSellerOrderDetailController::class);
+    Route::patch('/orders/{id}/status', UpdateSellerOrderStatusController::class);
     Route::get('/products', GetSellerProductListController::class);
     Route::post('/products', CreateSellerProductController::class);
     Route::get('/products/{id}', GetSellerProductDetailController::class);
