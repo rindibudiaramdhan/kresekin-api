@@ -1,12 +1,15 @@
 <?php
 
+use App\Http\Controllers\Web\AgentAuthController;
+use App\Http\Controllers\Web\AgentCommissionWithdrawalController;
+use App\Http\Controllers\Web\AgentDashboardController;
+use App\Http\Controllers\Web\AgentProfileController;
+use App\Http\Controllers\Web\AgentRegistrationController;
+use App\Http\Controllers\Web\AgentSellerController;
+use App\Http\Controllers\Web\AgentTenantController;
 use App\Http\Controllers\Web\SellerAuthController;
 use App\Http\Controllers\Web\SellerDashboardController;
 use App\Http\Controllers\Web\SellerProductController;
-use App\Http\Controllers\Web\AgentAuthController;
-use App\Http\Controllers\Web\AgentDashboardController;
-use App\Http\Controllers\Web\AgentRegistrationController;
-use App\Http\Controllers\Web\AgentTenantController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -26,6 +29,12 @@ Route::prefix('agent')->name('agent.')->group(function (): void {
     Route::middleware(['auth', 'role:agent'])->group(function (): void {
         Route::post('/logout', [AgentAuthController::class, 'destroy'])->name('logout');
         Route::get('/', AgentDashboardController::class)->name('dashboard');
+        Route::get('/sellers', [AgentSellerController::class, 'index'])->name('sellers.index');
+        Route::get('/sellers/{sellerId}', [AgentSellerController::class, 'show'])->name('sellers.show');
+        Route::get('/profile', [AgentProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [AgentProfileController::class, 'update'])->name('profile.update');
+        Route::get('/commission-withdrawals', [AgentCommissionWithdrawalController::class, 'index'])->name('withdrawals.index');
+        Route::post('/commission-withdrawals', [AgentCommissionWithdrawalController::class, 'store'])->name('withdrawals.store');
         Route::get('/tenants', [AgentTenantController::class, 'index'])->name('tenants.index');
         Route::get('/tenants/create', [AgentTenantController::class, 'create'])->name('tenants.create');
         Route::post('/tenants', [AgentTenantController::class, 'store'])->name('tenants.store');
