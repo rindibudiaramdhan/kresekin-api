@@ -4,9 +4,11 @@ use App\Http\Controllers\Api\AddCartItemController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\ConfirmFinanceBuyerPaymentController;
 use App\Http\Controllers\Api\CreateAgentCommissionWithdrawalController;
+use App\Http\Controllers\Api\CreateFinanceCancellationReasonCategoryController;
 use App\Http\Controllers\Api\CreateSellerProductController;
 use App\Http\Controllers\Api\CreateSellerTenantController;
 use App\Http\Controllers\Api\DeleteCartItemController;
+use App\Http\Controllers\Api\DeleteFinanceCancellationReasonCategoryController;
 use App\Http\Controllers\Api\DeleteSellerProductController;
 use App\Http\Controllers\Api\DisburseFinanceTransactionController;
 use App\Http\Controllers\Api\GetAgentCommissionWithdrawalListController;
@@ -15,8 +17,10 @@ use App\Http\Controllers\Api\GetAgentProfileController;
 use App\Http\Controllers\Api\GetAgentSellerDetailController;
 use App\Http\Controllers\Api\GetAgentSellerListController;
 use App\Http\Controllers\Api\GetBuyerTenantListController;
+use App\Http\Controllers\Api\GetCancellationReasonCategoryListController;
 use App\Http\Controllers\Api\GetCartController;
 use App\Http\Controllers\Api\GetDeliveryMethodsController;
+use App\Http\Controllers\Api\GetFinanceCancellationReasonCategoryListController;
 use App\Http\Controllers\Api\GetFinanceDashboardController;
 use App\Http\Controllers\Api\GetFinanceTransactionDetailController;
 use App\Http\Controllers\Api\GetFinanceTransactionListController;
@@ -43,6 +47,7 @@ use App\Http\Controllers\Api\RegisterUserDeviceController;
 use App\Http\Controllers\Api\UpdateAgentProfileController;
 use App\Http\Controllers\Api\UpdateCartDeliveryMethodController;
 use App\Http\Controllers\Api\UpdateCartItemController;
+use App\Http\Controllers\Api\UpdateFinanceCancellationReasonCategoryController;
 use App\Http\Controllers\Api\UpdateSellerOrderStatusController;
 use App\Http\Controllers\Api\UpdateSellerProductController;
 use App\Http\Controllers\Api\UpdateUserProfileController;
@@ -98,6 +103,7 @@ Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::get('/tenants', GetBuyerTenantListController::class);
     Route::get('/users/transactions', GetUserTransactionHistoryController::class);
     Route::get('/users/transactions/{transactionId}', GetUserTransactionDetailController::class);
+    Route::get('/cancellation-reason-categories', GetCancellationReasonCategoryListController::class);
 });
 
 Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(function (): void {
@@ -129,4 +135,8 @@ Route::middleware(['session.token', 'role:finance'])->prefix('finance')->group(f
     Route::get('/transactions/{id}', GetFinanceTransactionDetailController::class);
     Route::patch('/transactions/{id}/confirm-buyer-payment', ConfirmFinanceBuyerPaymentController::class);
     Route::patch('/disbursements/{id}/disburse-to-seller', DisburseFinanceTransactionController::class);
+    Route::get('/cancellation-reason-categories', GetFinanceCancellationReasonCategoryListController::class);
+    Route::post('/cancellation-reason-categories', CreateFinanceCancellationReasonCategoryController::class);
+    Route::put('/cancellation-reason-categories/{id}', UpdateFinanceCancellationReasonCategoryController::class);
+    Route::delete('/cancellation-reason-categories/{id}', DeleteFinanceCancellationReasonCategoryController::class);
 });
