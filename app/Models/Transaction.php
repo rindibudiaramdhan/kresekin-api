@@ -29,6 +29,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'promo_discount_type',
     'promo_discount_value',
     'discount_amount',
+    'cancellation_reason_category_id',
+    'cancellation_reason_text',
 ])]
 class Transaction extends Model
 {
@@ -131,5 +133,10 @@ class Transaction extends Model
     public function financeDisbursements(): HasMany
     {
         return $this->hasMany(FinanceTransactionDisbursement::class);
+    }
+
+    public function cancellationReasonCategory(): BelongsTo
+    {
+        return $this->belongsTo(CancellationReasonCategory::class);
     }
 }

@@ -16,7 +16,7 @@ class GetSellerOrderDetailController extends Controller
         $sellerId = $request->user()->id;
 
         $order = Transaction::query()
-            ->with(['items.tenant', 'statusHistories', 'user'])
+            ->with(['items.tenant', 'statusHistories', 'user', 'cancellationReasonCategory'])
             ->where('id', $id)
             ->whereHas('items.tenant', fn ($query) => $query->where('owner_user_id', $sellerId))
             ->first();
@@ -50,6 +50,12 @@ class GetSellerOrderDetailController extends Controller
             'status' => $order->status,
             'status_code' => $order->statusCode(),
             'status_label' => $this->formatStatusLabel($order->status),
+            'cancellation_reason' => $order->statusCode() === Transaction::STATUS_CODE_CANCELED ? [
+                'category_id' => $order->cancellation_reason_category_id,
+                'category_name' => $order->cancellationReasonCategory?->name,
+                'allows_free_text' => $order->cancellationReasonCategory?->allows_free_text,
+                'reason_text' => $order->cancellation_reason_text,
+            ] : null,
             'seller_subtotal_amount' => $items->sum('line_total'),
             'seller_subtotal_amount_label' => $this->moneyLabel($items->sum('line_total')),
             'subtotal_amount' => $order->subtotal_amount,

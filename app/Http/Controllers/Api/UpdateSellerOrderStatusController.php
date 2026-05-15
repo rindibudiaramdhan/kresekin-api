@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateSellerOrderStatusRequest;
+use App\Models\CancellationReasonCategory;
 use App\Models\Transaction;
 use App\Models\TransactionStatusHistory;
 use Illuminate\Http\JsonResponse;
@@ -41,16 +42,22 @@ class UpdateSellerOrderStatusController extends Controller
         $validated = $request->validated();
         $status = Transaction::statusFromCode($validated['status_code']);
 
-        DB::transaction(function () use ($order, $status, $validated): void {
+        $cancellationReasonCategory = $status === Transaction::STATUS_CANCELED
+            ? CancellationReasonCategory::query()->find($validated['cancellation_reason_category_id'])
+            : null;
+
+        DB::transaction(function () use ($order, $status, $validated, $cancellationReasonCategory): void {
             $order->forceFill([
                 'status' => $status,
+                'cancellation_reason_category_id' => $status === Transaction::STATUS_CANCELED ? $cancellationReasonCategory?->id : null,
+                'cancellation_reason_text' => $status === Transaction::STATUS_CANCELED ? ($validated['cancellation_reason_text'] ?? null) : null,
             ])->save();
 
             TransactionStatusHistory::query()->create([
                 'transaction_id' => $order->id,
                 'status' => $status,
                 'title' => $this->statusTitle($status),
-                'description' => $validated['description'] ?? $this->statusDescription($status),
+                'description' => $validated['description'] ?? $this->statusDescription($status, $cancellationReasonCategory, $validated['cancellation_reason_text'] ?? null),
                 'sequence' => ((int) $order->statusHistories()->max('sequence')) + 1,
                 'status_at' => now(),
             ]);
@@ -66,6 +73,12 @@ class UpdateSellerOrderStatusController extends Controller
                 'status' => $order->status,
                 'status_code' => $order->statusCode(),
                 'status_label' => $this->formatStatusLabel($order->status),
+                'cancellation_reason' => $order->statusCode() === Transaction::STATUS_CODE_CANCELED ? [
+                    'category_id' => $order->cancellation_reason_category_id,
+                    'category_name' => $cancellationReasonCategory?->name,
+                    'allows_free_text' => $cancellationReasonCategory?->allows_free_text,
+                    'reason_text' => $order->cancellation_reason_text,
+                ] : null,
             ],
         ]);
     }
@@ -82,8 +95,16 @@ class UpdateSellerOrderStatusController extends Controller
         };
     }
 
-    private function statusDescription(string $status): string
+    private function statusDescription(string $status, ?CancellationReasonCategory $cancellationReasonCategory = null, ?string $cancellationReasonText = null): string
     {
+        if ($status === Transaction::STATUS_CANCELED && $cancellationReasonCategory) {
+            return trim(sprintf(
+                'Pesanan dibatalkan. Alasan: %s%s',
+                $cancellationReasonCategory->name,
+                $cancellationReasonText ? ' - '.$cancellationReasonText : '',
+            ));
+        }
+
         return match ($status) {
             Transaction::STATUS_ACCEPTED_BY_STORE => 'Pesanan telah diterima oleh toko',
             Transaction::STATUS_PROCESSING => 'Pesanan sedang diproses oleh toko',

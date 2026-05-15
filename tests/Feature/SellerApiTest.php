@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CancellationReasonCategory;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\Transaction;
@@ -184,6 +185,64 @@ class SellerApiTest extends TestCase
             'status' => Transaction::STATUS_PROCESSING,
             'description' => 'Pesanan sedang disiapkan.',
         ]);
+    }
+
+    public function test_seller_can_cancel_order_with_cancellation_reason_category(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-cancel@example.com', '+6281200000012', 'seller-cancel-token', User::ROLE_SELLER);
+        $category = CancellationReasonCategory::query()
+            ->where('name', 'Salah Pesan / Salah Produk')
+            ->firstOrFail();
+        $order = $this->createOrderForSeller($seller, 'ORDER005', Transaction::STATUS_PROCESSING);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/orders/'.$order->id.'/status', [
+                'status_code' => Transaction::STATUS_CODE_CANCELED,
+                'cancellation_reason_category_id' => $category->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status_code', Transaction::STATUS_CODE_CANCELED)
+            ->assertJsonPath('data.cancellation_reason.category_id', $category->id)
+            ->assertJsonPath('data.cancellation_reason.category_name', 'Salah Pesan / Salah Produk');
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $order->id,
+            'status' => Transaction::STATUS_CANCELED,
+            'cancellation_reason_category_id' => $category->id,
+            'cancellation_reason_text' => null,
+        ]);
+        $this->assertDatabaseHas('transaction_status_histories', [
+            'transaction_id' => $order->id,
+            'status' => Transaction::STATUS_CANCELED,
+            'description' => 'Pesanan dibatalkan. Alasan: Salah Pesan / Salah Produk',
+        ]);
+    }
+
+    public function test_seller_cancel_order_requires_free_text_for_other_reason_category(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-cancel-other@example.com', '+6281200000013', 'seller-cancel-other-token', User::ROLE_SELLER);
+        $otherReason = CancellationReasonCategory::query()
+            ->where('name', CancellationReasonCategory::OTHER_REASON_NAME)
+            ->firstOrFail();
+        $order = $this->createOrderForSeller($seller, 'ORDER006', Transaction::STATUS_PROCESSING);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/orders/'.$order->id.'/status', [
+                'status_code' => Transaction::STATUS_CODE_CANCELED,
+                'cancellation_reason_category_id' => $otherReason->id,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['cancellation_reason_text']);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/orders/'.$order->id.'/status', [
+                'status_code' => Transaction::STATUS_CODE_CANCELED,
+                'cancellation_reason_category_id' => $otherReason->id,
+                'cancellation_reason_text' => 'Buyer meminta pembatalan melalui chat.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.cancellation_reason.category_name', CancellationReasonCategory::OTHER_REASON_NAME)
+            ->assertJsonPath('data.cancellation_reason.reason_text', 'Buyer meminta pembatalan melalui chat.');
     }
 
     public function test_seller_cannot_manage_other_sellers_order(): void

@@ -15,7 +15,7 @@ class GetUserTransactionDetailController extends Controller
     {
         $transaction = $request->user()
             ->transactions()
-            ->with(['items.tenant', 'statusHistories'])
+            ->with(['items.tenant', 'statusHistories', 'cancellationReasonCategory'])
             ->find($transactionId);
 
         if (! $transaction) {
@@ -33,6 +33,12 @@ class GetUserTransactionDetailController extends Controller
                 'status' => $transaction->status,
                 'status_code' => $transaction->statusCode(),
                 'status_label' => $this->formatStatusLabel($transaction->status),
+                'cancellation_reason' => $transaction->statusCode() === Transaction::STATUS_CODE_CANCELED ? [
+                    'category_id' => $transaction->cancellation_reason_category_id,
+                    'category_name' => $transaction->cancellationReasonCategory?->name,
+                    'allows_free_text' => $transaction->cancellationReasonCategory?->allows_free_text,
+                    'reason_text' => $transaction->cancellation_reason_text,
+                ] : null,
                 'total_amount' => $transaction->total_amount,
                 'total_amount_label' => $this->moneyLabel((int) $transaction->total_amount),
                 'total_items' => $transaction->items->sum('quantity'),

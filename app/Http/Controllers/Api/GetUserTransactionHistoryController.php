@@ -21,7 +21,7 @@ class GetUserTransactionHistoryController extends Controller
 
         $transactions = $request->user()
             ->transactions()
-            ->with('items.tenant')
+            ->with(['items.tenant', 'cancellationReasonCategory'])
             ->when($status, fn ($query) => $query->where('status', $status))
             ->orderByDesc('transaction_at')
             ->orderByDesc('id')
@@ -50,6 +50,12 @@ class GetUserTransactionHistoryController extends Controller
                 'transaction_at_label' => $transaction->transaction_at?->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i').' WIB',
                 'status' => $transaction->status,
                 'status_code' => $transaction->statusCode(),
+                'cancellation_reason' => $transaction->statusCode() === Transaction::STATUS_CODE_CANCELED ? [
+                    'category_id' => $transaction->cancellation_reason_category_id,
+                    'category_name' => $transaction->cancellationReasonCategory?->name,
+                    'allows_free_text' => $transaction->cancellationReasonCategory?->allows_free_text,
+                    'reason_text' => $transaction->cancellation_reason_text,
+                ] : null,
             ])->values(),
             'meta' => [
                 'current_page' => $transactions->currentPage(),
