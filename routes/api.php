@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\Api\AddCartItemController;
 use App\Http\Controllers\Api\CheckoutController;
+use App\Http\Controllers\Api\ConfirmFinanceBuyerPaymentController;
 use App\Http\Controllers\Api\CreateAgentCommissionWithdrawalController;
 use App\Http\Controllers\Api\CreateSellerProductController;
 use App\Http\Controllers\Api\CreateSellerTenantController;
 use App\Http\Controllers\Api\DeleteCartItemController;
 use App\Http\Controllers\Api\DeleteSellerProductController;
+use App\Http\Controllers\Api\DisburseFinanceTransactionController;
 use App\Http\Controllers\Api\GetAgentCommissionWithdrawalListController;
 use App\Http\Controllers\Api\GetAgentDashboardController;
 use App\Http\Controllers\Api\GetAgentProfileController;
@@ -15,6 +17,9 @@ use App\Http\Controllers\Api\GetAgentSellerListController;
 use App\Http\Controllers\Api\GetBuyerTenantListController;
 use App\Http\Controllers\Api\GetCartController;
 use App\Http\Controllers\Api\GetDeliveryMethodsController;
+use App\Http\Controllers\Api\GetFinanceDashboardController;
+use App\Http\Controllers\Api\GetFinanceTransactionDetailController;
+use App\Http\Controllers\Api\GetFinanceTransactionListController;
 use App\Http\Controllers\Api\GetHousingAreaListController;
 use App\Http\Controllers\Api\GetOrderTimeOptionsController;
 use App\Http\Controllers\Api\GetPaymentMethodsController;
@@ -63,6 +68,8 @@ $healthcheckHandler = function (): JsonResponse {
 Route::get('/vershealthcheck', $healthcheckHandler);
 Route::post('/agent/login', LoginUserController::class)->defaults('role', User::ROLE_AGENT);
 Route::post('/agent/register', RegisterUserController::class)->defaults('role', User::ROLE_AGENT);
+Route::post('/finance/login', LoginUserController::class)->defaults('role', User::ROLE_FINANCE);
+Route::post('/finance/register', RegisterUserController::class)->defaults('role', User::ROLE_FINANCE);
 Route::post('/users/{role}/login', LoginUserController::class)->whereIn('role', User::roles());
 Route::post('/users/{role}/register', RegisterUserController::class)->whereIn('role', User::roles());
 Route::post('/users/verify-otp', VerifyOtpController::class);
@@ -114,4 +121,12 @@ Route::middleware(['session.token', 'role:agent'])->prefix('agent')->group(funct
     Route::put('/profile', UpdateAgentProfileController::class);
     Route::get('/commission-withdrawals', GetAgentCommissionWithdrawalListController::class);
     Route::post('/commission-withdrawals', CreateAgentCommissionWithdrawalController::class);
+});
+
+Route::middleware(['session.token', 'role:finance'])->prefix('finance')->group(function (): void {
+    Route::get('/dashboard', GetFinanceDashboardController::class);
+    Route::get('/transactions', GetFinanceTransactionListController::class);
+    Route::get('/transactions/{id}', GetFinanceTransactionDetailController::class);
+    Route::patch('/transactions/{id}/confirm-buyer-payment', ConfirmFinanceBuyerPaymentController::class);
+    Route::patch('/disbursements/{id}/disburse-to-seller', DisburseFinanceTransactionController::class);
 });

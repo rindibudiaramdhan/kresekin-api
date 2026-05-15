@@ -127,4 +127,9 @@ class Transaction extends Model
     {
         return $this->hasMany(TransactionItem::class);
     }
+
+    public function financeDisbursements(): HasMany
+    {
+        return $this->hasMany(FinanceTransactionDisbursement::class);
+    }
 }

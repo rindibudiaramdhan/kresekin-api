@@ -7,6 +7,9 @@ use App\Http\Controllers\Web\AgentProfileController;
 use App\Http\Controllers\Web\AgentRegistrationController;
 use App\Http\Controllers\Web\AgentSellerController;
 use App\Http\Controllers\Web\AgentTenantController;
+use App\Http\Controllers\Web\FinanceAuthController;
+use App\Http\Controllers\Web\FinanceDashboardController;
+use App\Http\Controllers\Web\FinanceTransactionController;
 use App\Http\Controllers\Web\SellerAuthController;
 use App\Http\Controllers\Web\SellerDashboardController;
 use App\Http\Controllers\Web\SellerProductController;
@@ -61,5 +64,21 @@ Route::prefix('seller')->name('seller.')->group(function (): void {
         Route::get('/products/{id}/edit', [SellerProductController::class, 'edit'])->name('products.edit');
         Route::put('/products/{id}', [SellerProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{id}', [SellerProductController::class, 'destroy'])->name('products.destroy');
+    });
+});
+
+Route::prefix('finance')->name('finance.')->group(function (): void {
+    Route::middleware('guest')->group(function (): void {
+        Route::get('/login', [FinanceAuthController::class, 'create'])->name('login');
+        Route::post('/login', [FinanceAuthController::class, 'store'])->name('login.store');
+    });
+
+    Route::middleware(['auth', 'role:finance'])->group(function (): void {
+        Route::post('/logout', [FinanceAuthController::class, 'destroy'])->name('logout');
+        Route::get('/', FinanceDashboardController::class)->name('dashboard');
+        Route::get('/transactions', [FinanceTransactionController::class, 'index'])->name('transactions.index');
+        Route::get('/transactions/{id}', [FinanceTransactionController::class, 'show'])->name('transactions.show');
+        Route::post('/transactions/{id}/confirm-buyer-payment', [FinanceTransactionController::class, 'confirmBuyerPayment'])->name('transactions.confirm-buyer-payment');
+        Route::post('/disbursements/{id}/disburse-to-seller', [FinanceTransactionController::class, 'disburseToSeller'])->name('disbursements.disburse-to-seller');
     });
 });
