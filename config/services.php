@@ -43,4 +43,10 @@ return [
         'timeout' => (int) env('WHATSAPP_OTP_TIMEOUT', 10),
     ],
 
+    'bps_regions' => [
+        'base_url' => env('BPS_REGIONS_BASE_URL', ''),
+        'timeout' => (int) env('BPS_REGIONS_TIMEOUT', 2),
+        'cache_ttl' => (int) env('BPS_REGIONS_CACHE_TTL', 7776000),
+    ],
+
 ];
