@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserSessionToken;
 use App\Notifications\LoginOtpNotification;
 use App\Notifications\RegistrationOtpNotification;
+use App\Notifications\ResendOtpNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -298,6 +299,107 @@ class AuthApiTest extends TestCase
             'phone' => '+6281234567890',
             'otp' => $secondOtp,
         ])->assertOk();
+    }
+
+    public function test_user_can_resend_email_otp(): void
+    {
+        Notification::fake();
+
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'user@example.com',
+            'phone' => null,
+            'type' => 'email',
+            'role' => 'buyer',
+            'password' => null,
+            'otp_code' => Hash::make('123456'),
+            'otp_sent_at' => now()->subMinutes(5),
+        ]);
+
+        $oldOtpHash = $user->otp_code;
+
+        $response = $this->postJson('/api/users/buyer/resend-otp', [
+            'type' => 'email',
+            'email' => 'user@example.com',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('message', 'OTP berhasil dikirim ulang.')
+            ->assertJsonPath('data.id', $user->id)
+            ->assertJsonPath('data.email', 'user@example.com')
+            ->assertJsonPath('data.type', 'email')
+            ->assertJsonPath('data.role', 'buyer');
+
+        $user->refresh();
+        $this->assertNotSame($oldOtpHash, $user->otp_code);
+        $this->assertNotNull($user->otp_sent_at);
+
+        Notification::assertSentTo($user, ResendOtpNotification::class);
+    }
+
+    public function test_user_can_resend_phone_otp_and_previous_code_becomes_invalid(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => null,
+            'phone' => '+6281234567890',
+            'type' => 'phone',
+            'role' => 'buyer',
+            'password' => null,
+            'otp_code' => Hash::make('123456'),
+            'otp_sent_at' => now()->subMinutes(5),
+        ]);
+
+        $sentOtps = [];
+        $whatsappOtpSender = Mockery::mock(WhatsappOtpSender::class);
+        $whatsappOtpSender
+            ->shouldReceive('send')
+            ->once()
+            ->withArgs(function (string $phone, string $otp) use (&$sentOtps): bool {
+                $sentOtps[] = $otp;
+
+                return $phone === '+6281234567890' && preg_match('/^\d{6}$/', $otp) === 1;
+            });
+
+        $this->app->instance(WhatsappOtpSender::class, $whatsappOtpSender);
+
+        $response = $this->postJson('/api/users/buyer/resend-otp', [
+            'type' => 'phone',
+            'phone' => '081234567890',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('message', 'OTP berhasil dikirim ulang.')
+            ->assertJsonPath('data.id', $user->id)
+            ->assertJsonPath('data.phone', '+6281234567890')
+            ->assertJsonPath('data.type', 'phone')
+            ->assertJsonPath('data.role', 'buyer');
+
+        $user->refresh();
+        $this->assertFalse(Hash::check('123456', $user->otp_code));
+        $this->assertTrue(Hash::check($sentOtps[0], $user->otp_code));
+
+        $this->postJson('/api/users/verify-otp', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+            'otp' => '123456',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Kode OTP tidak valid.');
+    }
+
+    public function test_resend_otp_returns_not_found_when_user_does_not_exist(): void
+    {
+        $response = $this->postJson('/api/users/buyer/resend-otp', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+        ]);
+
+        $response
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Pengguna tidak ditemukan.');
     }
 
     public function test_authenticated_user_can_update_profile(): void
