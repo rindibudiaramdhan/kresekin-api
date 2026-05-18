@@ -22,6 +22,7 @@ class GetHousingAreaListController extends Controller
                     'city' => $area->city,
                     'district' => $area->district,
                     'subdistrict' => $area->subdistrict,
+                    'village_code' => $area->village_code,
                 ])
                 ->values(),
         ]);

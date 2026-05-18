@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'city',
     'district',
     'subdistrict',
+    'village_code',
 ])]
 class HousingArea extends Model
 {
