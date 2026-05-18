@@ -13,6 +13,7 @@ class GetHousingAreaListController extends Controller
         return response()->json([
             'message' => 'Daftar area perumahan berhasil diambil.',
             'data' => HousingArea::query()
+                ->where('village_code', '3273141003')
                 ->orderBy('name')
                 ->get()
                 ->map(fn (HousingArea $area): array => [

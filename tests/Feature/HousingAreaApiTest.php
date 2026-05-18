@@ -23,6 +23,14 @@ class HousingAreaApiTest extends TestCase
             'subdistrict' => 'Antapani Wetan',
             'village_code' => '3273141003',
         ]);
+        HousingArea::query()->create([
+            'name' => 'Komplek Luar Antapani Wetan',
+            'code' => 'komplek-luar-antapani-wetan',
+            'city' => 'Kota Bandung',
+            'district' => 'Antapani',
+            'subdistrict' => 'Antapani Kulon',
+            'village_code' => '3273141002',
+        ]);
 
         $user = User::query()->create([
             'name' => 'Budi',
@@ -53,6 +61,8 @@ class HousingAreaApiTest extends TestCase
             ->assertJsonPath('data.0.district', 'Antapani')
             ->assertJsonPath('data.0.subdistrict', 'Antapani Wetan')
             ->assertJsonPath('data.0.village_code', '3273141003');
+
+        $this->assertCount(1, $response->json('data'));
     }
 
     public function test_housing_areas_requires_authentication(): void
