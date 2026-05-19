@@ -13,6 +13,7 @@
         .nav-pills .nav-link.active { background: #15803d; }
         .table > :not(caption) > * > * { padding: 1rem; }
     </style>
+    @stack('styles')
 </head>
 <body class="min-vh-100">
     <div class="container py-4 panel-shell">
