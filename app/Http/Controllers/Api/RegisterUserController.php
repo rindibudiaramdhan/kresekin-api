@@ -24,6 +24,7 @@ class RegisterUserController extends Controller
             'phone' => $validated['type'] === User::AUTH_TYPE_PHONE ? $validated['phone'] : null,
             'type' => $validated['type'],
             'role' => $role,
+            'agent_code' => $role === User::ROLE_AGENT ? User::generateAgentCode() : null,
             'password' => null,
             'otp_code' => Hash::make($otp),
             'otp_sent_at' => now(),
@@ -43,6 +44,7 @@ class RegisterUserController extends Controller
                 'phone' => $user->phone,
                 'type' => $user->type,
                 'role' => $user->role,
+                'agent_code' => $user->agent_code,
                 'otp_sent_at' => $user->otp_sent_at?->toIso8601String(),
             ],
         ], 201);

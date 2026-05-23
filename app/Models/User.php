@@ -19,6 +19,7 @@ use Illuminate\Notifications\Notifiable;
     'phone',
     'type',
     'role',
+    'agent_code',
     'password',
     'otp_code',
     'otp_sent_at',
@@ -57,6 +58,15 @@ class User extends Authenticatable
             self::ROLE_FINANCE,
             self::ROLE_AGENT,
         ];
+    }
+
+    public static function generateAgentCode(): string
+    {
+        do {
+            $code = 'KA-'.random_int(10000, 99999);
+        } while (self::query()->where('agent_code', $code)->exists());
+
+        return $code;
     }
 
     /**

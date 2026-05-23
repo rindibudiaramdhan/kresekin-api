@@ -23,6 +23,7 @@ class GetAgentProfileController extends Controller
                 'phone' => $user->phone,
                 'type' => $user->type,
                 'role' => $user->role,
+                'agent_code' => $user->agent_code,
                 'bank_name' => $user->bank_name,
                 'bank_account_name' => $user->bank_account_name,
                 'bank_account_number' => $user->bank_account_number,

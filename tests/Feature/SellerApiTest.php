@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\CancellationReasonCategory;
+use App\Models\HousingArea;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Tenant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
@@ -23,11 +25,32 @@ class SellerApiTest extends TestCase
         Carbon::setTestNow('2026-04-01 10:00:00');
 
         [$seller, $token] = $this->createAuthenticatedUser('seller@example.com', '+6281200000001', 'seller-token', User::ROLE_SELLER);
+        [$agent] = $this->createAuthenticatedUser('agent-seller@example.com', '+6281200000099', 'agent-token', User::ROLE_AGENT);
+        $agent->forceFill(['agent_code' => 'KA-20265'])->save();
+        $category = ProductCategory::query()->create([
+            'name' => Tenant::CATEGORY_GROCERIES,
+            'slug' => 'sembako',
+            'image_path' => 'images/ic_groceries_category.svg',
+        ]);
+        $housingArea = HousingArea::query()->create([
+            'name' => 'Komp Setra Dago',
+            'code' => 'AREA-001',
+            'city' => 'Kota Bandung',
+            'district' => 'Antapani',
+            'subdistrict' => 'Antapani Wetan',
+            'village_code' => '3273141003',
+        ]);
 
         $createResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/seller/tenants', [
+                'owner_name' => 'Asep Pemilik',
+                'owner_phone' => '081234567890',
+                'owner_email' => 'asep@example.com',
+                'agent_code' => 'KA-20265',
                 'name' => 'Tenant Seller',
-                'category' => Tenant::CATEGORY_GROCERIES,
+                'category_id' => $category->id,
+                'location' => 'Jl Asri Raya No 45',
+                'housing_area_ids' => [$housingArea->id],
                 'profile_picture_url' => 'https://example.com/seller-tenant.png',
                 'latitude' => -6.2,
                 'longitude' => 106.8,
@@ -38,7 +61,17 @@ class SellerApiTest extends TestCase
         $createResponse
             ->assertCreated()
             ->assertJsonPath('data.owner_user_id', $seller->id)
-            ->assertJsonPath('data.name', 'Tenant Seller');
+            ->assertJsonPath('data.agent_user_id', $agent->id)
+            ->assertJsonPath('data.agent_code', 'KA-20265')
+            ->assertJsonPath('data.owner.name', 'Asep Pemilik')
+            ->assertJsonPath('data.owner.phone', '+6281234567890')
+            ->assertJsonPath('data.owner.email', 'asep@example.com')
+            ->assertJsonPath('data.name', 'Tenant Seller')
+            ->assertJsonPath('data.category_id', $category->id)
+            ->assertJsonPath('data.category', Tenant::CATEGORY_GROCERIES)
+            ->assertJsonPath('data.category_master.slug', 'sembako')
+            ->assertJsonPath('data.location', 'Jl Asri Raya No 45')
+            ->assertJsonPath('data.housing_areas.0.id', $housingArea->id);
 
         $listResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/tenants');
@@ -46,12 +79,48 @@ class SellerApiTest extends TestCase
         $listResponse
             ->assertOk()
             ->assertJsonPath('data.0.owner_user_id', $seller->id)
+            ->assertJsonPath('data.0.agent_code', 'KA-20265')
             ->assertJsonPath('data.0.name', 'Tenant Seller')
+            ->assertJsonPath('data.0.category_id', $category->id)
+            ->assertJsonPath('data.0.location', 'Jl Asri Raya No 45')
+            ->assertJsonPath('data.0.housing_areas.0.name', 'Komp Setra Dago')
             ->assertJsonPath('data.0.is_open', true)
             ->assertJsonPath('data.0.store_status', 'Buka')
             ->assertJsonPath('data.0.operating_hours_label', 'Buka 07:00 sd 21:00');
 
         Carbon::setTestNow();
+    }
+
+    public function test_seller_tenant_area_is_limited_to_three_housing_areas(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-area@example.com', '+6281200000040', 'seller-area-token', User::ROLE_SELLER);
+        [$agent] = $this->createAuthenticatedUser('agent-area@example.com', '+6281200000041', 'agent-area-token', User::ROLE_AGENT);
+        $agent->forceFill(['agent_code' => 'KA-30001'])->save();
+        $category = ProductCategory::query()->create([
+            'name' => Tenant::CATEGORY_GROCERIES,
+            'slug' => 'sembako',
+            'image_path' => 'images/ic_groceries_category.svg',
+        ]);
+
+        $housingAreaIds = collect(range(1, 4))
+            ->map(fn (int $number) => HousingArea::query()->create([
+                'name' => 'Komp Area '.$number,
+                'code' => 'AREA-'.$number,
+                'village_code' => '3273141003',
+            ])->id)
+            ->all();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/seller/tenants', [
+                'owner_name' => 'Pemilik Area',
+                'agent_code' => 'KA-30001',
+                'name' => 'Tenant Area',
+                'category_id' => $category->id,
+                'location' => 'Jl Area No 1',
+                'housing_area_ids' => $housingAreaIds,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['housing_area_ids']);
     }
 
     public function test_seller_can_create_and_list_own_product(): void

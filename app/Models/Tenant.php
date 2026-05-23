@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
@@ -14,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'profile_picture_url',
     'rating',
     'category',
+    'product_category_id',
+    'location',
     'latitude',
     'longitude',
     'open_time',
@@ -22,19 +25,33 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Tenant extends Model
 {
     public const CATEGORY_VEGETABLES = 'Sayur';
+
     public const CATEGORY_FRUITS = 'Buah';
+
     public const CATEGORY_MEAT = 'Daging';
+
     public const CATEGORY_TOILETRIES = 'Toiletries';
+
     public const CATEGORY_BEVERAGES = 'Minuman';
+
     public const CATEGORY_MEDICINE = 'Obat';
+
     public const CATEGORY_FOOD = 'Makanan';
+
     public const CATEGORY_FROZEN_FOOD = 'Frozen Food';
+
     public const CATEGORY_BABY = 'Bayi & Anak';
+
     public const CATEGORY_HOME_CARE = 'Home Care';
+
     public const CATEGORY_STATIONERY = 'Alat Tulis';
+
     public const CATEGORY_SPICES = 'Bumbu Dapur';
+
     public const CATEGORY_PERSONAL_CARE = 'Personal Care';
+
     public const CATEGORY_HOME_EQUIPMENT = 'Peralatan Rumah';
+
     public const CATEGORY_GROCERIES = 'Sembako';
 
     public const CATEGORIES = [
@@ -188,6 +205,16 @@ class Tenant extends Model
     public function agent(): BelongsTo
     {
         return $this->belongsTo(User::class, 'agent_user_id');
+    }
+
+    public function productCategory(): BelongsTo
+    {
+        return $this->belongsTo(ProductCategory::class);
+    }
+
+    public function housingAreas(): BelongsToMany
+    {
+        return $this->belongsToMany(HousingArea::class)->withTimestamps();
     }
 
     public static function categoryUiMetadata(string $category): array

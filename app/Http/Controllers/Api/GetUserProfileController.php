@@ -20,6 +20,7 @@ class GetUserProfileController extends Controller
                 'phone' => $user->phone,
                 'type' => $user->type,
                 'role' => $user->role,
+                'agent_code' => $user->agent_code,
                 'housing_area' => $user->housingArea,
                 'address' => $user->address,
                 'landmark' => $user->landmark,

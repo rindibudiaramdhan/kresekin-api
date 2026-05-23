@@ -45,6 +45,7 @@ class AgentRegistrationController extends Controller
             'phone' => $validated['phone'],
             'type' => User::AUTH_TYPE_EMAIL,
             'role' => User::ROLE_AGENT,
+            'agent_code' => User::generateAgentCode(),
             'password' => Hash::make($validated['password']),
             'otp_code' => null,
             'otp_sent_at' => null,
