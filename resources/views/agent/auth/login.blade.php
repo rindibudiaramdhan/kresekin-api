@@ -14,16 +14,20 @@
     }
 
     .agent-login-page {
-        min-height: 100vh;
+        height: 100vh;
+        height: 100dvh;
         display: grid;
         place-items: center;
-        padding: 56px;
+        padding: 24px;
         background: #ffffff;
+        overflow: hidden;
     }
 
     .agent-login-shell {
-        width: min(1760px, 100%);
-        min-height: 1170px;
+        width: min(1420px, 100%);
+        height: min(760px, calc(100vh - 48px));
+        height: min(760px, calc(100dvh - 48px));
+        min-height: 0;
         display: grid;
         grid-template-columns: 1fr 1fr;
         overflow: hidden;
@@ -36,102 +40,72 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 88px 58px 44px;
+        padding: 38px 48px 26px;
+        min-height: 0;
     }
 
     .agent-login-inner {
-        width: min(100%, 760px);
+        width: min(100%, 560px);
         margin: 0 auto;
     }
 
     .brand-mark {
         display: inline-flex;
         align-items: center;
-        gap: 18px;
-        margin-bottom: 52px;
+        gap: 12px;
+        margin-bottom: 26px;
     }
 
     .brand-bag {
-        width: 54px;
-        height: 54px;
-        display: grid;
-        place-items: center;
-        border-radius: 13px 13px 17px 17px;
-        background: linear-gradient(180deg, #18c8ce 0%, #0bb5bf 100%);
-        color: #ffffff;
-        position: relative;
-    }
-
-    .brand-bag::before {
-        content: "";
-        width: 24px;
-        height: 17px;
-        position: absolute;
-        top: 10px;
-        border: 4px solid #ffffff;
-        border-bottom: 0;
-        border-radius: 14px 14px 0 0;
-    }
-
-    .brand-bag::after {
-        content: "";
-        width: 20px;
-        height: 12px;
-        position: absolute;
-        bottom: 15px;
-        border-bottom: 4px solid #b7df25;
-        border-radius: 0 0 18px 18px;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        display: block;
     }
 
     .brand-text {
-        font-size: 46px;
-        line-height: 1;
-        font-weight: 800;
-        letter-spacing: 0;
-        color: #12bdc6;
-    }
-
-    .brand-text span {
-        color: #ffb000;
+        width: 168px;
+        height: auto;
+        display: block;
     }
 
     .agent-login-title {
-        margin: 0 0 16px;
-        font-size: 54px;
+        margin: 0 0 8px;
+        font-size: 38px;
         line-height: 1.08;
         font-weight: 800;
         letter-spacing: 0;
     }
 
     .agent-login-subtitle {
-        margin: 0 0 58px;
+        margin: 0 0 30px;
         color: #525866;
-        font-size: 28px;
+        font-size: 20px;
         line-height: 1.4;
         font-weight: 400;
     }
 
     .agent-auth-form {
         display: grid;
-        gap: 26px;
+        gap: 14px;
     }
 
     .agent-field label {
         display: block;
-        margin-bottom: 10px;
+        margin-bottom: 7px;
         color: #4b4e5d;
-        font-size: 22px;
+        font-size: 16px;
         font-weight: 700;
     }
 
     .agent-input-wrap {
-        min-height: 84px;
+        min-height: 60px;
         display: flex;
         align-items: center;
-        gap: 22px;
-        padding: 0 26px;
+        gap: 14px;
+        padding: 0 18px;
         border: 2px solid #e1e5ed;
-        border-radius: 14px;
+        border-radius: 10px;
         background: #f9fafc;
         color: #747987;
         transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
@@ -150,9 +124,9 @@
 
     .agent-input-icon,
     .password-toggle {
-        width: 34px;
-        height: 34px;
-        flex: 0 0 34px;
+        width: 26px;
+        height: 26px;
+        flex: 0 0 26px;
         color: #7b8190;
     }
 
@@ -163,7 +137,7 @@
         outline: 0;
         background: transparent;
         color: #232734;
-        font-size: 25px;
+        font-size: 18px;
         line-height: 1.2;
     }
 
@@ -181,13 +155,13 @@
     }
 
     .agent-field-meta {
-        min-height: 26px;
+        min-height: 18px;
         display: flex;
         justify-content: flex-end;
         align-items: center;
         gap: 20px;
-        margin-top: 8px;
-        font-size: 21px;
+        margin-top: 5px;
+        font-size: 14px;
         line-height: 1.2;
     }
 
@@ -208,13 +182,13 @@
 
     .agent-submit {
         width: 100%;
-        height: 84px;
-        margin-top: 12px;
+        height: 60px;
+        margin-top: 8px;
         border: 0;
         border-radius: 12px;
         background: #14bec8;
         color: #ffffff;
-        font-size: 25px;
+        font-size: 20px;
         font-weight: 700;
         display: inline-flex;
         align-items: center;
@@ -228,17 +202,17 @@
     }
 
     .agent-register-copy {
-        margin-top: 78px;
+        margin-top: 34px;
         color: #555b67;
         text-align: center;
-        font-size: 25px;
+        font-size: 18px;
     }
 
     .agent-login-footer {
-        margin-top: 168px;
+        margin-top: 70px;
         text-align: center;
         color: #bcc0ca;
-        font-size: 23px;
+        font-size: 15px;
         font-weight: 700;
         letter-spacing: 1.5px;
     }
@@ -246,50 +220,13 @@
     .agent-visual-panel {
         position: relative;
         overflow: hidden;
-        min-height: 1170px;
+        min-height: 0;
+        height: 100%;
         border-radius: 0 16px 16px 0;
         color: #ffffff;
         background:
-            linear-gradient(180deg, rgba(235, 245, 255, .84) 0%, rgba(190, 220, 250, .58) 43%, rgba(0, 115, 171, .96) 100%),
-            radial-gradient(circle at 66% 38%, rgba(255, 255, 255, .95) 0 9%, transparent 24%),
-            linear-gradient(132deg, #ffffff 0 16%, #d7e8fc 16% 47%, #b3dcf4 47% 100%);
-    }
-
-    .agent-visual-panel::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background:
-            linear-gradient(103deg, rgba(255, 255, 255, .98) 0 14%, transparent 14.2%),
-            linear-gradient(90deg, rgba(255, 255, 255, .58), transparent 34%),
-            radial-gradient(circle at 82% 11%, rgba(255, 255, 255, .85), transparent 10%),
-            repeating-linear-gradient(90deg, transparent 0 118px, rgba(7, 56, 98, .06) 119px 120px);
-        pointer-events: none;
-    }
-
-    .agent-visual-content {
-        position: relative;
-        z-index: 2;
-        height: 100%;
-        padding: 40px 36px 34px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .visual-brand {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        color: #0b9fb4;
-        font-size: 40px;
-        font-weight: 800;
-        line-height: 1;
-    }
-
-    .visual-brand .brand-bag {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px 12px 15px 15px;
+            linear-gradient(180deg, rgba(0, 93, 145, 0) 0%, rgba(0, 73, 126, .14) 100%),
+            url("{{ asset('images/agent-auth/agent-program-hero.svg') }}") center / cover no-repeat;
     }
 
     .visual-hero-copy {
@@ -549,44 +486,52 @@
 
     @media (max-width: 1400px) {
         .agent-login-page {
-            padding: 24px;
+            padding: 18px;
         }
 
         .agent-login-shell {
-            min-height: 900px;
+            width: min(1180px, 100%);
+            height: min(680px, calc(100dvh - 36px));
         }
 
         .agent-login-form-panel,
         .agent-visual-panel {
-            min-height: 900px;
+            min-height: 0;
         }
 
         .agent-login-title {
-            font-size: 42px;
+            font-size: 34px;
         }
 
         .agent-login-subtitle {
-            font-size: 22px;
+            margin-bottom: 24px;
+            font-size: 18px;
         }
 
         .brand-text {
-            font-size: 36px;
+            width: 154px;
         }
 
         .agent-input {
-            font-size: 21px;
+            font-size: 17px;
+        }
+
+        .agent-login-footer {
+            margin-top: 42px;
         }
     }
 
     @media (max-width: 992px) {
         .agent-login-page {
-            display: block;
-            min-height: auto;
+            min-height: 100dvh;
+            height: auto;
             padding: 18px;
+            overflow: auto;
         }
 
         .agent-login-shell {
             display: block;
+            height: auto;
             min-height: 0;
         }
 
@@ -600,17 +545,18 @@
         }
 
         .agent-visual-panel {
-            min-height: 720px;
+            min-height: 460px;
             border-radius: 0 0 16px 16px;
+            background-size: cover;
         }
 
         .agent-login-footer {
-            margin-top: 56px;
+            margin-top: 38px;
             font-size: 16px;
         }
 
         .agent-register-copy {
-            margin-top: 42px;
+            margin-top: 30px;
             font-size: 18px;
         }
     }
@@ -626,19 +572,19 @@
         }
 
         .brand-mark {
-            margin-bottom: 34px;
+            margin-bottom: 24px;
         }
 
         .brand-text {
-            font-size: 32px;
+            width: 148px;
         }
 
         .agent-login-title {
-            font-size: 36px;
+            font-size: 32px;
         }
 
         .agent-login-subtitle {
-            margin-bottom: 36px;
+            margin-bottom: 24px;
             font-size: 18px;
         }
 
@@ -662,7 +608,8 @@
         }
 
         .agent-visual-panel {
-            min-height: 620px;
+            min-height: 360px;
+            background-position: top center;
         }
 
         .visual-hero-copy h2 {
@@ -715,8 +662,8 @@
         <div class="agent-login-form-panel">
             <div class="agent-login-inner">
                 <a class="brand-mark text-decoration-none" href="{{ route('agent.login') }}" aria-label="Kresek.in">
-                    <span class="brand-bag" aria-hidden="true"></span>
-                    <span class="brand-text">kresek.<span>in</span></span>
+                    <img class="brand-bag" src="{{ asset('images/agent-auth/kresek-bag-icon.svg') }}" alt="" aria-hidden="true">
+                    <img class="brand-text" src="{{ asset('images/agent-auth/kresek-full-logo.svg') }}" alt="Kresek.in">
                 </a>
 
                 <h1 class="agent-login-title">Selamat Datang!</h1>
@@ -790,49 +737,7 @@
             </div>
         </div>
 
-        <aside class="agent-visual-panel" aria-label="Kresek agent program">
-            <div class="agent-visual-content">
-                <div class="visual-brand">
-                    <span class="brand-bag" aria-hidden="true"></span>
-                    <span>kresek.in</span>
-                </div>
-
-                <div class="visual-hero-copy">
-                    <h2>Agen Seller UMKM <span>Kresek.in</span></h2>
-                    <p>Bersama kita, dukung UMKM Indonesia <strong>tumbuh lebih besar</strong> dan sejahtera.</p>
-                </div>
-
-                <div class="scribble">Merangkul UMKM<br>dengan Senyuman ◡</div>
-
-                <div class="commission-card">
-                    <b>Total Komisi</b>
-                    <strong>Rp 24.680.000</strong>
-                    <small>▲ 28.5% dari bulan lalu</small>
-                    <span class="wallet-dot" aria-hidden="true">
-                        <svg width="42" height="42" viewBox="0 0 24 24" fill="none">
-                            <path d="M4 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4V7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                            <path d="M4 7 16 4v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M16 13h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </span>
-                </div>
-
-                <div class="coin" aria-hidden="true">Rp</div>
-
-                <div class="seller-scene" aria-hidden="true">
-                    <div class="person person-one"></div>
-                    <div class="person person-two"></div>
-                    <div class="tote-bag"></div>
-                    <div class="phone-shape"></div>
-                </div>
-
-                <div class="bottom-program-card">
-                    <div class="program-kicker">KRESEK AGENT PROGRAM</div>
-                    <p class="program-title">Bantu UMKM berkembang dan dapatkan komisi dari setiap transaksi seller binaan anda</p>
-                    <a class="visual-register-button" href="{{ route('agent.register') }}">Daftar Sekarang</a>
-                </div>
-            </div>
-        </aside>
+        <aside class="agent-visual-panel" aria-label="Kresek agent program"></aside>
     </section>
 </main>
 
