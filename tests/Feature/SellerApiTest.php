@@ -217,6 +217,63 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.status_timelines.0.status_code', Transaction::STATUS_CODE_PROCESSING);
     }
 
+    public function test_seller_can_access_split_dashboard_apis_for_own_store(): void
+    {
+        Carbon::setTestNow('2026-04-02 10:00:00');
+
+        [$seller, $token] = $this->createAuthenticatedUser('seller-dashboard@example.com', '+6281200000041', 'seller-dashboard-token', User::ROLE_SELLER);
+        [$otherSeller] = $this->createAuthenticatedUser('other-seller-dashboard@example.com', '+6281200000042', 'other-seller-dashboard-token', User::ROLE_SELLER);
+
+        $this->createOrderForSeller($seller, 'DASH001', Transaction::STATUS_COMPLETED);
+        $newToday = $this->createOrderForSeller($seller, 'DASH002', Transaction::STATUS_ACCEPTED_BY_STORE);
+        $completedYesterday = $this->createOrderForSeller($seller, 'DASH003', Transaction::STATUS_COMPLETED);
+        $completedYesterday->forceFill(['transaction_at' => now()->subDay()])->save();
+        $this->createOrderForSeller($otherSeller, 'DASH004', Transaction::STATUS_COMPLETED);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/dashboard/profile')
+            ->assertOk()
+            ->assertJsonPath('data.store.is_verified', true);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/dashboard/revenue-today')
+            ->assertOk()
+            ->assertJsonPath('data.today_revenue', 24000)
+            ->assertJsonPath('data.today_revenue_label', 'Rp. 24.000');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/dashboard/revenue-change')
+            ->assertOk()
+            ->assertJsonPath('data.today_revenue', 24000)
+            ->assertJsonPath('data.yesterday_revenue', 24000)
+            ->assertJsonPath('data.change_percentage', 0);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/dashboard/transactions-today')
+            ->assertOk()
+            ->assertJsonPath('data.today_transaction_count', 2)
+            ->assertJsonPath('data.change_percentage', 100);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/dashboard/orders-today/counts')
+            ->assertOk()
+            ->assertJsonPath('data.new.count', 1)
+            ->assertJsonPath('data.completed.count', 1);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/dashboard/orders/new-preview')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $newToday->id)
+            ->assertJsonPath('data.0.order_number', 'DASH002')
+            ->assertJsonPath('data.0.can_process', true);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/dashboard/top-products-today')
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Produk DASH001')
+            ->assertJsonPath('data.0.sold_quantity', 2);
+    }
+
     public function test_seller_can_update_order_status_until_completed(): void
     {
         [$seller, $token] = $this->createAuthenticatedUser('seller-status@example.com', '+6281200000009', 'seller-status-token', User::ROLE_SELLER);

@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\GetPaymentMethodsController;
 use App\Http\Controllers\Api\GetProductCategoriesController;
 use App\Http\Controllers\Api\GetProductDetailController;
 use App\Http\Controllers\Api\GetProductListController;
+use App\Http\Controllers\Api\GetSellerDashboardController;
 use App\Http\Controllers\Api\GetSellerOrderDetailController;
 use App\Http\Controllers\Api\GetSellerOrderListController;
 use App\Http\Controllers\Api\GetSellerProductDetailController;
@@ -116,6 +117,14 @@ Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
 });
 
 Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(function (): void {
+    Route::get('/dashboard', GetSellerDashboardController::class);
+    Route::get('/dashboard/profile', [GetSellerDashboardController::class, 'profile']);
+    Route::get('/dashboard/revenue-today', [GetSellerDashboardController::class, 'todayRevenue']);
+    Route::get('/dashboard/revenue-change', [GetSellerDashboardController::class, 'revenueChange']);
+    Route::get('/dashboard/transactions-today', [GetSellerDashboardController::class, 'todayTransactions']);
+    Route::get('/dashboard/orders-today/counts', [GetSellerDashboardController::class, 'todayOrderCounts']);
+    Route::get('/dashboard/orders/new-preview', [GetSellerDashboardController::class, 'newOrderPreview']);
+    Route::get('/dashboard/top-products-today', [GetSellerDashboardController::class, 'topProductsToday']);
     Route::get('/tenants', GetSellerTenantListController::class);
     Route::post('/tenants', CreateSellerTenantController::class);
     Route::get('/orders', GetSellerOrderListController::class);
