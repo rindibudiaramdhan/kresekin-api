@@ -126,6 +126,7 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
     Route::get('/products/{id}', GetSellerProductDetailController::class);
     Route::put('/products/{id}', UpdateSellerProductController::class);
     Route::delete('/products/{id}', DeleteSellerProductController::class);
+    Route::get('/product-categories', GetProductCategoriesController::class);
 });
 
 Route::middleware(['session.token', 'role:agent'])->prefix('agent')->group(function (): void {
