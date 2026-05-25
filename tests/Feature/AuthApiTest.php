@@ -95,6 +95,106 @@ class AuthApiTest extends TestCase
             ->assertJsonValidationErrors(['phone']);
     }
 
+    public function test_registration_allows_same_email_for_different_roles(): void
+    {
+        Notification::fake();
+
+        $this->postJson('/api/users/buyer/register', [
+            'type' => 'email',
+            'email' => 'same@example.com',
+        ])->assertCreated();
+
+        $this->postJson('/api/users/seller/register', [
+            'type' => 'email',
+            'email' => 'same@example.com',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.role', User::ROLE_SELLER);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'same@example.com',
+            'role' => User::ROLE_BUYER,
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'same@example.com',
+            'role' => User::ROLE_SELLER,
+        ]);
+    }
+
+    public function test_registration_rejects_same_email_for_same_role(): void
+    {
+        Notification::fake();
+
+        $this->postJson('/api/users/buyer/register', [
+            'type' => 'email',
+            'email' => 'same@example.com',
+        ])->assertCreated();
+
+        $this->postJson('/api/users/buyer/register', [
+            'type' => 'email',
+            'email' => 'same@example.com',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_registration_allows_same_phone_for_different_roles(): void
+    {
+        $whatsappOtpSender = Mockery::mock(WhatsappOtpSender::class);
+        $whatsappOtpSender
+            ->shouldReceive('send')
+            ->twice()
+            ->withArgs(fn (string $phone, string $otp): bool => $phone === '+6281234567890' && preg_match('/^\d{6}$/', $otp) === 1);
+
+        $this->app->instance(WhatsappOtpSender::class, $whatsappOtpSender);
+
+        $this->postJson('/api/users/buyer/register', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+        ])->assertCreated();
+
+        $this->postJson('/api/users/seller/register', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.role', User::ROLE_SELLER);
+
+        $this->assertDatabaseHas('users', [
+            'phone' => '+6281234567890',
+            'role' => User::ROLE_BUYER,
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'phone' => '+6281234567890',
+            'role' => User::ROLE_SELLER,
+        ]);
+    }
+
+    public function test_registration_rejects_same_phone_for_same_role(): void
+    {
+        $whatsappOtpSender = Mockery::mock(WhatsappOtpSender::class);
+        $whatsappOtpSender
+            ->shouldReceive('send')
+            ->once()
+            ->withArgs(fn (string $phone, string $otp): bool => $phone === '+6281234567890' && preg_match('/^\d{6}$/', $otp) === 1);
+
+        $this->app->instance(WhatsappOtpSender::class, $whatsappOtpSender);
+
+        $this->postJson('/api/users/buyer/register', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+        ])->assertCreated();
+
+        $this->postJson('/api/users/buyer/register', [
+            'type' => 'phone',
+            'phone' => '+6281234567890',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['phone']);
+    }
+
     public function test_user_can_login_with_email_and_receive_otp_notification(): void
     {
         Notification::fake();

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -40,13 +41,13 @@ class CreateSellerTenantRequest extends FormRequest
                 'string',
                 'max:20',
                 'regex:/^\+?[0-9]{8,15}$/',
-                Rule::unique('users', 'phone')->ignore($this->user()?->id),
+                Rule::unique('users', 'phone')->where('role', User::ROLE_SELLER)->ignore($this->user()?->id),
             ],
             'owner_email' => [
                 'nullable',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($this->user()?->id),
+                Rule::unique('users', 'email')->where('role', User::ROLE_SELLER)->ignore($this->user()?->id),
             ],
             'agent_code' => [
                 'required',

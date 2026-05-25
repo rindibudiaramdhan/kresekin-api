@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Models\HousingArea;
 
 class UpdateUserProfileRequest extends FormRequest
 {
@@ -16,6 +15,7 @@ class UpdateUserProfileRequest extends FormRequest
     public function rules(): array
     {
         $userId = $this->user()?->id;
+        $role = $this->user()?->role;
 
         return [
             'name' => ['required', 'string', 'max:255'],
@@ -23,14 +23,14 @@ class UpdateUserProfileRequest extends FormRequest
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($userId),
+                Rule::unique('users', 'email')->where('role', $role)->ignore($userId),
             ],
             'phone' => [
                 'nullable',
                 'string',
                 'max:20',
                 'regex:/^\+?[0-9]{8,15}$/',
-                Rule::unique('users', 'phone')->ignore($userId),
+                Rule::unique('users', 'phone')->where('role', $role)->ignore($userId),
             ],
             'housing_area_id' => ['required', 'integer', Rule::exists('housing_areas', 'id')],
             'address' => ['required', 'string', 'max:1000'],

@@ -25,7 +25,7 @@ class AgentTenantRequest extends FormRequest
                 'required_if:owner_mode,existing',
             ],
             'seller_name' => ['nullable', 'string', 'max:255', 'required_if:owner_mode,new'],
-            'seller_email' => ['nullable', 'email', 'max:255', 'required_if:owner_mode,new', Rule::unique('users', 'email')],
+            'seller_email' => ['nullable', 'email', 'max:255', 'required_if:owner_mode,new', Rule::unique('users', 'email')->where('role', User::ROLE_SELLER)],
             'seller_password' => ['nullable', 'string', 'min:8', 'required_if:owner_mode,new'],
             'name' => ['required', 'string', 'max:255'],
             'profile_picture_url' => ['nullable', 'url', 'max:255'],
