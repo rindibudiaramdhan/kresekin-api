@@ -24,6 +24,7 @@ class UpdateSellerProductRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', Rule::in(Tenant::CATEGORIES)],
             'image' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'image_path' => ['nullable', 'string', 'max:255', 'starts_with:products/'],
             'image_url' => ['nullable', 'url', 'max:255'],
             'price' => ['required', 'integer', 'min:0'],
             'original_price' => ['nullable', 'integer', 'min:0', 'gte:price'],

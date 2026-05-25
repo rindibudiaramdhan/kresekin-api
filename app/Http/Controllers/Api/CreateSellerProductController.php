@@ -21,6 +21,8 @@ class CreateSellerProductController extends Controller
             $imageStorage = new ProductImageStorage;
             $validated['image_path'] = $imageStorage->store($request->file('image'));
             $validated['image_url'] = $imageStorage->url($validated['image_path']);
+        } elseif (! empty($validated['image_path'])) {
+            $validated['image_url'] = (new ProductImageStorage)->url($validated['image_path']);
         }
 
         $product = Product::query()->create($validated);

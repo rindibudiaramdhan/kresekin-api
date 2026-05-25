@@ -277,6 +277,58 @@ class SellerApiTest extends TestCase
         Storage::disk('local')->assertExists($product->image_path);
     }
 
+    public function test_seller_can_upload_product_image_separately_and_create_product_with_image_path(): void
+    {
+        Storage::fake('local');
+
+        [$seller, $token] = $this->createAuthenticatedUser('seller-upload-path@example.com', '+6281200000044', 'seller-upload-path-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Upload Path Product',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $uploadResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->post('/api/seller/product-images', [
+                'image' => UploadedFile::fake()->image('wortel.png'),
+            ]);
+
+        $uploadResponse
+            ->assertCreated()
+            ->assertJsonPath('message', 'Gambar produk berhasil diupload.');
+
+        $imagePath = $uploadResponse->json('data.image_path');
+
+        Storage::disk('local')->assertExists($imagePath);
+
+        $createResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/seller/products', [
+                'tenant_id' => $tenant->id,
+                'name' => 'Wortel Lokal',
+                'category' => Tenant::CATEGORY_VEGETABLES,
+                'image_path' => $imagePath,
+                'price' => 10000,
+                'stock' => 50,
+                'unit' => 'kilogram',
+            ]);
+
+        $createResponse
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'Wortel Lokal')
+            ->assertJsonPath('data.unit', 'kilogram');
+
+        $this->assertDatabaseHas('products', [
+            'tenant_id' => $tenant->id,
+            'name' => 'Wortel Lokal',
+            'image_path' => $imagePath,
+            'stock' => 50,
+            'unit' => 'kilogram',
+        ]);
+    }
+
     public function test_seller_can_list_and_view_own_orders(): void
     {
         [$seller, $token] = $this->createAuthenticatedUser('seller-order@example.com', '+6281200000007', 'seller-order-token', User::ROLE_SELLER);

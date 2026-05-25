@@ -32,6 +32,12 @@ class UpdateSellerProductController extends Controller
             $imageStorage->delete($product->image_path);
             $validated['image_path'] = $imageStorage->store($request->file('image'));
             $validated['image_url'] = $imageStorage->url($validated['image_path']);
+        } elseif ($request->filled('image_path')) {
+            if ($product->image_path !== $validated['image_path']) {
+                $imageStorage->delete($product->image_path);
+            }
+
+            $validated['image_url'] = $imageStorage->url($validated['image_path']);
         } elseif ($request->has('image_url')) {
             $imageStorage->delete($product->image_path);
             $validated['image_path'] = null;
