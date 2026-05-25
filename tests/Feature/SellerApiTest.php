@@ -123,6 +123,41 @@ class SellerApiTest extends TestCase
             ->assertJsonValidationErrors(['housing_area_ids']);
     }
 
+    public function test_seller_can_create_tenant_without_agent_code(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-no-agent@example.com', '+6281200000042', 'seller-no-agent-token', User::ROLE_SELLER);
+        $category = ProductCategory::query()->create([
+            'name' => Tenant::CATEGORY_GROCERIES,
+            'slug' => 'sembako-no-agent',
+            'image_path' => 'images/ic_groceries_category.svg',
+        ]);
+        $housingArea = HousingArea::query()->create([
+            'name' => 'Komp Tanpa Agent',
+            'code' => 'AREA-NO-AGENT',
+            'village_code' => '3273141003',
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/seller/tenants', [
+                'owner_name' => 'Pemilik Tanpa Agent',
+                'name' => 'Tenant Tanpa Agent',
+                'category_id' => $category->id,
+                'location' => 'Jl Mandiri No 1',
+                'housing_area_ids' => [$housingArea->id],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.owner_user_id', $seller->id)
+            ->assertJsonPath('data.agent_user_id', null)
+            ->assertJsonPath('data.agent_code', null)
+            ->assertJsonPath('data.name', 'Tenant Tanpa Agent');
+
+        $this->assertDatabaseHas('tenants', [
+            'owner_user_id' => $seller->id,
+            'agent_user_id' => null,
+            'name' => 'Tenant Tanpa Agent',
+        ]);
+    }
+
     public function test_seller_can_create_and_list_own_product(): void
     {
         [$seller, $token] = $this->createAuthenticatedUser('seller2@example.com', '+6281200000002', 'seller-token-2', User::ROLE_SELLER);

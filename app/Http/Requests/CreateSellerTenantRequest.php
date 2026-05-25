@@ -50,7 +50,7 @@ class CreateSellerTenantRequest extends FormRequest
                 Rule::unique('users', 'email')->where('role', User::ROLE_SELLER)->ignore($this->user()?->id),
             ],
             'agent_code' => [
-                'required',
+                'nullable',
                 'string',
                 Rule::exists('users', 'agent_code')->where('role', 'agent'),
             ],

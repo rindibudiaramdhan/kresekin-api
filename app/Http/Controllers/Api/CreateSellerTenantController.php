@@ -16,10 +16,12 @@ class CreateSellerTenantController extends Controller
     {
         $validated = $request->validated();
         $seller = $request->user();
-        $agent = User::query()
-            ->where('role', User::ROLE_AGENT)
-            ->where('agent_code', $validated['agent_code'])
-            ->firstOrFail();
+        $agent = isset($validated['agent_code'])
+            ? User::query()
+                ->where('role', User::ROLE_AGENT)
+                ->where('agent_code', $validated['agent_code'])
+                ->firstOrFail()
+            : null;
         $category = ProductCategory::query()->findOrFail($validated['category_id']);
 
         $seller->forceFill([
@@ -30,7 +32,7 @@ class CreateSellerTenantController extends Controller
 
         $tenant = Tenant::query()->create([
             'owner_user_id' => $seller->id,
-            'agent_user_id' => $agent->id,
+            'agent_user_id' => $agent?->id,
             'name' => $validated['name'],
             'category' => $category->name,
             'product_category_id' => $category->id,
