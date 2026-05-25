@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
@@ -12,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class GetSellerDashboardController extends Controller
 {
@@ -282,6 +284,7 @@ class GetSellerDashboardController extends Controller
                 DB::raw('SUM(transaction_items.quantity) as sold_quantity'),
                 DB::raw('SUM(transaction_items.line_total) as revenue'),
                 DB::raw('MAX(products.image_url) as image_url'),
+                DB::raw('MAX(products.image_path) as image_path'),
             ])
             ->leftJoin('products', 'products.id', '=', 'transaction_items.product_id')
             ->whereHas('tenant', fn (Builder $query) => $query->where('owner_user_id', $sellerId))
@@ -297,7 +300,9 @@ class GetSellerDashboardController extends Controller
                 'rank' => $index + 1,
                 'product_id' => $product->product_id,
                 'name' => $product->product_name,
-                'image_url' => $product->image_url,
+                'image_url' => $product->image_path
+                    ? Storage::disk(Product::imageDisk())->url($product->image_path)
+                    : $product->image_url,
                 'sold_quantity' => (int) $product->sold_quantity,
                 'sold_quantity_label' => ((int) $product->sold_quantity).' terjual hari ini',
                 'revenue' => (int) $product->revenue,

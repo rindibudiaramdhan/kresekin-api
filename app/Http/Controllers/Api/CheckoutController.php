@@ -7,6 +7,7 @@ use App\Http\Requests\CheckoutRequest;
 use App\Models\CartItem;
 use App\Models\PaymentMethod;
 use App\Models\PaymentMethodOption;
+use App\Models\Product;
 use App\Models\PromoCode;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
@@ -86,15 +87,35 @@ class CheckoutController extends Controller
             ]);
 
             foreach ($cartItems as $cartItem) {
+                $product = Product::query()
+                    ->lockForUpdate()
+                    ->find($cartItem->product_id);
+
+                if (! $product?->is_active) {
+                    throw new HttpResponseException(response()->json([
+                        'message' => 'Produk tidak tersedia.',
+                    ], 422));
+                }
+
+                if (! $product->hasEnoughStock($cartItem->quantity)) {
+                    throw new HttpResponseException(response()->json([
+                        'message' => 'Stok produk tidak mencukupi.',
+                    ], 422));
+                }
+
                 TransactionItem::query()->create([
                     'transaction_id' => $transaction->id,
                     'product_id' => $cartItem->product_id,
-                    'tenant_id' => $cartItem->product->tenant_id,
-                    'product_name' => $cartItem->product->name,
+                    'tenant_id' => $product->tenant_id,
+                    'product_name' => $product->name,
                     'quantity' => $cartItem->quantity,
-                    'unit_price' => $cartItem->product->price,
-                    'line_total' => $cartItem->quantity * $cartItem->product->price,
+                    'unit_price' => $product->price,
+                    'line_total' => $cartItem->quantity * $product->price,
                 ]);
+
+                if ($product->stock !== null) {
+                    $product->decrement('stock', $cartItem->quantity);
+                }
             }
 
             TransactionStatusHistory::query()->create([

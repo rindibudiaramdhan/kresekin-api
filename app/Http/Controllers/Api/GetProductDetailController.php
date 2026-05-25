@@ -13,7 +13,10 @@ class GetProductDetailController extends Controller
 {
     public function __invoke(Request $request, int $id): JsonResponse
     {
-        $product = Product::query()->with('tenant')->find($id);
+        $product = Product::query()
+            ->with('tenant')
+            ->where('is_active', true)
+            ->find($id);
 
         if (! $product) {
             return response()->json([
@@ -46,12 +49,16 @@ class GetProductDetailController extends Controller
                 'category_icon_key' => $categoryUiMetadata['icon_key'],
                 'category_background_color' => $categoryUiMetadata['background_color'],
                 'category_icon_color' => $categoryUiMetadata['icon_color'],
-                'image_url' => $product->image_url,
+                'image_url' => $product->publicImageUrl(),
                 'price' => $product->price,
                 'price_label' => $this->moneyLabel($product->price),
                 'original_price' => $product->original_price,
                 'original_price_label' => $product->original_price ? $this->moneyLabel($product->original_price) : null,
                 'discount_percentage' => $this->discountPercentage($product->price, $product->original_price),
+                'stock' => $product->stock,
+                'unit' => $product->unit,
+                'minimum_stock' => $product->minimum_stock,
+                'is_low_stock' => $product->isLowStock(),
                 'weight_label' => $product->weight_label,
                 'description' => $product->description,
                 'delivery_estimate' => $product->delivery_estimate,

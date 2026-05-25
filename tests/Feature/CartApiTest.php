@@ -75,6 +75,38 @@ class CartApiTest extends TestCase
         ]);
     }
 
+    public function test_authenticated_user_cannot_add_inactive_product_to_cart(): void
+    {
+        [, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct(['is_active' => false]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 1,
+            ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Produk tidak tersedia.');
+    }
+
+    public function test_authenticated_user_cannot_add_more_than_available_stock_to_cart(): void
+    {
+        [, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct(['stock' => 2]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 3,
+            ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Stok produk tidak mencukupi.');
+    }
+
     public function test_authenticated_user_can_get_product_detail(): void
     {
         [, $token] = $this->createAuthenticatedUser();
@@ -306,6 +338,10 @@ class CartApiTest extends TestCase
             'image_url' => 'https://example.com/pakcoy.png',
             'price' => 9999,
             'original_price' => 15000,
+            'stock' => 100,
+            'unit' => 'ikat',
+            'minimum_stock' => 5,
+            'is_active' => true,
             'weight_label' => '500gr',
             'description' => 'Produk segar.',
             'delivery_estimate' => '1-2 jam delivery',

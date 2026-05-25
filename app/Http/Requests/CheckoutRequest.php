@@ -76,6 +76,20 @@ class CheckoutRequest extends FormRequest
                 ], Response::HTTP_UNPROCESSABLE_ENTITY));
             }
 
+            foreach ($this->cartItems() as $cartItem) {
+                if (! $cartItem->product?->is_active) {
+                    throw new HttpResponseException(response()->json([
+                        'message' => 'Produk tidak tersedia.',
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY));
+                }
+
+                if (! $cartItem->product->hasEnoughStock($cartItem->quantity)) {
+                    throw new HttpResponseException(response()->json([
+                        'message' => 'Stok produk tidak mencukupi.',
+                    ], Response::HTTP_UNPROCESSABLE_ENTITY));
+                }
+            }
+
             $paymentMethod = $this->paymentMethod();
             $optionCode = $this->input('payment_method_option_code');
 

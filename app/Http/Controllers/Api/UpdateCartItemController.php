@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SetCartItemQuantityRequest;
 use App\Models\CartItem;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class UpdateCartItemController extends Controller
@@ -21,6 +20,20 @@ class UpdateCartItemController extends Controller
             return response()->json([
                 'message' => 'Item keranjang tidak ditemukan.',
             ], Response::HTTP_NOT_FOUND);
+        }
+
+        $cartItem->load('product');
+
+        if (! $cartItem->product?->is_active) {
+            return response()->json([
+                'message' => 'Produk tidak tersedia.',
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        if (! $cartItem->product->hasEnoughStock($request->validated()['quantity'])) {
+            return response()->json([
+                'message' => 'Stok produk tidak mencukupi.',
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $cartItem->forceFill([

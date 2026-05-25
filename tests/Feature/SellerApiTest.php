@@ -14,6 +14,8 @@ use App\Models\User;
 use App\Models\UserSessionToken;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class SellerApiTest extends TestCase
@@ -178,6 +180,10 @@ class SellerApiTest extends TestCase
                 'image_url' => 'https://example.com/bayam.png',
                 'price' => 7000,
                 'original_price' => 9000,
+                'stock' => 100,
+                'unit' => 'ikat',
+                'minimum_stock' => 5,
+                'is_active' => true,
                 'weight_label' => '250gr',
                 'description' => 'Sayur segar.',
                 'delivery_estimate' => 'Hari ini',
@@ -186,7 +192,11 @@ class SellerApiTest extends TestCase
         $createResponse
             ->assertCreated()
             ->assertJsonPath('data.tenant_id', $tenant->id)
-            ->assertJsonPath('data.name', 'Bayam');
+            ->assertJsonPath('data.name', 'Bayam')
+            ->assertJsonPath('data.stock', 100)
+            ->assertJsonPath('data.unit', 'ikat')
+            ->assertJsonPath('data.minimum_stock', 5)
+            ->assertJsonPath('data.is_active', true);
 
         $listResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/products');
@@ -194,7 +204,9 @@ class SellerApiTest extends TestCase
         $listResponse
             ->assertOk()
             ->assertJsonPath('data.0.tenant_id', $tenant->id)
-            ->assertJsonPath('data.0.name', 'Bayam');
+            ->assertJsonPath('data.0.name', 'Bayam')
+            ->assertJsonPath('data.0.stock', 100)
+            ->assertJsonPath('data.0.unit', 'ikat');
     }
 
     public function test_seller_cannot_create_product_for_other_sellers_tenant(): void
@@ -216,11 +228,53 @@ class SellerApiTest extends TestCase
                 'name' => 'Bayam',
                 'category' => Tenant::CATEGORY_VEGETABLES,
                 'price' => 7000,
+                'stock' => 10,
+                'unit' => 'ikat',
             ]);
 
         $response
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['tenant_id']);
+    }
+
+    public function test_seller_can_upload_product_image_when_creating_product(): void
+    {
+        Storage::fake('local');
+
+        [$seller, $token] = $this->createAuthenticatedUser('seller-upload@example.com', '+6281200000043', 'seller-upload-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Upload Product',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->post('/api/seller/products', [
+                'tenant_id' => $tenant->id,
+                'name' => 'Pakcoy Lokal',
+                'category' => Tenant::CATEGORY_VEGETABLES,
+                'image' => UploadedFile::fake()->image('pakcoy.jpg'),
+                'price' => 9999,
+                'original_price' => 12000,
+                'stock' => 100,
+                'unit' => 'ikat',
+                'minimum_stock' => 5,
+                'is_active' => true,
+            ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'Pakcoy Lokal')
+            ->assertJsonPath('data.stock', 100)
+            ->assertJsonPath('data.unit', 'ikat');
+
+        $product = Product::query()->where('name', 'Pakcoy Lokal')->firstOrFail();
+
+        $this->assertNotNull($product->image_path);
+        Storage::disk('local')->assertExists($product->image_path);
     }
 
     public function test_seller_can_list_and_view_own_orders(): void

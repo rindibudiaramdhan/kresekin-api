@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Product;
-use App\Models\ProductCategory;
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
 
@@ -95,6 +94,10 @@ class TenantSeeder extends Seeder
                         'image_url' => $productData['image_url'],
                         'price' => $productData['price'],
                         'original_price' => $productData['original_price'] ?? null,
+                        'stock' => $productData['stock'] ?? 100,
+                        'unit' => $productData['unit'] ?? 'pcs',
+                        'minimum_stock' => $productData['minimum_stock'] ?? 1,
+                        'is_active' => $productData['is_active'] ?? true,
                         'weight_label' => $productData['weight_label'] ?? null,
                         'description' => $productData['description'] ?? null,
                         'delivery_estimate' => $productData['delivery_estimate'] ?? null,

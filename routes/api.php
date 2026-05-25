@@ -134,6 +134,7 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
     Route::post('/products', CreateSellerProductController::class);
     Route::get('/products/{id}', GetSellerProductDetailController::class);
     Route::put('/products/{id}', UpdateSellerProductController::class);
+    Route::post('/products/{id}', UpdateSellerProductController::class);
     Route::delete('/products/{id}', DeleteSellerProductController::class);
 });
 

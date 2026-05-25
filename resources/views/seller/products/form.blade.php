@@ -74,6 +74,32 @@
         </div>
 
         <div class="row g-3">
+            <div class="col-md-3">
+                <label for="stock" class="form-label">Stok</label>
+                <input class="form-control" id="stock" name="stock" type="number" min="0" value="{{ old('stock', $product->stock) }}">
+                @error('stock')<div class="text-danger small">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-3">
+                <label for="unit" class="form-label">Satuan</label>
+                <input class="form-control" id="unit" name="unit" value="{{ old('unit', $product->unit) }}">
+                @error('unit')<div class="text-danger small">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-3">
+                <label for="minimum_stock" class="form-label">Stok Minimum</label>
+                <input class="form-control" id="minimum_stock" name="minimum_stock" type="number" min="0" value="{{ old('minimum_stock', $product->minimum_stock ?? 1) }}">
+                @error('minimum_stock')<div class="text-danger small">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <div class="form-check">
+                    <input type="hidden" name="is_active" value="0">
+                    <input class="form-check-input" id="is_active" name="is_active" type="checkbox" value="1" @checked(old('is_active', $product->exists ? $product->is_active : true))>
+                    <label for="is_active" class="form-check-label">Aktif</label>
+                </div>
+                @error('is_active')<div class="text-danger small">{{ $message }}</div>@enderror
+            </div>
+        </div>
+
+        <div class="row g-3">
             <div class="col-md-6">
                 <label for="delivery_estimate" class="form-label">Estimasi Pengiriman</label>
                 <input class="form-control" id="delivery_estimate" name="delivery_estimate" value="{{ old('delivery_estimate', $product->delivery_estimate) }}">

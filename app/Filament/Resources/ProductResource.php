@@ -47,7 +47,7 @@ class ProductResource extends Resource
                     ->options(array_combine(Tenant::CATEGORIES, Tenant::CATEGORIES))
                     ->required()
                     ->searchable(),
-                Forms\Components\FileUpload::make('image_url')
+                Forms\Components\FileUpload::make('image_path')
                     ->label('Image')
                     ->image()
                     ->directory('products')
@@ -60,6 +60,18 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('original_price')
                     ->numeric()
                     ->prefix('Rp'),
+                Forms\Components\TextInput::make('stock')
+                    ->numeric()
+                    ->minValue(0),
+                Forms\Components\TextInput::make('unit')
+                    ->maxLength(50),
+                Forms\Components\TextInput::make('minimum_stock')
+                    ->numeric()
+                    ->minValue(0)
+                    ->default(1),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Aktif')
+                    ->default(true),
                 Forms\Components\TextInput::make('weight_label')
                     ->maxLength(100),
                 Forms\Components\Textarea::make('description')
@@ -90,6 +102,12 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('original_price')
                     ->money('IDR', true)
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('stock')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('unit')
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime('d M Y H:i')
                     ->sortable(),

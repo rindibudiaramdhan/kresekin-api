@@ -154,6 +154,7 @@ class CheckoutApiTest extends TestCase
             'user_id' => $user->id,
             'delivery_method_code' => null,
         ]);
+        $this->assertSame(98, $product->fresh()->stock);
     }
 
     public function test_checkout_can_apply_optional_promo_code(): void
@@ -583,6 +584,10 @@ class CheckoutApiTest extends TestCase
             'image_url' => 'https://example.com/pakcoy.png',
             'price' => 9999,
             'original_price' => 15000,
+            'stock' => 100,
+            'unit' => 'ikat',
+            'minimum_stock' => 5,
+            'is_active' => true,
             'weight_label' => '500gr',
             'description' => 'Produk segar.',
             'delivery_estimate' => '1-2 jam delivery',
