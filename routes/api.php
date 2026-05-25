@@ -94,6 +94,7 @@ Route::get('/indonesia/villages', GetIndonesiaRegionListController::class)->defa
 Route::get('/users/profile', GetUserProfileController::class)->middleware('session.token');
 Route::put('/users/profile', UpdateUserProfileController::class)->middleware('session.token');
 Route::get('/housing-areas', GetHousingAreaListController::class)->middleware('session.token');
+Route::get('/product-categories', GetProductCategoriesController::class)->middleware('session.token');
 
 Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::post('/checkout', CheckoutController::class);
@@ -108,7 +109,6 @@ Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::delete('/cart/items/{id}', DeleteCartItemController::class);
     Route::get('/products/{id}', GetProductDetailController::class);
     Route::get('/products', GetProductListController::class);
-    Route::get('/product-categories', GetProductCategoriesController::class);
     Route::get('/tenants/categories', GetTenantCategoriesController::class);
     Route::get('/tenants', GetBuyerTenantListController::class);
     Route::get('/users/transactions', GetUserTransactionHistoryController::class);
@@ -135,7 +135,6 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
     Route::get('/products/{id}', GetSellerProductDetailController::class);
     Route::put('/products/{id}', UpdateSellerProductController::class);
     Route::delete('/products/{id}', DeleteSellerProductController::class);
-    Route::get('/product-categories', GetProductCategoriesController::class);
 });
 
 Route::middleware(['session.token', 'role:agent'])->prefix('agent')->group(function (): void {
