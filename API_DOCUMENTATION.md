@@ -7,6 +7,7 @@ Dokumentasi ini dibuat dari route, controller, request validation, model, dan fe
 - Base URL lokal default: `http://127.0.0.1:8000`
 - Prefix API: `/api`
 - Format body: `application/json`, kecuali upload gambar memakai `multipart/form-data`
+- Semua field identifier entity aplikasi memakai UUID string, misalnya `id`, `user_id`, `tenant_id`, `product_id`, `transaction_id`, `housing_area_id`, `category_id`, dan path parameter seperti `{id}` atau `{transactionId}`. Field numerik bisnis seperti `quantity`, `price`, `amount`, `sort_order`, `limit`, dan `page` tetap integer.
 - Format response umum:
 
 ```json
@@ -253,7 +254,7 @@ Body:
 - `name` wajib, max 255
 - `email` wajib, email, unik per role
 - `phone` opsional, regex `+?[0-9]{8,15}`, unik per role
-- `housing_area_id` wajib, harus ada di `housing_areas`
+- `housing_area_id` wajib UUID, harus ada di `housing_areas`
 - `address` wajib, max 1000
 - `landmark` opsional, max 255
 
@@ -261,7 +262,7 @@ Body:
 curl -X PUT http://127.0.0.1:8000/api/users/profile \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Budi","email":"budi@example.com","phone":"+6281234567890","housing_area_id":1,"address":"Jl. Melati No. 1","landmark":"Dekat masjid"}'
+  -d '{"name":"Budi","email":"budi@example.com","phone":"+6281234567890","housing_area_id":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","address":"Jl. Melati No. 1","landmark":"Dekat masjid"}'
 ```
 
 ### GET `/api/housing-areas`
@@ -356,7 +357,7 @@ Query opsional:
 - `limit`: 1 sampai 100, default 10
 - `page`: halaman pagination Laravel
 - `category`: slug kategori produk
-- `tenant_id`: ID tenant
+- `tenant_id`: UUID tenant
 - `name`: pencarian nama produk
 - `is_promo`: `true`, `false`, `1`, atau `0`
 
@@ -370,7 +371,7 @@ curl "http://127.0.0.1:8000/api/products?limit=10&category=sembako&is_promo=true
 Mengambil detail produk aktif.
 
 ```bash
-curl http://127.0.0.1:8000/api/products/1 \
+curl http://127.0.0.1:8000/api/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
   -H "Authorization: Bearer $BUYER_TOKEN"
 ```
 
@@ -428,14 +429,14 @@ Menambahkan produk ke cart. Jika produk sudah ada di cart, quantity akan di-upse
 
 Body:
 
-- `product_id` wajib, harus ada di `products`
+- `product_id` wajib UUID, harus ada di `products`
 - `quantity` wajib, integer 1 sampai 999
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/cart/items \
   -H "Authorization: Bearer $BUYER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"product_id":1,"quantity":2}'
+  -d '{"product_id":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","quantity":2}'
 ```
 
 ### PATCH `/api/cart/items/{id}`
@@ -447,7 +448,7 @@ Body:
 - `quantity` wajib, integer 1 sampai 999
 
 ```bash
-curl -X PATCH http://127.0.0.1:8000/api/cart/items/1 \
+curl -X PATCH http://127.0.0.1:8000/api/cart/items/cccccccc-cccc-4ccc-8ccc-cccccccccccc \
   -H "Authorization: Bearer $BUYER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"quantity":3}'
@@ -458,7 +459,7 @@ curl -X PATCH http://127.0.0.1:8000/api/cart/items/1 \
 Menghapus item cart milik user aktif.
 
 ```bash
-curl -X DELETE http://127.0.0.1:8000/api/cart/items/1 \
+curl -X DELETE http://127.0.0.1:8000/api/cart/items/cccccccc-cccc-4ccc-8ccc-cccccccccccc \
   -H "Authorization: Bearer $BUYER_TOKEN"
 ```
 
@@ -518,7 +519,7 @@ curl http://127.0.0.1:8000/api/users/transactions \
 Mengambil detail transaksi buyer.
 
 ```bash
-curl http://127.0.0.1:8000/api/users/transactions/1 \
+curl http://127.0.0.1:8000/api/users/transactions/dddddddd-dddd-4ddd-8ddd-dddddddddddd \
   -H "Authorization: Bearer $BUYER_TOKEN"
 ```
 
@@ -595,10 +596,10 @@ Body:
 - `agent_code` opsional, harus milik user role `agent`
 - `name` wajib
 - `profile_picture_url` opsional
-- `category_id` wajib, harus ada di `product_categories`
+- `category_id` wajib UUID, harus ada di `product_categories`
 - `category` opsional, salah satu `Tenant::CATEGORIES`
 - `location` wajib
-- `housing_area_ids` wajib array, minimal 1 maksimal 3
+- `housing_area_ids` wajib array UUID, minimal 1 maksimal 3
 - `rating` opsional, 0 sampai 5
 - `latitude` opsional, -90 sampai 90
 - `longitude` opsional, -180 sampai 180
@@ -608,7 +609,7 @@ Body:
 curl -X POST http://127.0.0.1:8000/api/seller/tenants \
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"owner_name":"Asep Pemilik","owner_phone":"081234567890","owner_email":"asep@example.com","agent_code":"KA-20265","name":"Toko Asep","category_id":1,"location":"Jl Asri Raya No 45","housing_area_ids":[1],"latitude":-6.2,"longitude":106.8,"open_time":"07:00","close_time":"21:00"}'
+  -d '{"owner_name":"Asep Pemilik","owner_phone":"081234567890","owner_email":"asep@example.com","agent_code":"KA-20265","name":"Toko Asep","category_id":"ffffffff-ffff-4fff-8fff-ffffffffffff","location":"Jl Asri Raya No 45","housing_area_ids":["eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"],"latitude":-6.2,"longitude":106.8,"open_time":"07:00","close_time":"21:00"}'
 ```
 
 ### GET `/api/seller/orders`
@@ -629,7 +630,7 @@ curl "http://127.0.0.1:8000/api/seller/orders?status_code=processing" \
 Mengambil detail order seller.
 
 ```bash
-curl http://127.0.0.1:8000/api/seller/orders/1 \
+curl http://127.0.0.1:8000/api/seller/orders/dddddddd-dddd-4ddd-8ddd-dddddddddddd \
   -H "Authorization: Bearer $SELLER_TOKEN"
 ```
 
@@ -641,11 +642,11 @@ Body:
 
 - `status_code` wajib: `accepted_by_store`, `processing`, `on_the_way`, `completed`, atau `canceled`
 - `description` opsional, max 255
-- `cancellation_reason_category_id` wajib jika status `canceled`
+- `cancellation_reason_category_id` wajib UUID jika status `canceled`
 - `cancellation_reason_text` wajib jika kategori alasan pembatalan mengizinkan free text
 
 ```bash
-curl -X PATCH http://127.0.0.1:8000/api/seller/orders/1/status \
+curl -X PATCH http://127.0.0.1:8000/api/seller/orders/dddddddd-dddd-4ddd-8ddd-dddddddddddd/status \
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"status_code":"accepted_by_store","description":"Pesanan diterima toko"}'
@@ -680,7 +681,7 @@ Membuat produk seller.
 
 Body:
 
-- `tenant_id` wajib, tenant harus milik seller aktif
+- `tenant_id` wajib UUID, tenant harus milik seller aktif
 - `name` wajib
 - `category` wajib, salah satu `Tenant::CATEGORIES`
 - salah satu dari `image`, `image_path`, atau `image_url` wajib
@@ -701,7 +702,7 @@ Body:
 curl -X POST http://127.0.0.1:8000/api/seller/products \
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"tenant_id":1,"name":"Bayam","category":"Sayur","image_url":"https://example.com/bayam.png","price":7000,"original_price":9000,"stock":100,"unit":"ikat","minimum_stock":5,"is_active":true,"weight_label":"250gr","description":"Sayur segar.","delivery_estimate":"Hari ini"}'
+  -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam","category":"Sayur","image_url":"https://example.com/bayam.png","price":7000,"original_price":9000,"stock":100,"unit":"ikat","minimum_stock":5,"is_active":true,"weight_label":"250gr","description":"Sayur segar.","delivery_estimate":"Hari ini"}'
 ```
 
 Untuk multipart:
@@ -709,7 +710,7 @@ Untuk multipart:
 ```bash
 curl -X POST http://127.0.0.1:8000/api/seller/products \
   -H "Authorization: Bearer $SELLER_TOKEN" \
-  -F "tenant_id=1" \
+  -F "tenant_id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" \
   -F "name=Bayam" \
   -F "category=Sayur" \
   -F "image=@/path/to/bayam.jpg" \
@@ -723,7 +724,7 @@ curl -X POST http://127.0.0.1:8000/api/seller/products \
 Mengambil detail produk seller.
 
 ```bash
-curl http://127.0.0.1:8000/api/seller/products/1 \
+curl http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
   -H "Authorization: Bearer $SELLER_TOKEN"
 ```
 
@@ -732,10 +733,10 @@ curl http://127.0.0.1:8000/api/seller/products/1 \
 Mengubah produk seller. Body mirip create product, tetapi gambar opsional.
 
 ```bash
-curl -X PUT http://127.0.0.1:8000/api/seller/products/1 \
+curl -X PUT http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"tenant_id":1,"name":"Bayam Super","category":"Sayur","image_url":"https://example.com/bayam-super.png","price":8000,"original_price":10000,"stock":80,"unit":"ikat","minimum_stock":5,"is_active":true}'
+  -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam Super","category":"Sayur","image_url":"https://example.com/bayam-super.png","price":8000,"original_price":10000,"stock":80,"unit":"ikat","minimum_stock":5,"is_active":true}'
 ```
 
 ### POST `/api/seller/products/{id}`
@@ -743,9 +744,9 @@ curl -X PUT http://127.0.0.1:8000/api/seller/products/1 \
 Alias update produk seller, berguna untuk form multipart yang sulit memakai method `PUT`.
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/seller/products/1 \
+curl -X POST http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
   -H "Authorization: Bearer $SELLER_TOKEN" \
-  -F "tenant_id=1" \
+  -F "tenant_id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" \
   -F "name=Bayam Super" \
   -F "category=Sayur" \
   -F "image=@/path/to/bayam-super.jpg" \
@@ -759,7 +760,7 @@ curl -X POST http://127.0.0.1:8000/api/seller/products/1 \
 Menghapus produk seller.
 
 ```bash
-curl -X DELETE http://127.0.0.1:8000/api/seller/products/1 \
+curl -X DELETE http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
   -H "Authorization: Bearer $SELLER_TOKEN"
 ```
 
@@ -790,7 +791,7 @@ curl http://127.0.0.1:8000/api/agent/sellers \
 Mengambil detail seller dan performanya untuk agent aktif.
 
 ```bash
-curl http://127.0.0.1:8000/api/agent/sellers/1 \
+curl http://127.0.0.1:8000/api/agent/sellers/22222222-2222-4222-8222-222222222222 \
   -H "Authorization: Bearer $AGENT_TOKEN"
 ```
 
@@ -881,7 +882,7 @@ curl "http://127.0.0.1:8000/api/finance/transactions?status=pending_buyer_paymen
 Mengambil detail transaksi finance.
 
 ```bash
-curl http://127.0.0.1:8000/api/finance/transactions/1 \
+curl http://127.0.0.1:8000/api/finance/transactions/dddddddd-dddd-4ddd-8ddd-dddddddddddd \
   -H "Authorization: Bearer $FINANCE_TOKEN"
 ```
 
@@ -890,7 +891,7 @@ curl http://127.0.0.1:8000/api/finance/transactions/1 \
 Mengonfirmasi pembayaran buyer untuk transaksi.
 
 ```bash
-curl -X PATCH http://127.0.0.1:8000/api/finance/transactions/1/confirm-buyer-payment \
+curl -X PATCH http://127.0.0.1:8000/api/finance/transactions/dddddddd-dddd-4ddd-8ddd-dddddddddddd/confirm-buyer-payment \
   -H "Authorization: Bearer $FINANCE_TOKEN"
 ```
 
@@ -899,7 +900,7 @@ curl -X PATCH http://127.0.0.1:8000/api/finance/transactions/1/confirm-buyer-pay
 Menandai disbursement sebagai sudah dicairkan ke seller.
 
 ```bash
-curl -X PATCH http://127.0.0.1:8000/api/finance/disbursements/1/disburse-to-seller \
+curl -X PATCH http://127.0.0.1:8000/api/finance/disbursements/99999999-9999-4999-8999-999999999999/disburse-to-seller \
   -H "Authorization: Bearer $FINANCE_TOKEN"
 ```
 
@@ -935,7 +936,7 @@ curl -X POST http://127.0.0.1:8000/api/finance/cancellation-reason-categories \
 Mengubah kategori alasan pembatalan.
 
 ```bash
-curl -X PUT http://127.0.0.1:8000/api/finance/cancellation-reason-categories/1 \
+curl -X PUT http://127.0.0.1:8000/api/finance/cancellation-reason-categories/77777777-7777-4777-8777-777777777777 \
   -H "Authorization: Bearer $FINANCE_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"Stok tidak tersedia","sort_order":1,"allows_free_text":false,"is_active":true}'
@@ -946,7 +947,7 @@ curl -X PUT http://127.0.0.1:8000/api/finance/cancellation-reason-categories/1 \
 Menghapus kategori alasan pembatalan.
 
 ```bash
-curl -X DELETE http://127.0.0.1:8000/api/finance/cancellation-reason-categories/1 \
+curl -X DELETE http://127.0.0.1:8000/api/finance/cancellation-reason-categories/77777777-7777-4777-8777-777777777777 \
   -H "Authorization: Bearer $FINANCE_TOKEN"
 ```
 
@@ -1049,7 +1050,7 @@ Berlaku juga untuk `POST /api/agent/register` dan `POST /api/finance/register`.
 {
   "message": "Registrasi berhasil. Kode OTP telah dikirim.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "email": "buyer@example.com",
     "phone": null,
     "type": "email",
@@ -1064,7 +1065,7 @@ Berlaku juga untuk `POST /api/agent/register` dan `POST /api/finance/register`.
 {
   "message": "Registrasi berhasil. Kode OTP telah dikirim.",
   "data": {
-    "id": 3,
+    "id": "33333333-3333-4333-8333-333333333333",
     "email": "agent@example.com",
     "phone": null,
     "type": "email",
@@ -1079,7 +1080,7 @@ Berlaku juga untuk `POST /api/agent/register` dan `POST /api/finance/register`.
 {
   "message": "Registrasi berhasil. Kode OTP telah dikirim.",
   "data": {
-    "id": 4,
+    "id": "44444444-4444-4444-8444-444444444444",
     "email": "finance@example.com",
     "phone": null,
     "type": "email",
@@ -1096,7 +1097,7 @@ Berlaku juga untuk `POST /api/agent/login` dan `POST /api/finance/login`.
 {
   "message": "Kode OTP login telah dikirim.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "email": "buyer@example.com",
     "phone": null,
     "type": "email",
@@ -1111,7 +1112,7 @@ Berlaku juga untuk `POST /api/agent/login` dan `POST /api/finance/login`.
 {
   "message": "Kode OTP login telah dikirim.",
   "data": {
-    "id": 3,
+    "id": "33333333-3333-4333-8333-333333333333",
     "email": "agent@example.com",
     "phone": null,
     "type": "email",
@@ -1126,7 +1127,7 @@ Berlaku juga untuk `POST /api/agent/login` dan `POST /api/finance/login`.
 {
   "message": "Kode OTP login telah dikirim.",
   "data": {
-    "id": 4,
+    "id": "44444444-4444-4444-8444-444444444444",
     "email": "finance@example.com",
     "phone": null,
     "type": "email",
@@ -1143,7 +1144,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Kode OTP berhasil dikirim ulang.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "email": "buyer@example.com",
     "phone": null,
     "type": "email",
@@ -1158,7 +1159,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Kode OTP berhasil dikirim ulang.",
   "data": {
-    "id": 3,
+    "id": "33333333-3333-4333-8333-333333333333",
     "email": "agent@example.com",
     "phone": null,
     "type": "email",
@@ -1173,7 +1174,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Kode OTP berhasil dikirim ulang.",
   "data": {
-    "id": 4,
+    "id": "44444444-4444-4444-8444-444444444444",
     "email": "finance@example.com",
     "phone": null,
     "type": "email",
@@ -1191,7 +1192,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "token": "plain-text-session-token",
     "token_type": "Bearer",
     "user": {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "name": null,
       "email": "buyer@example.com",
       "phone": null,
@@ -1228,8 +1229,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Perangkat berhasil didaftarkan.",
   "data": {
-    "id": 1,
-    "user_id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "user_id": "11111111-1111-4111-8111-111111111111",
     "device_token": "firebase-token",
     "platform": "android",
     "device_name": "Pixel 8"
@@ -1245,12 +1246,12 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Profil user berhasil diambil.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "name": "Budi",
     "email": "budi@example.com",
     "phone": "+6281234567890",
     "role": "buyer",
-    "housing_area_id": 1,
+    "housing_area_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
     "address": "Jl. Melati No. 1",
     "landmark": "Dekat masjid"
   }
@@ -1263,11 +1264,11 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Profil user berhasil diperbarui.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "name": "Budi",
     "email": "budi@example.com",
     "phone": "+6281234567890",
-    "housing_area_id": 1,
+    "housing_area_id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
     "address": "Jl. Melati No. 1",
     "landmark": "Dekat masjid"
   }
@@ -1281,7 +1282,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Daftar area perumahan berhasil diambil.",
   "data": [
     {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "name": "Komp Setra Dago",
       "code": "AREA-001",
       "city": "Kota Bandung",
@@ -1300,7 +1301,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Daftar kategori produk berhasil diambil.",
   "data": [
     {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "name": "Sembako",
       "slug": "sembako",
       "image_url": "http://127.0.0.1:8000/images/ic_groceries_category.svg"
@@ -1436,8 +1437,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Daftar barang berhasil diambil.",
   "data": [
     {
-      "id": 1,
-      "tenant_id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
+      "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       "tenant_name": "Toko Asep",
       "name": "Bayam",
       "category": "Sayur",
@@ -1474,8 +1475,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Detail barang berhasil diambil.",
   "data": {
-    "id": 1,
-    "tenant_id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "tenant_name": "Toko Asep",
     "name": "Bayam",
     "category": "Sayur",
@@ -1497,7 +1498,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Daftar tenant berhasil diambil.",
   "data": [
     {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "name": "Toko Asep",
       "profile_picture_url": "https://example.com/toko.png",
       "rating": 4.8,
@@ -1548,7 +1549,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Keranjang berhasil diambil.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "delivery_method_code": "store_courier",
     "delivery_method": {
       "code": "store_courier",
@@ -1557,8 +1558,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     },
     "items": [
       {
-        "id": 1,
-        "product_id": 1,
+        "id": "11111111-1111-4111-8111-111111111111",
+        "product_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         "name": "Bayam",
         "quantity": 2,
         "unit_price": 7000,
@@ -1578,7 +1579,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Metode pengiriman keranjang berhasil diperbarui.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "delivery_method_code": "store_courier"
   }
 }
@@ -1590,11 +1591,11 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Barang berhasil ditambahkan ke keranjang.",
   "data": {
-    "id": 1,
-    "product_id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "product_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     "quantity": 2,
     "product": {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "name": "Bayam",
       "price": 7000,
       "stock": 100
@@ -1609,8 +1610,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Jumlah barang keranjang berhasil diperbarui.",
   "data": {
-    "id": 1,
-    "product_id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "product_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     "quantity": 3
   }
 }
@@ -1630,7 +1631,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Promo berhasil divalidasi.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "code": "HEMAT10",
     "name": "Hemat 10%",
     "description": "Diskon 10% untuk pesanan minimal Rp 10.000.",
@@ -1649,7 +1650,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Checkout berhasil.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "order_number": "INV-20260527-0001",
     "status": "menunggu pembayaran",
     "status_code": "pending_payment",
@@ -1663,7 +1664,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "promo_code": "HEMAT10",
     "items": [
       {
-        "product_id": 1,
+        "product_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         "product_name": "Bayam",
         "quantity": 2,
         "unit_price": 9999,
@@ -1681,7 +1682,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Riwayat transaksi berhasil diambil.",
   "data": [
     {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "order_number": "INV-20260527-0001",
       "status": "menunggu pembayaran",
       "status_code": "pending_payment",
@@ -1699,7 +1700,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Detail transaksi berhasil diambil.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "order_number": "INV-20260527-0001",
     "status": "menunggu pembayaran",
     "status_code": "pending_payment",
@@ -1709,8 +1710,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "total_amount": 20499,
     "items": [
       {
-        "id": 1,
-        "product_id": 1,
+        "id": "11111111-1111-4111-8111-111111111111",
+        "product_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         "product_name": "Bayam",
         "quantity": 2,
         "line_total": 19998
@@ -1734,7 +1735,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Daftar kategori alasan pembatalan berhasil diambil.",
   "data": [
     {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "name": "Stok kosong",
       "allows_free_text": false,
       "sort_order": 1
@@ -1752,7 +1753,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Dashboard seller berhasil diambil.",
   "data": {
     "profile": {
-      "tenant_id": 1,
+      "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       "tenant_name": "Toko Asep"
     },
     "revenue_today": 150000,
@@ -1772,7 +1773,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Profil dashboard seller berhasil diambil.",
   "data": {
-    "tenant_id": 1,
+    "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "tenant_name": "Toko Asep",
     "category": "Sembako",
     "is_open": true,
@@ -1841,7 +1842,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Preview order baru berhasil diambil.",
   "data": [
     {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "order_number": "INV-20260527-0001",
       "buyer_name": "Budi",
       "total_amount": 20499,
@@ -1858,7 +1859,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Produk teratas hari ini berhasil diambil.",
   "data": [
     {
-      "product_id": 1,
+      "product_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
       "product_name": "Bayam",
       "quantity_sold": 12,
       "revenue": 84000,
@@ -1875,17 +1876,17 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Daftar tenant seller berhasil diambil.",
   "data": [
     {
-      "id": 1,
-      "owner_user_id": 2,
-      "agent_user_id": 3,
+      "id": "11111111-1111-4111-8111-111111111111",
+      "owner_user_id": "22222222-2222-4222-8222-222222222222",
+      "agent_user_id": "33333333-3333-4333-8333-333333333333",
       "agent_code": "KA-20265",
       "name": "Toko Asep",
-      "category_id": 1,
+      "category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
       "category": "Sembako",
       "location": "Jl Asri Raya No 45",
       "housing_areas": [
         {
-          "id": 1,
+          "id": "11111111-1111-4111-8111-111111111111",
           "name": "Komp Setra Dago"
         }
       ],
@@ -1901,23 +1902,23 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Tenant berhasil dibuat.",
   "data": {
-    "id": 1,
-    "owner_user_id": 2,
-    "agent_user_id": 3,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "owner_user_id": "22222222-2222-4222-8222-222222222222",
+    "agent_user_id": "33333333-3333-4333-8333-333333333333",
     "agent_code": "KA-20265",
     "owner": {
-      "id": 2,
+      "id": "22222222-2222-4222-8222-222222222222",
       "name": "Asep Pemilik",
       "phone": "+6281234567890",
       "email": "asep@example.com"
     },
     "name": "Toko Asep",
-    "category_id": 1,
+    "category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
     "category": "Sembako",
     "location": "Jl Asri Raya No 45",
     "housing_areas": [
       {
-        "id": 1,
+        "id": "11111111-1111-4111-8111-111111111111",
         "name": "Komp Setra Dago"
       }
     ]
@@ -1932,10 +1933,10 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Daftar order seller berhasil diambil.",
   "data": [
     {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "order_number": "INV-20260527-0001",
       "buyer": {
-        "id": 1,
+        "id": "11111111-1111-4111-8111-111111111111",
         "name": "Budi",
         "email": "budi@example.com",
         "phone": "+6281234567890"
@@ -1970,17 +1971,17 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Detail order seller berhasil diambil.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "order_number": "INV-20260527-0001",
     "buyer": {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "name": "Budi"
     },
     "status": "menunggu pembayaran",
     "status_code": "pending_payment",
     "items": [
       {
-        "product_id": 1,
+        "product_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         "product_name": "Bayam",
         "quantity": 2,
         "line_total": 19998
@@ -1996,7 +1997,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Status order berhasil diperbarui.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "order_number": "INV-20260527-0001",
     "status": "diterima toko",
     "status_code": "accepted_by_store"
@@ -2011,8 +2012,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
   "message": "Daftar produk seller berhasil diambil.",
   "data": [
     {
-      "id": 1,
-      "tenant_id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
+      "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       "name": "Bayam",
       "category": "Sayur",
       "image_url": "https://example.com/bayam.png",
@@ -2043,8 +2044,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Produk berhasil dibuat.",
   "data": {
-    "id": 1,
-    "tenant_id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "name": "Bayam",
     "category": "Sayur",
     "price": 7000,
@@ -2064,8 +2065,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Detail produk seller berhasil diambil.",
   "data": {
-    "id": 1,
-    "tenant_id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "name": "Bayam",
     "category": "Sayur",
     "price": 7000,
@@ -2085,8 +2086,8 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Produk berhasil diperbarui.",
   "data": {
-    "id": 1,
-    "tenant_id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "name": "Bayam Super",
     "category": "Sayur",
     "price": 8000,
@@ -2103,8 +2104,8 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Produk berhasil diperbarui.",
   "data": {
-    "id": 1,
-    "tenant_id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "name": "Bayam Super",
     "category": "Sayur",
     "price": 8000,
@@ -2139,7 +2140,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
     },
     "recent_transactions": [
       {
-        "id": 1,
+        "id": "11111111-1111-4111-8111-111111111111",
         "order_number": "INV-20260527-0001",
         "total_amount": 20499
       }
@@ -2155,7 +2156,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
   "message": "Daftar seller agent berhasil diambil.",
   "data": [
     {
-      "id": 2,
+      "id": "22222222-2222-4222-8222-222222222222",
       "name": "Asep Pemilik",
       "email": "asep@example.com",
       "phone": "+6281234567890",
@@ -2173,13 +2174,13 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Detail seller agent berhasil diambil.",
   "data": {
-    "id": 2,
+    "id": "22222222-2222-4222-8222-222222222222",
     "name": "Asep Pemilik",
     "email": "asep@example.com",
     "phone": "+6281234567890",
     "tenants": [
       {
-        "id": 1,
+        "id": "11111111-1111-4111-8111-111111111111",
         "name": "Toko Asep",
         "completed_revenue": 1000000,
         "commission_amount": 50000
@@ -2195,7 +2196,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Profil agent berhasil diambil.",
   "data": {
-    "id": 3,
+    "id": "33333333-3333-4333-8333-333333333333",
     "name": "Agent Satu",
     "email": "agent@example.com",
     "phone": "+6281200000099",
@@ -2215,7 +2216,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Profil pencairan agent berhasil diperbarui.",
   "data": {
-    "id": 3,
+    "id": "33333333-3333-4333-8333-333333333333",
     "name": "Agent Satu",
     "email": "agent@example.com",
     "phone": "+6281200000099",
@@ -2234,7 +2235,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
   "message": "Daftar pencairan komisi agent berhasil diambil.",
   "data": [
     {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "amount": 50000,
       "amount_label": "Rp. 50.000",
       "status": "pending",
@@ -2251,8 +2252,8 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Permintaan pencairan komisi berhasil dibuat.",
   "data": {
-    "id": 1,
-    "agent_user_id": 3,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "agent_user_id": "33333333-3333-4333-8333-333333333333",
     "amount": 50000,
     "status": "pending",
     "note": "Pencairan mingguan"
@@ -2277,7 +2278,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
     },
     "recent_transactions": [
       {
-        "id": 1,
+        "id": "11111111-1111-4111-8111-111111111111",
         "order_number": "INV-20260527-0001",
         "total_amount": 20499
       }
@@ -2293,21 +2294,21 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
   "message": "Daftar transaksi finance berhasil diambil.",
   "data": [
     {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "unique_code": "DISB-0001",
       "status": "pending_buyer_payment",
       "amount": 19998,
       "amount_label": "Rp. 19.998",
       "store": {
-        "id": 1,
+        "id": "11111111-1111-4111-8111-111111111111",
         "name": "Toko Asep"
       },
       "seller": {
-        "id": 2,
+        "id": "22222222-2222-4222-8222-222222222222",
         "name": "Asep Pemilik"
       },
       "transaction": {
-        "id": 1,
+        "id": "11111111-1111-4111-8111-111111111111",
         "order_number": "INV-20260527-0001",
         "status_code": "pending_payment",
         "total_amount": 20499
@@ -2337,23 +2338,23 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Detail transaksi finance berhasil diambil.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "unique_code": "DISB-0001",
     "status": "pending_buyer_payment",
     "amount": 19998,
     "store": {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "name": "Toko Asep"
     },
     "seller": {
-      "id": 2,
+      "id": "22222222-2222-4222-8222-222222222222",
       "name": "Asep Pemilik",
       "bank_name": "BCA",
       "bank_account_name": "Asep Pemilik",
       "bank_account_number": "1234567890"
     },
     "transaction": {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "order_number": "INV-20260527-0001",
       "total_amount": 20499,
       "items": [
@@ -2374,8 +2375,8 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Pembayaran buyer berhasil dikonfirmasi.",
   "data": {
-    "id": 1,
-    "transaction_id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "transaction_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
     "status": "buyer_payment_confirmed",
     "buyer_payment_confirmed_at": "2026-05-27T10:00:00+07:00"
   }
@@ -2388,8 +2389,8 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Dana berhasil ditandai sudah dicairkan ke seller.",
   "data": {
-    "id": 1,
-    "transaction_id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
+    "transaction_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
     "status": "disbursed_to_seller",
     "disbursed_at": "2026-05-27T10:05:00+07:00"
   }
@@ -2403,7 +2404,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
   "message": "Daftar kategori alasan pembatalan berhasil diambil.",
   "data": [
     {
-      "id": 1,
+      "id": "11111111-1111-4111-8111-111111111111",
       "name": "Stok kosong",
       "sort_order": 1,
       "allows_free_text": false,
@@ -2419,7 +2420,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Kategori alasan pembatalan berhasil dibuat.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "name": "Stok kosong",
     "sort_order": 1,
     "allows_free_text": false,
@@ -2434,7 +2435,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 {
   "message": "Kategori alasan pembatalan berhasil diperbarui.",
   "data": {
-    "id": 1,
+    "id": "11111111-1111-4111-8111-111111111111",
     "name": "Stok tidak tersedia",
     "sort_order": 1,
     "allows_free_text": false,
