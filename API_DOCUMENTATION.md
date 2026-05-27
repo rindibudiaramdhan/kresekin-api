@@ -688,6 +688,23 @@ curl -X POST http://127.0.0.1:8000/api/seller/product-images \
 
 Membuat produk seller.
 
+Mapping input form Tambah Produk:
+
+| Input UI | Field API | Keterangan |
+|---|---|---|
+| Tambah Foto Produk | `image` / `image_path` / `image_url` | Salah satu wajib. `image` untuk multipart upload langsung. |
+| Nama Produk | `name` | Wajib. |
+| Kategori Produk | `category` | Wajib, nama kategori dari master kategori produk. |
+| Deskripsi Produk | `description` | Opsional. |
+| Harga Produk | `price` | Wajib, integer. |
+| Harga Diskon | `original_price` | Opsional. Dipakai sebagai harga coret sebelum diskon. |
+| Stok | `stock` | Wajib, integer. |
+| Satuan | `product_unit_id` | Wajib, ID dari `GET /api/product-units`. |
+| Peringatan stok minimum | `minimum_stock` | Opsional, default `1`. |
+| Status Produk | `is_active` | Opsional boolean, default `true`. |
+
+Catatan: client tidak mengirim field `unit`. Field `unit` pada response diisi otomatis dari `product_units.name` berdasarkan `product_unit_id`.
+
 Body:
 
 - `tenant_id` wajib UUID, tenant harus milik seller aktif
@@ -746,6 +763,21 @@ curl -X PUT http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bb
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam Super","category":"Sayur","image_url":"https://example.com/bayam-super.png","price":8000,"original_price":10000,"stock":80,"product_unit_id":"22222222-2222-4222-8222-222222222222","minimum_stock":5,"is_active":true}'
+```
+
+### PATCH `/api/seller/products/{id}/status`
+
+Mengubah status aktif/nonaktif produk seller tanpa perlu mengirim seluruh data produk.
+
+Body:
+
+- `is_active` wajib boolean
+
+```bash
+curl -X PATCH http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/status \
+  -H "Authorization: Bearer $SELLER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"is_active":false}'
 ```
 
 ### POST `/api/seller/products/{id}`
@@ -2065,7 +2097,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 
 ```json
 {
-  "message": "Gambar produk berhasil diunggah.",
+  "message": "Gambar produk berhasil diupload.",
   "data": {
     "image_path": "products/bayam.jpg",
     "image_url": "http://127.0.0.1:8000/storage/products/bayam.jpg"
@@ -2077,7 +2109,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 
 ```json
 {
-  "message": "Produk berhasil dibuat.",
+  "message": "Produk seller berhasil dibuat.",
   "data": {
     "id": "11111111-1111-4111-8111-111111111111",
     "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -2131,7 +2163,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 
 ```json
 {
-  "message": "Produk berhasil diperbarui.",
+  "message": "Produk seller berhasil diperbarui.",
   "data": {
     "id": "11111111-1111-4111-8111-111111111111",
     "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -2151,11 +2183,24 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 }
 ```
 
+#### PATCH `/api/seller/products/{id}/status`
+
+```json
+{
+  "message": "Status produk seller berhasil diperbarui.",
+  "data": {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "is_active": false,
+    "status_label": "Nonaktif"
+  }
+}
+```
+
 #### POST `/api/seller/products/{id}`
 
 ```json
 {
-  "message": "Produk berhasil diperbarui.",
+  "message": "Produk seller berhasil diperbarui.",
   "data": {
     "id": "11111111-1111-4111-8111-111111111111",
     "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",

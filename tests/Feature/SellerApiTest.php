@@ -606,6 +606,107 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('message', 'Order tidak ditemukan.');
     }
 
+    public function test_seller_can_update_own_product_status_only(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-product-status@example.com', '+6281200000047', 'seller-product-status-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Product Status',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $product = Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Bayam Status',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'image_url' => 'https://example.com/bayam-status.png',
+            'price' => 7000,
+            'stock' => 10,
+            'unit' => 'ikat',
+            'is_active' => true,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/products/'.$product->id.'/status', [
+                'is_active' => false,
+            ])
+            ->assertOk()
+            ->assertJsonPath('message', 'Status produk seller berhasil diperbarui.')
+            ->assertJsonPath('data.id', $product->id)
+            ->assertJsonPath('data.is_active', false)
+            ->assertJsonPath('data.status_label', 'Nonaktif');
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'is_active' => false,
+            'name' => 'Bayam Status',
+        ]);
+    }
+
+    public function test_seller_product_status_update_requires_is_active(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-product-status-validation@example.com', '+6281200000048', 'seller-product-status-validation-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Product Status Validation',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $product = Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Bayam Status Validation',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'image_url' => 'https://example.com/bayam-status-validation.png',
+            'price' => 7000,
+            'stock' => 10,
+            'unit' => 'ikat',
+            'is_active' => true,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/products/'.$product->id.'/status', [])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['is_active']);
+    }
+
+    public function test_seller_cannot_update_other_sellers_product_status(): void
+    {
+        [, $token] = $this->createAuthenticatedUser('seller-no-product-status@example.com', '+6281200000049', 'seller-no-product-status-token', User::ROLE_SELLER);
+        [$otherSeller] = $this->createAuthenticatedUser('seller-owner-product-status@example.com', '+6281200000050', 'seller-owner-product-status-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $otherSeller->id,
+            'name' => 'Other Product Status Tenant',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $product = Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Other Product Status',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'image_url' => 'https://example.com/other-product-status.png',
+            'price' => 7000,
+            'stock' => 10,
+            'unit' => 'ikat',
+            'is_active' => true,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/products/'.$product->id.'/status', [
+                'is_active' => false,
+            ])
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Produk tidak ditemukan.');
+    }
+
     public function test_buyer_cannot_access_seller_endpoints(): void
     {
         [, $token] = $this->createAuthenticatedUser('buyer@example.com', '+6281200000005', 'buyer-token', User::ROLE_BUYER);

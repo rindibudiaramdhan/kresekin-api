@@ -54,6 +54,7 @@ use App\Http\Controllers\Api\UpdateCartItemController;
 use App\Http\Controllers\Api\UpdateFinanceCancellationReasonCategoryController;
 use App\Http\Controllers\Api\UpdateSellerOrderStatusController;
 use App\Http\Controllers\Api\UpdateSellerProductController;
+use App\Http\Controllers\Api\UpdateSellerProductStatusController;
 use App\Http\Controllers\Api\UpdateUserProfileController;
 use App\Http\Controllers\Api\UploadSellerProductImageController;
 use App\Http\Controllers\Api\ValidatePromoCodeController;
@@ -137,6 +138,7 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
     Route::post('/product-images', UploadSellerProductImageController::class);
     Route::post('/products', CreateSellerProductController::class);
     Route::get('/products/{id}', GetSellerProductDetailController::class);
+    Route::patch('/products/{id}/status', UpdateSellerProductStatusController::class);
     Route::put('/products/{id}', UpdateSellerProductController::class);
     Route::post('/products/{id}', UpdateSellerProductController::class);
     Route::delete('/products/{id}', DeleteSellerProductController::class);
