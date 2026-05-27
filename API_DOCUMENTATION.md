@@ -584,6 +584,15 @@ curl http://127.0.0.1:8000/api/seller/dashboard/top-products-today \
   -H "Authorization: Bearer $SELLER_TOKEN"
 ```
 
+### GET `/api/seller/products/summary`
+
+Mengambil ringkasan produk untuk layar kelola produk seller. Produk yang sudah soft delete tidak dihitung.
+
+```bash
+curl http://127.0.0.1:8000/api/seller/products/summary \
+  -H "Authorization: Bearer $SELLER_TOKEN"
+```
+
 ### GET `/api/seller/tenants`
 
 Mengambil daftar tenant milik seller aktif.
@@ -2090,6 +2099,20 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
       "is_active": true
     }
   ]
+}
+```
+
+#### GET `/api/seller/products/summary`
+
+```json
+{
+  "message": "Ringkasan produk seller berhasil diambil.",
+  "data": {
+    "total_products": 20,
+    "active_products": 16,
+    "inactive_products": 4,
+    "low_stock_products": 10
+  }
 }
 ```
 

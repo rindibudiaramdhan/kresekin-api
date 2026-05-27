@@ -403,6 +403,93 @@ class SellerApiTest extends TestCase
         ]);
     }
 
+    public function test_seller_can_get_product_summary_counts(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-product-summary@example.com', '+6281200000052', 'seller-product-summary-token', User::ROLE_SELLER);
+        [$otherSeller] = $this->createAuthenticatedUser('other-product-summary@example.com', '+6281200000053', 'other-product-summary-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Product Summary',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $otherTenant = Tenant::query()->create([
+            'owner_user_id' => $otherSeller->id,
+            'name' => 'Other Tenant Product Summary',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Produk Aktif Aman',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'price' => 7000,
+            'stock' => 20,
+            'unit' => 'ikat',
+            'minimum_stock' => 5,
+            'is_active' => true,
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Produk Aktif Stok Sedikit',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'price' => 7000,
+            'stock' => 5,
+            'unit' => 'ikat',
+            'minimum_stock' => 5,
+            'is_active' => true,
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Produk Nonaktif Stok Sedikit',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'price' => 7000,
+            'stock' => 0,
+            'unit' => 'ikat',
+            'minimum_stock' => 1,
+            'is_active' => false,
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $otherTenant->id,
+            'name' => 'Produk Seller Lain',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'price' => 7000,
+            'stock' => 0,
+            'unit' => 'ikat',
+            'minimum_stock' => 1,
+            'is_active' => false,
+        ]);
+
+        $deletedProduct = Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Produk Terhapus',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'price' => 7000,
+            'stock' => 0,
+            'unit' => 'ikat',
+            'minimum_stock' => 1,
+            'is_active' => false,
+        ]);
+        $deletedProduct->delete();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/products/summary')
+            ->assertOk()
+            ->assertJsonPath('message', 'Ringkasan produk seller berhasil diambil.')
+            ->assertJsonPath('data.total_products', 3)
+            ->assertJsonPath('data.active_products', 2)
+            ->assertJsonPath('data.inactive_products', 1)
+            ->assertJsonPath('data.low_stock_products', 2);
+    }
+
     public function test_seller_can_list_and_view_own_orders(): void
     {
         [$seller, $token] = $this->createAuthenticatedUser('seller-order@example.com', '+6281200000007', 'seller-order-token', User::ROLE_SELLER);

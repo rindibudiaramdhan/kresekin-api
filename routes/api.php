@@ -37,6 +37,7 @@ use App\Http\Controllers\Api\GetSellerOrderDetailController;
 use App\Http\Controllers\Api\GetSellerOrderListController;
 use App\Http\Controllers\Api\GetSellerProductDetailController;
 use App\Http\Controllers\Api\GetSellerProductListController;
+use App\Http\Controllers\Api\GetSellerProductSummaryController;
 use App\Http\Controllers\Api\GetSellerTenantListController;
 use App\Http\Controllers\Api\GetTenantCategoriesController;
 use App\Http\Controllers\Api\GetUserProfileController;
@@ -135,6 +136,7 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
     Route::get('/orders/{id}', GetSellerOrderDetailController::class);
     Route::patch('/orders/{id}/status', UpdateSellerOrderStatusController::class);
     Route::get('/products', GetSellerProductListController::class);
+    Route::get('/products/summary', GetSellerProductSummaryController::class);
     Route::post('/product-images', UploadSellerProductImageController::class);
     Route::post('/products', CreateSellerProductController::class);
     Route::get('/products/{id}', GetSellerProductDetailController::class);
