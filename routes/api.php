@@ -135,6 +135,7 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
     Route::get('/orders', GetSellerOrderListController::class);
     Route::get('/orders/{id}', GetSellerOrderDetailController::class);
     Route::patch('/orders/{id}/status', UpdateSellerOrderStatusController::class);
+    Route::get('/cancellation-reason-categories', GetCancellationReasonCategoryListController::class);
     Route::get('/products', GetSellerProductListController::class);
     Route::get('/products/summary', GetSellerProductSummaryController::class);
     Route::post('/product-images', UploadSellerProductImageController::class);

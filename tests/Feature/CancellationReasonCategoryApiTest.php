@@ -36,6 +36,21 @@ class CancellationReasonCategoryApiTest extends TestCase
         $this->assertFalse(collect($response->json('data'))->contains('name', 'Tidak Jadi Belanja'));
     }
 
+    public function test_seller_can_get_active_cancellation_reason_categories_for_rejecting_orders(): void
+    {
+        [, $token] = $this->createAuthenticatedUser('seller-cancel-list@example.com', '+6281500000005', 'seller-cancel-list-token', User::ROLE_SELLER);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/cancellation-reason-categories');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Salah Pesan / Salah Produk')
+            ->assertJsonPath('data.3.name', CancellationReasonCategory::OTHER_REASON_NAME)
+            ->assertJsonPath('data.3.allows_free_text', true)
+            ->assertJsonPath('data.3.is_other_reason', true);
+    }
+
     public function test_finance_can_manage_cancellation_reason_categories(): void
     {
         [, $token] = $this->createAuthenticatedUser('finance-cancel@example.com', '+6281500000002', 'finance-cancel-token', User::ROLE_FINANCE);

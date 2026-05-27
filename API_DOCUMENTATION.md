@@ -652,6 +652,15 @@ curl http://127.0.0.1:8000/api/seller/orders/dddddddd-dddd-4ddd-8ddd-ddddddddddd
   -H "Authorization: Bearer $SELLER_TOKEN"
 ```
 
+### GET `/api/seller/cancellation-reason-categories`
+
+Mengambil daftar kategori alasan pembatalan aktif untuk alur seller menolak order.
+
+```bash
+curl http://127.0.0.1:8000/api/seller/cancellation-reason-categories \
+  -H "Authorization: Bearer $SELLER_TOKEN"
+```
+
 ### PATCH `/api/seller/orders/{id}/status`
 
 Mengubah status order seller.
@@ -2058,6 +2067,30 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
       }
     ]
   }
+}
+```
+
+#### GET `/api/seller/cancellation-reason-categories`
+
+```json
+{
+  "message": "Daftar kategori alasan pembatalan berhasil diambil.",
+  "data": [
+    {
+      "id": "77777777-7777-4777-8777-777777777777",
+      "name": "Salah Pesan / Salah Produk",
+      "sort_order": 10,
+      "allows_free_text": false,
+      "is_other_reason": false
+    },
+    {
+      "id": "88888888-8888-4888-8888-888888888888",
+      "name": "Alasan Lainnya",
+      "sort_order": 999,
+      "allows_free_text": true,
+      "is_other_reason": true
+    }
+  ]
 }
 ```
 
