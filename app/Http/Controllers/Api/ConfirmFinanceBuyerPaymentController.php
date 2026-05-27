@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ConfirmFinanceBuyerPaymentController extends Controller
 {
-    public function __invoke(Request $request, int $id, FinanceDisbursementSyncer $syncer): JsonResponse
+    public function __invoke(Request $request, string $id, FinanceDisbursementSyncer $syncer): JsonResponse
     {
         $transaction = Transaction::query()->with('items.tenant')->find($id);
 

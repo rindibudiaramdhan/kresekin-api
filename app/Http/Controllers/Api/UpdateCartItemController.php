@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UpdateCartItemController extends Controller
 {
-    public function __invoke(SetCartItemQuantityRequest $request, int $id): JsonResponse
+    public function __invoke(SetCartItemQuantityRequest $request, string $id): JsonResponse
     {
         $cartItem = CartItem::query()
             ->where('user_id', $request->user()->id)

@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class GetUserTransactionDetailController extends Controller
 {
-    public function __invoke(Request $request, int $transactionId): JsonResponse
+    public function __invoke(Request $request, string $transactionId): JsonResponse
     {
         $transaction = $request->user()
             ->transactions()

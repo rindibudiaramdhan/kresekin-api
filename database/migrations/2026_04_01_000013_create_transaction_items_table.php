@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transaction_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('tenant_id')->nullable()->constrained()->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('transaction_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('product_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('tenant_id')->nullable()->constrained()->nullOnDelete();
             $table->string('product_name');
             $table->unsignedInteger('quantity');
             $table->unsignedBigInteger('unit_price');

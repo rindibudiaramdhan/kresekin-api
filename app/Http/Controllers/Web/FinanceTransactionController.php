@@ -40,7 +40,7 @@ class FinanceTransactionController extends Controller
         ]);
     }
 
-    public function show(int $id, FinanceDisbursementSyncer $syncer): View
+    public function show(string $id, FinanceDisbursementSyncer $syncer): View
     {
         $transaction = Transaction::query()
             ->with(['items.tenant.owner', 'user', 'statusHistories', 'financeDisbursements.tenant.owner'])
@@ -54,7 +54,7 @@ class FinanceTransactionController extends Controller
         ]);
     }
 
-    public function confirmBuyerPayment(Request $request, int $id, FinanceDisbursementSyncer $syncer): RedirectResponse
+    public function confirmBuyerPayment(Request $request, string $id, FinanceDisbursementSyncer $syncer): RedirectResponse
     {
         $transaction = Transaction::query()->with('items.tenant')->findOrFail($id);
 
@@ -88,7 +88,7 @@ class FinanceTransactionController extends Controller
         return back()->with('status', 'Pembayaran buyer berhasil dikonfirmasi. Transaksi sudah masuk ke seller.');
     }
 
-    public function disburseToSeller(Request $request, int $id): RedirectResponse
+    public function disburseToSeller(Request $request, string $id): RedirectResponse
     {
         $disbursement = FinanceTransactionDisbursement::query()->findOrFail($id);
 

@@ -20,7 +20,7 @@ class AgentTenantRequest extends FormRequest
             'owner_mode' => ['nullable', Rule::in(['existing', 'new'])],
             'owner_user_id' => [
                 'nullable',
-                'integer',
+                'uuid',
                 Rule::exists('users', 'id')->where('role', User::ROLE_SELLER),
                 'required_if:owner_mode,existing',
             ],

@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class GetFinanceTransactionDetailController extends Controller
 {
-    public function __invoke(int $id, FinanceDisbursementSyncer $syncer): JsonResponse
+    public function __invoke(string $id, FinanceDisbursementSyncer $syncer): JsonResponse
     {
         $transaction = Transaction::query()
             ->with(['items.tenant.owner', 'user', 'statusHistories', 'financeDisbursements.tenant.owner'])

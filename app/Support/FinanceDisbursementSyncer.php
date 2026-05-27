@@ -31,7 +31,7 @@ class FinanceDisbursementSyncer
                     ],
                     [
                         'seller_user_id' => $firstItem->tenant?->owner_user_id,
-                        'unique_code' => $this->uniqueCode($transaction, (int) $firstItem->tenant_id),
+                        'unique_code' => $this->uniqueCode($transaction, $firstItem->tenant_id),
                         'amount' => $amount,
                     ],
                 );
@@ -39,8 +39,8 @@ class FinanceDisbursementSyncer
             ->values();
     }
 
-    public function uniqueCode(Transaction $transaction, int $tenantId): string
+    public function uniqueCode(Transaction $transaction, string $tenantId): string
     {
-        return sprintf('FIN-%s-%04d', $transaction->order_number, $tenantId);
+        return sprintf('FIN-%s-%s', $transaction->order_number, $tenantId);
     }
 }

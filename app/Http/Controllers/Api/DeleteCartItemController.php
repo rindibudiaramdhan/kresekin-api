@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DeleteCartItemController extends Controller
 {
-    public function __invoke(Request $request, int $id): JsonResponse
+    public function __invoke(Request $request, string $id): JsonResponse
     {
         $cartItem = CartItem::query()
             ->where('user_id', $request->user()->id)

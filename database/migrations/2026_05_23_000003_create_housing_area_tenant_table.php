@@ -9,9 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('housing_area_tenant', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
-            $table->foreignId('housing_area_id')->constrained('housing_areas')->cascadeOnDelete();
+            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
+            $table->foreignUuid('housing_area_id')->constrained('housing_areas')->cascadeOnDelete();
             $table->timestamps();
 
             $table->unique(['tenant_id', 'housing_area_id']);

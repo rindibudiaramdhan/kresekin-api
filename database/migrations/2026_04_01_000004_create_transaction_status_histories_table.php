@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transaction_status_histories', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('transaction_id')->constrained()->cascadeOnDelete();
             $table->string('status', 100);
             $table->string('title');
             $table->string('description')->nullable();

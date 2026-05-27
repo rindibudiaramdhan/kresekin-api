@@ -50,7 +50,7 @@ class GetSellerOrderListController extends Controller
         ]);
     }
 
-    private function mapOrder(Transaction $order, int $sellerId): array
+    private function mapOrder(Transaction $order, string $sellerId): array
     {
         $items = $this->sellerItems($order, $sellerId);
 
@@ -88,7 +88,7 @@ class GetSellerOrderListController extends Controller
         ];
     }
 
-    private function sellerItems(Transaction $order, int $sellerId)
+    private function sellerItems(Transaction $order, string $sellerId)
     {
         return $order->items
             ->filter(fn (TransactionItem $item): bool => $item->tenant?->owner_user_id === $sellerId)

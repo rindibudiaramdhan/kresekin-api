@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class GetSellerProductDetailController extends Controller
 {
-    public function __invoke(Request $request, int $id): JsonResponse
+    public function __invoke(Request $request, string $id): JsonResponse
     {
         $product = Product::query()
             ->with('tenant')

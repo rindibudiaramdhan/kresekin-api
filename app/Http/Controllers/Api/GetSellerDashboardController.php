@@ -129,7 +129,7 @@ class GetSellerDashboardController extends Controller
         ]);
     }
 
-    private function ordersToday(int $sellerId): Collection
+    private function ordersToday(string $sellerId): Collection
     {
         $today = CarbonImmutable::now('Asia/Jakarta');
 
@@ -181,7 +181,7 @@ class GetSellerDashboardController extends Controller
         ]);
     }
 
-    private function revenueForDate(int $sellerId, CarbonImmutable $date): int
+    private function revenueForDate(string $sellerId, CarbonImmutable $date): int
     {
         return (int) TransactionItem::query()
             ->whereHas('tenant', fn (Builder $query) => $query->where('owner_user_id', $sellerId))
@@ -191,7 +191,7 @@ class GetSellerDashboardController extends Controller
             ->sum('line_total');
     }
 
-    private function transactionCountForDate(int $sellerId, CarbonImmutable $date): int
+    private function transactionCountForDate(string $sellerId, CarbonImmutable $date): int
     {
         return Transaction::query()
             ->whereDate('transaction_at', $date->toDateString())
@@ -227,7 +227,7 @@ class GetSellerDashboardController extends Controller
         ];
     }
 
-    private function mapOrderPreview(Transaction $order, int $sellerId): array
+    private function mapOrderPreview(Transaction $order, string $sellerId): array
     {
         $items = $this->sellerItems($order, $sellerId);
         $itemSummary = $items
@@ -268,14 +268,14 @@ class GetSellerDashboardController extends Controller
         ];
     }
 
-    private function sellerItems(Transaction $order, int $sellerId): Collection
+    private function sellerItems(Transaction $order, string $sellerId): Collection
     {
         return $order->items
             ->filter(fn (TransactionItem $item): bool => $item->tenant?->owner_user_id === $sellerId)
             ->values();
     }
 
-    private function topProductsForDate(int $sellerId, CarbonImmutable $date): Collection
+    private function topProductsForDate(string $sellerId, CarbonImmutable $date): Collection
     {
         return TransactionItem::query()
             ->select([

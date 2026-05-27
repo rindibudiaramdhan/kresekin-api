@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UpdateSellerOrderStatusController extends Controller
 {
-    public function __invoke(UpdateSellerOrderStatusRequest $request, int $id): JsonResponse
+    public function __invoke(UpdateSellerOrderStatusRequest $request, string $id): JsonResponse
     {
         $sellerId = $request->user()->id;
 

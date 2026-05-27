@@ -45,7 +45,7 @@ class GetAgentSellerListController extends Controller
         ]);
     }
 
-    private function mapSeller(User $seller, int $agentId, AgentCommissionCalculator $calculator): array
+    private function mapSeller(User $seller, string $agentId, AgentCommissionCalculator $calculator): array
     {
         $tenantIds = $seller->ownedTenants->pluck('id');
         $completedRevenue = $this->completedRevenue($tenantIds->all());

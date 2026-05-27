@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('order_time_options', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('code', 50)->unique();
             $table->string('name');
             $table->string('description')->nullable();

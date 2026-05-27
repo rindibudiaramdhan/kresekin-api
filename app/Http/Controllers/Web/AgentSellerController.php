@@ -30,7 +30,7 @@ class AgentSellerController extends Controller
         ]);
     }
 
-    public function show(Request $request, int $sellerId, AgentCommissionCalculator $calculator): View
+    public function show(Request $request, string $sellerId, AgentCommissionCalculator $calculator): View
     {
         $agentId = $request->user()->id;
         $seller = User::query()

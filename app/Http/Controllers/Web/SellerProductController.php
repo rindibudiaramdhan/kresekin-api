@@ -44,7 +44,7 @@ class SellerProductController extends Controller
             ->with('status', 'Produk berhasil dibuat.');
     }
 
-    public function edit(Request $request, int $id): View
+    public function edit(Request $request, string $id): View
     {
         $product = Product::query()
             ->with('tenant')
@@ -59,7 +59,7 @@ class SellerProductController extends Controller
         ]);
     }
 
-    public function update(SellerProductRequest $request, int $id): RedirectResponse
+    public function update(SellerProductRequest $request, string $id): RedirectResponse
     {
         $product = Product::query()
             ->where('id', $id)
@@ -73,7 +73,7 @@ class SellerProductController extends Controller
             ->with('status', 'Produk berhasil diperbarui.');
     }
 
-    public function destroy(Request $request, int $id): RedirectResponse
+    public function destroy(Request $request, string $id): RedirectResponse
     {
         $product = Product::query()
             ->where('id', $id)

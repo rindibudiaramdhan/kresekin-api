@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DeleteFinanceCancellationReasonCategoryController extends Controller
 {
-    public function __invoke(int $id): JsonResponse
+    public function __invoke(string $id): JsonResponse
     {
         $category = CancellationReasonCategory::query()->find($id);
 

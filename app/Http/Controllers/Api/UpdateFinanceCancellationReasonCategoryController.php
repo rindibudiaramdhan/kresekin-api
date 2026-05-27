@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UpdateFinanceCancellationReasonCategoryController extends Controller
 {
-    public function __invoke(CancellationReasonCategoryRequest $request, int $id): JsonResponse
+    public function __invoke(CancellationReasonCategoryRequest $request, string $id): JsonResponse
     {
         $category = CancellationReasonCategory::query()->find($id);
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
@@ -14,6 +15,8 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class CancellationReasonCategory extends Model
 {
+    use HasUuids;
+
     public const OTHER_REASON_NAME = 'Alasan Lainnya';
 
     protected function casts(): array

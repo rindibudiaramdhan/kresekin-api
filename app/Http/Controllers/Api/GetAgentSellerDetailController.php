@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class GetAgentSellerDetailController extends Controller
 {
-    public function __invoke(Request $request, int $sellerId, AgentCommissionCalculator $calculator): JsonResponse
+    public function __invoke(Request $request, string $sellerId, AgentCommissionCalculator $calculator): JsonResponse
     {
         $agentId = $request->user()->id;
         $seller = User::query()

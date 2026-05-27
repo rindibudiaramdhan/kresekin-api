@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -20,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class FinanceTransactionDisbursement extends Model
 {
+    use HasUuids;
+
     public const STATUS_PENDING_BUYER_PAYMENT = 'pending_buyer_payment';
 
     public const STATUS_BUYER_PAYMENT_CONFIRMED = 'buyer_payment_confirmed';

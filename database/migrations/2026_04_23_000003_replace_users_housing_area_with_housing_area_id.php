@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('housing_area_id')->nullable()->after('type')->constrained('housing_areas')->nullOnDelete();
+            $table->foreignUuid('housing_area_id')->nullable()->after('type')->constrained('housing_areas')->nullOnDelete();
         });
 
         DB::table('users')->update([

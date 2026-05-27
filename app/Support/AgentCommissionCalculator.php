@@ -8,7 +8,7 @@ use App\Models\TransactionItem;
 
 class AgentCommissionCalculator
 {
-    public function summary(int $agentId): array
+    public function summary(string $agentId): array
     {
         $revenue = $this->completedRevenue($agentId);
         $commission = $this->commissionFromRevenue($revenue);
@@ -23,7 +23,7 @@ class AgentCommissionCalculator
         ];
     }
 
-    public function completedRevenue(int $agentId): int
+    public function completedRevenue(string $agentId): int
     {
         return (int) TransactionItem::query()
             ->whereHas('tenant', fn ($query) => $query->where('agent_user_id', $agentId))
@@ -36,7 +36,7 @@ class AgentCommissionCalculator
         return (int) round($revenue * $this->commissionRate());
     }
 
-    public function lockedWithdrawalAmount(int $agentId): int
+    public function lockedWithdrawalAmount(string $agentId): int
     {
         return (int) AgentCommissionWithdrawal::query()
             ->where('agent_user_id', $agentId)

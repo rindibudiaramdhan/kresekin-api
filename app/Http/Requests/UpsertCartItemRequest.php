@@ -15,7 +15,7 @@ class UpsertCartItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => ['required', 'integer', Rule::exists('products', 'id')],
+            'product_id' => ['required', 'uuid', Rule::exists('products', 'id')],
             'quantity' => ['required', 'integer', 'min:1', 'max:999'],
         ];
     }

@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DisburseFinanceTransactionController extends Controller
 {
-    public function __invoke(Request $request, int $id): JsonResponse
+    public function __invoke(Request $request, string $id): JsonResponse
     {
         $disbursement = FinanceTransactionDisbursement::query()
             ->with(['transaction', 'tenant.owner'])

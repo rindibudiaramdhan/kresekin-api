@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UpdateSellerProductController extends Controller
 {
-    public function __invoke(UpdateSellerProductRequest $request, int $id): JsonResponse
+    public function __invoke(UpdateSellerProductRequest $request, string $id): JsonResponse
     {
         $product = Product::query()
             ->with('tenant')

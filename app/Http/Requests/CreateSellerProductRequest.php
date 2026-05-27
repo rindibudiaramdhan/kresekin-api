@@ -18,7 +18,7 @@ class CreateSellerProductRequest extends FormRequest
         return [
             'tenant_id' => [
                 'required',
-                'integer',
+                'uuid',
                 Rule::exists('tenants', 'id')->where(fn ($query) => $query->where('owner_user_id', $this->user()->id)),
             ],
             'name' => ['required', 'string', 'max:255'],

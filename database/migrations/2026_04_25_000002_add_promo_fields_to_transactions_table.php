@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->foreignId('promo_code_id')->nullable()->after('payment_method_option_name')->constrained()->nullOnDelete();
+            $table->foreignUuid('promo_code_id')->nullable()->after('payment_method_option_name')->constrained()->nullOnDelete();
             $table->string('promo_code')->nullable()->after('promo_code_id');
             $table->string('promo_name')->nullable()->after('promo_code');
             $table->string('promo_discount_type', 50)->nullable()->after('promo_name');

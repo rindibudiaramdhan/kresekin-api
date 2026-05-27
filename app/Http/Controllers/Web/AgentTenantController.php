@@ -86,7 +86,7 @@ class AgentTenantController extends Controller
             ->with('status', 'Tenant berhasil dibuat.');
     }
 
-    public function edit(int $id): View
+    public function edit(string $id): View
     {
         $tenant = Tenant::query()
             ->where('agent_user_id', auth()->id())
@@ -100,7 +100,7 @@ class AgentTenantController extends Controller
         ]);
     }
 
-    public function show(int $id): View
+    public function show(string $id): View
     {
         $tenant = Tenant::query()
             ->with(['owner', 'products'])
@@ -113,7 +113,7 @@ class AgentTenantController extends Controller
         ]);
     }
 
-    public function update(AgentTenantRequest $request, int $id): RedirectResponse
+    public function update(AgentTenantRequest $request, string $id): RedirectResponse
     {
         $tenant = Tenant::query()
             ->where('agent_user_id', $request->user()->id)
@@ -153,7 +153,7 @@ class AgentTenantController extends Controller
             ->with('status', 'Tenant berhasil diperbarui.');
     }
 
-    public function destroy(int $id): RedirectResponse
+    public function destroy(string $id): RedirectResponse
     {
         Tenant::query()
             ->where('agent_user_id', auth()->id())

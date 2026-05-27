@@ -18,7 +18,7 @@ class GetProductListController extends Controller
         $validator = Validator::make($request->query(), [
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
             'category' => ['nullable', 'string', 'exists:product_categories,slug'],
-            'tenant_id' => ['nullable', 'integer', 'exists:tenants,id'],
+            'tenant_id' => ['nullable', 'uuid', 'exists:tenants,id'],
             'name' => ['nullable', 'string', 'max:255'],
             'is_promo' => ['nullable', 'in:true,false,1,0'],
         ]);

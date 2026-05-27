@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -18,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class PaymentMethod extends Model
 {
+    use HasUuids;
+
     public const BANK_TRANSFER = 'bank_transfer';
 
     public const QR_PAYMENT = 'qr_payment';

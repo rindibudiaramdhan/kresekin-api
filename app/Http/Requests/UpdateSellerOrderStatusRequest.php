@@ -32,7 +32,7 @@ class UpdateSellerOrderStatusRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:255'],
             'cancellation_reason_category_id' => [
                 'nullable',
-                'integer',
+                'uuid',
                 Rule::exists('cancellation_reason_categories', 'id')->where('is_active', true),
             ],
             'cancellation_reason_text' => ['nullable', 'string', 'max:1000'],
@@ -54,7 +54,7 @@ class UpdateSellerOrderStatusRequest extends FormRequest
 
             $category = CancellationReasonCategory::query()
                 ->where('is_active', true)
-                ->find($this->integer('cancellation_reason_category_id'));
+                ->find($this->input('cancellation_reason_category_id'));
 
             if ($category?->allows_free_text && ! $this->filled('cancellation_reason_text')) {
                 $validator->errors()->add('cancellation_reason_text', 'Alasan pembatalan wajib diisi untuk kategori Alasan Lainnya.');

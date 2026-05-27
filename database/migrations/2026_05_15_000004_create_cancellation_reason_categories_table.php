@@ -4,13 +4,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
     public function up(): void
     {
         Schema::create('cancellation_reason_categories', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name')->unique();
             $table->unsignedInteger('sort_order')->default(0);
             $table->boolean('allows_free_text')->default(false);
@@ -21,6 +22,7 @@ return new class extends Migration
 
         DB::table('cancellation_reason_categories')->insert([
             [
+                'id' => (string) Str::uuid(),
                 'name' => 'Salah Pesan / Salah Produk',
                 'sort_order' => 10,
                 'allows_free_text' => false,
@@ -30,6 +32,7 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
             [
+                'id' => (string) Str::uuid(),
                 'name' => 'Ingin Ubah Alamat',
                 'sort_order' => 20,
                 'allows_free_text' => false,
@@ -39,6 +42,7 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
             [
+                'id' => (string) Str::uuid(),
                 'name' => 'Pengiriman Terlalu Lama',
                 'sort_order' => 30,
                 'allows_free_text' => false,
@@ -48,6 +52,7 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
             [
+                'id' => (string) Str::uuid(),
                 'name' => 'Alasan Lainnya',
                 'sort_order' => 999,
                 'allows_free_text' => true,

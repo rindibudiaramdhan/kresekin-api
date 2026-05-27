@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->foreignId('cancellation_reason_category_id')
+            $table->foreignUuid('cancellation_reason_category_id')
                 ->nullable()
                 ->after('discount_amount')
                 ->constrained('cancellation_reason_categories')

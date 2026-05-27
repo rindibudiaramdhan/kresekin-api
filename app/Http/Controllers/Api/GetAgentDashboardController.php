@@ -50,7 +50,7 @@ class GetAgentDashboardController extends Controller
         ]);
     }
 
-    private function transactionCount(int $agentId): int
+    private function transactionCount(string $agentId): int
     {
         return Transaction::query()
             ->whereHas('items.tenant', fn ($query) => $query->where('agent_user_id', $agentId))
@@ -89,7 +89,7 @@ class GetAgentDashboardController extends Controller
         ];
     }
 
-    private function mapTransaction(Transaction $transaction, int $agentId, AgentCommissionCalculator $calculator): array
+    private function mapTransaction(Transaction $transaction, string $agentId, AgentCommissionCalculator $calculator): array
     {
         $items = $transaction->items
             ->filter(fn (TransactionItem $item): bool => $item->tenant?->agent_user_id === $agentId)
