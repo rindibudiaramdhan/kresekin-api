@@ -1017,3 +1017,1436 @@ export BUYER_TOKEN="token-dari-response"
 6. Ambil master data: delivery methods, payment methods, order time options, product categories.
 7. Tambahkan item ke cart.
 8. Checkout.
+
+## Contoh Response Per Endpoint
+
+Contoh response di bawah memakai data dummy. Field tambahan bisa muncul tergantung relasi database dan perubahan controller.
+
+### Healthcheck
+
+#### GET `/api/vershealthcheck`
+
+```json
+{
+  "status": "ok",
+  "message": "API sehat",
+  "version": "v1",
+  "framework": {
+    "name": "Laravel",
+    "version": "13.x"
+  },
+  "timestamp": "2026-05-27T10:00:00+07:00"
+}
+```
+
+### Auth dan Session
+
+#### POST `/api/users/{role}/register`
+
+Berlaku juga untuk `POST /api/agent/register` dan `POST /api/finance/register`.
+
+```json
+{
+  "message": "Registrasi berhasil. Kode OTP telah dikirim.",
+  "data": {
+    "id": 1,
+    "email": "buyer@example.com",
+    "phone": null,
+    "type": "email",
+    "role": "buyer"
+  }
+}
+```
+
+#### POST `/api/agent/register`
+
+```json
+{
+  "message": "Registrasi berhasil. Kode OTP telah dikirim.",
+  "data": {
+    "id": 3,
+    "email": "agent@example.com",
+    "phone": null,
+    "type": "email",
+    "role": "agent"
+  }
+}
+```
+
+#### POST `/api/finance/register`
+
+```json
+{
+  "message": "Registrasi berhasil. Kode OTP telah dikirim.",
+  "data": {
+    "id": 4,
+    "email": "finance@example.com",
+    "phone": null,
+    "type": "email",
+    "role": "finance"
+  }
+}
+```
+
+#### POST `/api/users/{role}/login`
+
+Berlaku juga untuk `POST /api/agent/login` dan `POST /api/finance/login`.
+
+```json
+{
+  "message": "Kode OTP login telah dikirim.",
+  "data": {
+    "id": 1,
+    "email": "buyer@example.com",
+    "phone": null,
+    "type": "email",
+    "role": "buyer"
+  }
+}
+```
+
+#### POST `/api/agent/login`
+
+```json
+{
+  "message": "Kode OTP login telah dikirim.",
+  "data": {
+    "id": 3,
+    "email": "agent@example.com",
+    "phone": null,
+    "type": "email",
+    "role": "agent"
+  }
+}
+```
+
+#### POST `/api/finance/login`
+
+```json
+{
+  "message": "Kode OTP login telah dikirim.",
+  "data": {
+    "id": 4,
+    "email": "finance@example.com",
+    "phone": null,
+    "type": "email",
+    "role": "finance"
+  }
+}
+```
+
+#### POST `/api/users/{role}/resend-otp`
+
+Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-otp`.
+
+```json
+{
+  "message": "Kode OTP berhasil dikirim ulang.",
+  "data": {
+    "id": 1,
+    "email": "buyer@example.com",
+    "phone": null,
+    "type": "email",
+    "role": "buyer"
+  }
+}
+```
+
+#### POST `/api/agent/resend-otp`
+
+```json
+{
+  "message": "Kode OTP berhasil dikirim ulang.",
+  "data": {
+    "id": 3,
+    "email": "agent@example.com",
+    "phone": null,
+    "type": "email",
+    "role": "agent"
+  }
+}
+```
+
+#### POST `/api/finance/resend-otp`
+
+```json
+{
+  "message": "Kode OTP berhasil dikirim ulang.",
+  "data": {
+    "id": 4,
+    "email": "finance@example.com",
+    "phone": null,
+    "type": "email",
+    "role": "finance"
+  }
+}
+```
+
+#### POST `/api/users/verify-otp`
+
+```json
+{
+  "message": "OTP berhasil diverifikasi.",
+  "data": {
+    "token": "plain-text-session-token",
+    "token_type": "Bearer",
+    "user": {
+      "id": 1,
+      "name": null,
+      "email": "buyer@example.com",
+      "phone": null,
+      "type": "email",
+      "role": "buyer"
+    }
+  }
+}
+```
+
+#### POST `/api/users/logout`
+
+```json
+{
+  "message": "Logout berhasil."
+}
+```
+
+#### POST `/api/users/refresh-session`
+
+```json
+{
+  "message": "Session berhasil diperbarui.",
+  "data": {
+    "token": "new-plain-text-session-token",
+    "token_type": "Bearer"
+  }
+}
+```
+
+#### POST `/api/users/devices`
+
+```json
+{
+  "message": "Perangkat berhasil didaftarkan.",
+  "data": {
+    "id": 1,
+    "user_id": 1,
+    "device_token": "firebase-token",
+    "platform": "android",
+    "device_name": "Pixel 8"
+  }
+}
+```
+
+### Profile dan Master Data Umum
+
+#### GET `/api/users/profile`
+
+```json
+{
+  "message": "Profil user berhasil diambil.",
+  "data": {
+    "id": 1,
+    "name": "Budi",
+    "email": "budi@example.com",
+    "phone": "+6281234567890",
+    "role": "buyer",
+    "housing_area_id": 1,
+    "address": "Jl. Melati No. 1",
+    "landmark": "Dekat masjid"
+  }
+}
+```
+
+#### PUT `/api/users/profile`
+
+```json
+{
+  "message": "Profil user berhasil diperbarui.",
+  "data": {
+    "id": 1,
+    "name": "Budi",
+    "email": "budi@example.com",
+    "phone": "+6281234567890",
+    "housing_area_id": 1,
+    "address": "Jl. Melati No. 1",
+    "landmark": "Dekat masjid"
+  }
+}
+```
+
+#### GET `/api/housing-areas`
+
+```json
+{
+  "message": "Daftar area perumahan berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "name": "Komp Setra Dago",
+      "code": "AREA-001",
+      "city": "Kota Bandung",
+      "district": "Antapani",
+      "subdistrict": "Antapani Wetan",
+      "village_code": "3273141003"
+    }
+  ]
+}
+```
+
+#### GET `/api/product-categories`
+
+```json
+{
+  "message": "Daftar kategori produk berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "name": "Sembako",
+      "slug": "sembako",
+      "image_url": "http://127.0.0.1:8000/images/ic_groceries_category.svg"
+    }
+  ]
+}
+```
+
+### Data Wilayah Indonesia
+
+#### GET `/api/indonesia/provinces`
+
+```json
+{
+  "message": "Daftar provinsi berhasil diambil.",
+  "data": [
+    {
+      "code": "32",
+      "name": "JAWA BARAT"
+    }
+  ]
+}
+```
+
+#### GET `/api/indonesia/regencies`
+
+```json
+{
+  "message": "Daftar kabupaten/kota berhasil diambil.",
+  "data": [
+    {
+      "code": "3273",
+      "name": "KOTA BANDUNG",
+      "province_code": "32"
+    }
+  ]
+}
+```
+
+#### GET `/api/indonesia/districts`
+
+```json
+{
+  "message": "Daftar kecamatan berhasil diambil.",
+  "data": [
+    {
+      "code": "3273141",
+      "name": "ANTAPANI",
+      "regency_code": "3273"
+    }
+  ]
+}
+```
+
+#### GET `/api/indonesia/villages`
+
+```json
+{
+  "message": "Daftar desa/kelurahan berhasil diambil.",
+  "data": [
+    {
+      "code": "3273141003",
+      "name": "ANTAPANI WETAN",
+      "district_code": "3273141"
+    }
+  ]
+}
+```
+
+### Buyer API
+
+#### GET `/api/delivery-methods`
+
+```json
+{
+  "message": "Daftar metode pengiriman berhasil diambil.",
+  "data": [
+    {
+      "code": "store_courier",
+      "name": "Antar Kurir Toko",
+      "description": "Diantar hari ini",
+      "fee": 2500,
+      "fee_label": "Rp 2.500",
+      "requires_order_time": false
+    }
+  ]
+}
+```
+
+#### GET `/api/order-time-options`
+
+```json
+{
+  "message": "Daftar opsi waktu pesanan berhasil diambil.",
+  "data": [
+    {
+      "code": "sekarang",
+      "name": "Sekarang",
+      "description": "estimasi 15-30 menit",
+      "requires_schedule": false
+    }
+  ]
+}
+```
+
+#### GET `/api/payment-methods`
+
+```json
+{
+  "message": "Daftar metode pembayaran berhasil diambil.",
+  "data": [
+    {
+      "code": "bank_transfer",
+      "name": "Transfer Bank",
+      "icon_key": "bank_transfer",
+      "requires_option": true,
+      "options": [
+        {
+          "code": "bca",
+          "name": "BCA",
+          "icon_key": "bank_bca"
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### GET `/api/products`
+
+```json
+{
+  "message": "Daftar barang berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "tenant_id": 1,
+      "tenant_name": "Toko Asep",
+      "name": "Bayam",
+      "category": "Sayur",
+      "category_slug": "sayur",
+      "image_url": "http://127.0.0.1:8000/storage/products/bayam.jpg",
+      "price": 7000,
+      "price_label": "Rp 7.000",
+      "original_price": 9000,
+      "discount_percentage": 22,
+      "stock": 100,
+      "unit": "ikat"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 10,
+    "last_page": 1,
+    "total": 1,
+    "from": 1,
+    "to": 1
+  },
+  "links": {
+    "first": "http://127.0.0.1:8000/api/products?page=1",
+    "last": "http://127.0.0.1:8000/api/products?page=1",
+    "prev": null,
+    "next": null
+  }
+}
+```
+
+#### GET `/api/products/{id}`
+
+```json
+{
+  "message": "Detail barang berhasil diambil.",
+  "data": {
+    "id": 1,
+    "tenant_id": 1,
+    "tenant_name": "Toko Asep",
+    "name": "Bayam",
+    "category": "Sayur",
+    "image_url": "http://127.0.0.1:8000/storage/products/bayam.jpg",
+    "price": 7000,
+    "price_label": "Rp 7.000",
+    "stock": 100,
+    "unit": "ikat",
+    "description": "Sayur segar.",
+    "delivery_estimate": "Hari ini"
+  }
+}
+```
+
+#### GET `/api/tenants`
+
+```json
+{
+  "message": "Daftar tenant berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "name": "Toko Asep",
+      "profile_picture_url": "https://example.com/toko.png",
+      "rating": 4.8,
+      "category": "Sembako",
+      "product_count": 20,
+      "is_open": true,
+      "store_status": "Buka",
+      "operating_hours_label": "Buka 07:00 sd 21:00"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 10,
+    "last_page": 1,
+    "total": 1,
+    "from": 1,
+    "to": 1
+  },
+  "links": {
+    "first": "http://127.0.0.1:8000/api/tenants?page=1",
+    "last": "http://127.0.0.1:8000/api/tenants?page=1",
+    "prev": null,
+    "next": null
+  }
+}
+```
+
+#### GET `/api/tenants/categories`
+
+```json
+{
+  "message": "Daftar kategori tenant berhasil diambil.",
+  "data": [
+    {
+      "name": "Sayur",
+      "slug": "sayur",
+      "icon_key": "vegetables",
+      "background_color": "#E7F6EB",
+      "icon_color": "#67B97A"
+    }
+  ]
+}
+```
+
+#### GET `/api/cart`
+
+```json
+{
+  "message": "Keranjang berhasil diambil.",
+  "data": {
+    "id": 1,
+    "delivery_method_code": "store_courier",
+    "delivery_method": {
+      "code": "store_courier",
+      "name": "Antar Kurir Toko",
+      "fee": 2500
+    },
+    "items": [
+      {
+        "id": 1,
+        "product_id": 1,
+        "name": "Bayam",
+        "quantity": 2,
+        "unit_price": 7000,
+        "line_total": 14000
+      }
+    ],
+    "subtotal_amount": 14000,
+    "delivery_fee": 2500,
+    "total_amount": 16500
+  }
+}
+```
+
+#### PATCH `/api/cart/delivery-method`
+
+```json
+{
+  "message": "Metode pengiriman keranjang berhasil diperbarui.",
+  "data": {
+    "id": 1,
+    "delivery_method_code": "store_courier"
+  }
+}
+```
+
+#### POST `/api/cart/items`
+
+```json
+{
+  "message": "Barang berhasil ditambahkan ke keranjang.",
+  "data": {
+    "id": 1,
+    "product_id": 1,
+    "quantity": 2,
+    "product": {
+      "id": 1,
+      "name": "Bayam",
+      "price": 7000,
+      "stock": 100
+    }
+  }
+}
+```
+
+#### PATCH `/api/cart/items/{id}`
+
+```json
+{
+  "message": "Jumlah barang keranjang berhasil diperbarui.",
+  "data": {
+    "id": 1,
+    "product_id": 1,
+    "quantity": 3
+  }
+}
+```
+
+#### DELETE `/api/cart/items/{id}`
+
+```json
+{
+  "message": "Barang berhasil dihapus dari keranjang."
+}
+```
+
+#### POST `/api/promo-codes/validate`
+
+```json
+{
+  "message": "Promo berhasil divalidasi.",
+  "data": {
+    "id": 1,
+    "code": "HEMAT10",
+    "name": "Hemat 10%",
+    "description": "Diskon 10% untuk pesanan minimal Rp 10.000.",
+    "discount_type": "percentage",
+    "discount_value": 10,
+    "minimum_order_amount": 10000,
+    "maximum_discount_amount": 10000,
+    "remaining_quantity": 3
+  }
+}
+```
+
+#### POST `/api/checkout`
+
+```json
+{
+  "message": "Checkout berhasil.",
+  "data": {
+    "id": 1,
+    "order_number": "INV-20260527-0001",
+    "status": "menunggu pembayaran",
+    "status_code": "pending_payment",
+    "subtotal_amount": 19998,
+    "delivery_fee": 2500,
+    "discount_amount": 1999,
+    "total_amount": 20499,
+    "delivery_method": "Antar Kurir Toko",
+    "payment_method": "Transfer Bank",
+    "payment_method_option_name": "BCA",
+    "promo_code": "HEMAT10",
+    "items": [
+      {
+        "product_id": 1,
+        "product_name": "Bayam",
+        "quantity": 2,
+        "unit_price": 9999,
+        "line_total": 19998
+      }
+    ]
+  }
+}
+```
+
+#### GET `/api/users/transactions`
+
+```json
+{
+  "message": "Riwayat transaksi berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "order_number": "INV-20260527-0001",
+      "status": "menunggu pembayaran",
+      "status_code": "pending_payment",
+      "total_amount": 20499,
+      "total_amount_label": "Rp 20.499",
+      "transaction_at": "2026-05-27T10:00:00+07:00"
+    }
+  ]
+}
+```
+
+#### GET `/api/users/transactions/{transactionId}`
+
+```json
+{
+  "message": "Detail transaksi berhasil diambil.",
+  "data": {
+    "id": 1,
+    "order_number": "INV-20260527-0001",
+    "status": "menunggu pembayaran",
+    "status_code": "pending_payment",
+    "subtotal_amount": 19998,
+    "delivery_fee": 2500,
+    "discount_amount": 1999,
+    "total_amount": 20499,
+    "items": [
+      {
+        "id": 1,
+        "product_id": 1,
+        "product_name": "Bayam",
+        "quantity": 2,
+        "line_total": 19998
+      }
+    ],
+    "status_histories": [
+      {
+        "status": "menunggu pembayaran",
+        "description": "Transaksi dibuat.",
+        "sequence": 1
+      }
+    ]
+  }
+}
+```
+
+#### GET `/api/cancellation-reason-categories`
+
+```json
+{
+  "message": "Daftar kategori alasan pembatalan berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "name": "Stok kosong",
+      "allows_free_text": false,
+      "sort_order": 1
+    }
+  ]
+}
+```
+
+### Seller API
+
+#### GET `/api/seller/dashboard`
+
+```json
+{
+  "message": "Dashboard seller berhasil diambil.",
+  "data": {
+    "profile": {
+      "tenant_id": 1,
+      "tenant_name": "Toko Asep"
+    },
+    "revenue_today": 150000,
+    "transactions_today": 6,
+    "orders_today_counts": {
+      "pending_payment": 1,
+      "processing": 2,
+      "completed": 3
+    }
+  }
+}
+```
+
+#### GET `/api/seller/dashboard/profile`
+
+```json
+{
+  "message": "Profil dashboard seller berhasil diambil.",
+  "data": {
+    "tenant_id": 1,
+    "tenant_name": "Toko Asep",
+    "category": "Sembako",
+    "is_open": true,
+    "operating_hours_label": "Buka 07:00 sd 21:00"
+  }
+}
+```
+
+#### GET `/api/seller/dashboard/revenue-today`
+
+```json
+{
+  "message": "Revenue hari ini berhasil diambil.",
+  "data": {
+    "amount": 150000,
+    "amount_label": "Rp. 150.000"
+  }
+}
+```
+
+#### GET `/api/seller/dashboard/revenue-change`
+
+```json
+{
+  "message": "Perubahan revenue berhasil diambil.",
+  "data": {
+    "current_amount": 150000,
+    "previous_amount": 100000,
+    "change_percentage": 50,
+    "trend": "up"
+  }
+}
+```
+
+#### GET `/api/seller/dashboard/transactions-today`
+
+```json
+{
+  "message": "Transaksi hari ini berhasil diambil.",
+  "data": {
+    "count": 6
+  }
+}
+```
+
+#### GET `/api/seller/dashboard/orders-today/counts`
+
+```json
+{
+  "message": "Jumlah order hari ini berhasil diambil.",
+  "data": {
+    "pending_payment": 1,
+    "accepted_by_store": 1,
+    "processing": 2,
+    "on_the_way": 0,
+    "completed": 3,
+    "canceled": 0
+  }
+}
+```
+
+#### GET `/api/seller/dashboard/orders/new-preview`
+
+```json
+{
+  "message": "Preview order baru berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "order_number": "INV-20260527-0001",
+      "buyer_name": "Budi",
+      "total_amount": 20499,
+      "status_code": "pending_payment"
+    }
+  ]
+}
+```
+
+#### GET `/api/seller/dashboard/top-products-today`
+
+```json
+{
+  "message": "Produk teratas hari ini berhasil diambil.",
+  "data": [
+    {
+      "product_id": 1,
+      "product_name": "Bayam",
+      "quantity_sold": 12,
+      "revenue": 84000,
+      "revenue_label": "Rp. 84.000"
+    }
+  ]
+}
+```
+
+#### GET `/api/seller/tenants`
+
+```json
+{
+  "message": "Daftar tenant seller berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "owner_user_id": 2,
+      "agent_user_id": 3,
+      "agent_code": "KA-20265",
+      "name": "Toko Asep",
+      "category_id": 1,
+      "category": "Sembako",
+      "location": "Jl Asri Raya No 45",
+      "housing_areas": [
+        {
+          "id": 1,
+          "name": "Komp Setra Dago"
+        }
+      ],
+      "is_open": true
+    }
+  ]
+}
+```
+
+#### POST `/api/seller/tenants`
+
+```json
+{
+  "message": "Tenant berhasil dibuat.",
+  "data": {
+    "id": 1,
+    "owner_user_id": 2,
+    "agent_user_id": 3,
+    "agent_code": "KA-20265",
+    "owner": {
+      "id": 2,
+      "name": "Asep Pemilik",
+      "phone": "+6281234567890",
+      "email": "asep@example.com"
+    },
+    "name": "Toko Asep",
+    "category_id": 1,
+    "category": "Sembako",
+    "location": "Jl Asri Raya No 45",
+    "housing_areas": [
+      {
+        "id": 1,
+        "name": "Komp Setra Dago"
+      }
+    ]
+  }
+}
+```
+
+#### GET `/api/seller/orders`
+
+```json
+{
+  "message": "Daftar order seller berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "order_number": "INV-20260527-0001",
+      "buyer": {
+        "id": 1,
+        "name": "Budi",
+        "email": "budi@example.com",
+        "phone": "+6281234567890"
+      },
+      "store_name": "Toko Asep",
+      "total_items": 2,
+      "seller_subtotal_amount": 19998,
+      "status": "menunggu pembayaran",
+      "status_code": "pending_payment"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 10,
+    "last_page": 1,
+    "total": 1,
+    "from": 1,
+    "to": 1
+  },
+  "links": {
+    "first": "http://127.0.0.1:8000/api/seller/orders?page=1",
+    "last": "http://127.0.0.1:8000/api/seller/orders?page=1",
+    "prev": null,
+    "next": null
+  }
+}
+```
+
+#### GET `/api/seller/orders/{id}`
+
+```json
+{
+  "message": "Detail order seller berhasil diambil.",
+  "data": {
+    "id": 1,
+    "order_number": "INV-20260527-0001",
+    "buyer": {
+      "id": 1,
+      "name": "Budi"
+    },
+    "status": "menunggu pembayaran",
+    "status_code": "pending_payment",
+    "items": [
+      {
+        "product_id": 1,
+        "product_name": "Bayam",
+        "quantity": 2,
+        "line_total": 19998
+      }
+    ]
+  }
+}
+```
+
+#### PATCH `/api/seller/orders/{id}/status`
+
+```json
+{
+  "message": "Status order berhasil diperbarui.",
+  "data": {
+    "id": 1,
+    "order_number": "INV-20260527-0001",
+    "status": "diterima toko",
+    "status_code": "accepted_by_store"
+  }
+}
+```
+
+#### GET `/api/seller/products`
+
+```json
+{
+  "message": "Daftar produk seller berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "tenant_id": 1,
+      "name": "Bayam",
+      "category": "Sayur",
+      "image_url": "https://example.com/bayam.png",
+      "price": 7000,
+      "stock": 100,
+      "unit": "ikat",
+      "is_active": true
+    }
+  ]
+}
+```
+
+#### POST `/api/seller/product-images`
+
+```json
+{
+  "message": "Gambar produk berhasil diunggah.",
+  "data": {
+    "image_path": "products/bayam.jpg",
+    "image_url": "http://127.0.0.1:8000/storage/products/bayam.jpg"
+  }
+}
+```
+
+#### POST `/api/seller/products`
+
+```json
+{
+  "message": "Produk berhasil dibuat.",
+  "data": {
+    "id": 1,
+    "tenant_id": 1,
+    "name": "Bayam",
+    "category": "Sayur",
+    "price": 7000,
+    "original_price": 9000,
+    "stock": 100,
+    "unit": "ikat",
+    "minimum_stock": 5,
+    "is_active": true,
+    "image_url": "https://example.com/bayam.png"
+  }
+}
+```
+
+#### GET `/api/seller/products/{id}`
+
+```json
+{
+  "message": "Detail produk seller berhasil diambil.",
+  "data": {
+    "id": 1,
+    "tenant_id": 1,
+    "name": "Bayam",
+    "category": "Sayur",
+    "price": 7000,
+    "stock": 100,
+    "unit": "ikat",
+    "description": "Sayur segar.",
+    "is_active": true
+  }
+}
+```
+
+#### PUT `/api/seller/products/{id}`
+
+Berlaku juga untuk `POST /api/seller/products/{id}`.
+
+```json
+{
+  "message": "Produk berhasil diperbarui.",
+  "data": {
+    "id": 1,
+    "tenant_id": 1,
+    "name": "Bayam Super",
+    "category": "Sayur",
+    "price": 8000,
+    "stock": 80,
+    "unit": "ikat",
+    "is_active": true
+  }
+}
+```
+
+#### POST `/api/seller/products/{id}`
+
+```json
+{
+  "message": "Produk berhasil diperbarui.",
+  "data": {
+    "id": 1,
+    "tenant_id": 1,
+    "name": "Bayam Super",
+    "category": "Sayur",
+    "price": 8000,
+    "stock": 80,
+    "unit": "ikat",
+    "is_active": true
+  }
+}
+```
+
+#### DELETE `/api/seller/products/{id}`
+
+```json
+{
+  "message": "Produk berhasil dihapus."
+}
+```
+
+### Agent API
+
+#### GET `/api/agent/dashboard`
+
+```json
+{
+  "message": "Dashboard agent berhasil diambil.",
+  "data": {
+    "summary": {
+      "tenant_count": 3,
+      "seller_count": 3,
+      "completed_revenue": 1000000,
+      "commission_amount": 50000
+    },
+    "recent_transactions": [
+      {
+        "id": 1,
+        "order_number": "INV-20260527-0001",
+        "total_amount": 20499
+      }
+    ]
+  }
+}
+```
+
+#### GET `/api/agent/sellers`
+
+```json
+{
+  "message": "Daftar seller agent berhasil diambil.",
+  "data": [
+    {
+      "id": 2,
+      "name": "Asep Pemilik",
+      "email": "asep@example.com",
+      "phone": "+6281234567890",
+      "tenant_count": 1,
+      "completed_revenue": 1000000,
+      "commission_amount": 50000
+    }
+  ]
+}
+```
+
+#### GET `/api/agent/sellers/{sellerId}`
+
+```json
+{
+  "message": "Detail seller agent berhasil diambil.",
+  "data": {
+    "id": 2,
+    "name": "Asep Pemilik",
+    "email": "asep@example.com",
+    "phone": "+6281234567890",
+    "tenants": [
+      {
+        "id": 1,
+        "name": "Toko Asep",
+        "completed_revenue": 1000000,
+        "commission_amount": 50000
+      }
+    ]
+  }
+}
+```
+
+#### GET `/api/agent/profile`
+
+```json
+{
+  "message": "Profil agent berhasil diambil.",
+  "data": {
+    "id": 3,
+    "name": "Agent Satu",
+    "email": "agent@example.com",
+    "phone": "+6281200000099",
+    "role": "agent",
+    "agent_code": "KA-20265",
+    "bank_name": "BCA",
+    "bank_account_name": "Agent Satu",
+    "bank_account_number": "1234567890",
+    "payout_profile_completed": true
+  }
+}
+```
+
+#### PUT `/api/agent/profile`
+
+```json
+{
+  "message": "Profil pencairan agent berhasil diperbarui.",
+  "data": {
+    "id": 3,
+    "name": "Agent Satu",
+    "email": "agent@example.com",
+    "phone": "+6281200000099",
+    "role": "agent",
+    "bank_name": "BCA",
+    "bank_account_name": "Agent Satu",
+    "bank_account_number": "1234567890"
+  }
+}
+```
+
+#### GET `/api/agent/commission-withdrawals`
+
+```json
+{
+  "message": "Daftar pencairan komisi agent berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "amount": 50000,
+      "amount_label": "Rp. 50.000",
+      "status": "pending",
+      "note": "Pencairan mingguan",
+      "requested_at": "2026-05-27T10:00:00+07:00"
+    }
+  ]
+}
+```
+
+#### POST `/api/agent/commission-withdrawals`
+
+```json
+{
+  "message": "Permintaan pencairan komisi berhasil dibuat.",
+  "data": {
+    "id": 1,
+    "agent_user_id": 3,
+    "amount": 50000,
+    "status": "pending",
+    "note": "Pencairan mingguan"
+  }
+}
+```
+
+### Finance API
+
+#### GET `/api/finance/dashboard`
+
+```json
+{
+  "message": "Dashboard finance berhasil diambil.",
+  "data": {
+    "summary": {
+      "total_transactions": 12,
+      "total_transaction_amount": 2500000,
+      "total_transaction_amount_label": "Rp. 2.500.000",
+      "active_store_count": 8,
+      "all_store_count": 10
+    },
+    "recent_transactions": [
+      {
+        "id": 1,
+        "order_number": "INV-20260527-0001",
+        "total_amount": 20499
+      }
+    ]
+  }
+}
+```
+
+#### GET `/api/finance/transactions`
+
+```json
+{
+  "message": "Daftar transaksi finance berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "unique_code": "DISB-0001",
+      "status": "pending_buyer_payment",
+      "amount": 19998,
+      "amount_label": "Rp. 19.998",
+      "store": {
+        "id": 1,
+        "name": "Toko Asep"
+      },
+      "seller": {
+        "id": 2,
+        "name": "Asep Pemilik"
+      },
+      "transaction": {
+        "id": 1,
+        "order_number": "INV-20260527-0001",
+        "status_code": "pending_payment",
+        "total_amount": 20499
+      }
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 10,
+    "last_page": 1,
+    "total": 1,
+    "from": 1,
+    "to": 1
+  },
+  "links": {
+    "first": "http://127.0.0.1:8000/api/finance/transactions?page=1",
+    "last": "http://127.0.0.1:8000/api/finance/transactions?page=1",
+    "prev": null,
+    "next": null
+  }
+}
+```
+
+#### GET `/api/finance/transactions/{id}`
+
+```json
+{
+  "message": "Detail transaksi finance berhasil diambil.",
+  "data": {
+    "id": 1,
+    "unique_code": "DISB-0001",
+    "status": "pending_buyer_payment",
+    "amount": 19998,
+    "store": {
+      "id": 1,
+      "name": "Toko Asep"
+    },
+    "seller": {
+      "id": 2,
+      "name": "Asep Pemilik",
+      "bank_name": "BCA",
+      "bank_account_name": "Asep Pemilik",
+      "bank_account_number": "1234567890"
+    },
+    "transaction": {
+      "id": 1,
+      "order_number": "INV-20260527-0001",
+      "total_amount": 20499,
+      "items": [
+        {
+          "product_name": "Bayam",
+          "quantity": 2,
+          "line_total": 19998
+        }
+      ]
+    }
+  }
+}
+```
+
+#### PATCH `/api/finance/transactions/{id}/confirm-buyer-payment`
+
+```json
+{
+  "message": "Pembayaran buyer berhasil dikonfirmasi.",
+  "data": {
+    "id": 1,
+    "transaction_id": 1,
+    "status": "buyer_payment_confirmed",
+    "buyer_payment_confirmed_at": "2026-05-27T10:00:00+07:00"
+  }
+}
+```
+
+#### PATCH `/api/finance/disbursements/{id}/disburse-to-seller`
+
+```json
+{
+  "message": "Dana berhasil ditandai sudah dicairkan ke seller.",
+  "data": {
+    "id": 1,
+    "transaction_id": 1,
+    "status": "disbursed_to_seller",
+    "disbursed_at": "2026-05-27T10:05:00+07:00"
+  }
+}
+```
+
+#### GET `/api/finance/cancellation-reason-categories`
+
+```json
+{
+  "message": "Daftar kategori alasan pembatalan berhasil diambil.",
+  "data": [
+    {
+      "id": 1,
+      "name": "Stok kosong",
+      "sort_order": 1,
+      "allows_free_text": false,
+      "is_active": true
+    }
+  ]
+}
+```
+
+#### POST `/api/finance/cancellation-reason-categories`
+
+```json
+{
+  "message": "Kategori alasan pembatalan berhasil dibuat.",
+  "data": {
+    "id": 1,
+    "name": "Stok kosong",
+    "sort_order": 1,
+    "allows_free_text": false,
+    "is_active": true
+  }
+}
+```
+
+#### PUT `/api/finance/cancellation-reason-categories/{id}`
+
+```json
+{
+  "message": "Kategori alasan pembatalan berhasil diperbarui.",
+  "data": {
+    "id": 1,
+    "name": "Stok tidak tersedia",
+    "sort_order": 1,
+    "allows_free_text": false,
+    "is_active": true
+  }
+}
+```
+
+#### DELETE `/api/finance/cancellation-reason-categories/{id}`
+
+```json
+{
+  "message": "Kategori alasan pembatalan berhasil dihapus."
+}
+```
