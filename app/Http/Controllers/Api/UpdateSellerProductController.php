@@ -27,8 +27,7 @@ class UpdateSellerProductController extends Controller
         }
 
         $validated = $request->safe()->except('image');
-        $productUnit = ProductUnit::query()->where('name', $validated['unit'])->firstOrFail();
-        $validated['product_unit_id'] = $productUnit->id;
+        $productUnit = ProductUnit::query()->findOrFail($validated['product_unit_id']);
         $validated['unit'] = $productUnit->name;
         $imageStorage = new ProductImageStorage;
 

@@ -29,11 +29,10 @@ class CreateSellerProductRequest extends FormRequest
             'price' => ['required', 'integer', 'min:0'],
             'original_price' => ['nullable', 'integer', 'min:0', 'gte:price'],
             'stock' => ['required', 'integer', 'min:0', 'max:999999'],
-            'unit' => [
+            'product_unit_id' => [
                 'required',
-                'string',
-                'max:50',
-                Rule::exists('product_units', 'name')->where(fn ($query) => $query->where('is_active', true)),
+                'uuid',
+                Rule::exists('product_units', 'id')->where(fn ($query) => $query->where('is_active', true)),
             ],
             'minimum_stock' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'is_active' => ['nullable', 'boolean'],

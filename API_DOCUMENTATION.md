@@ -285,7 +285,7 @@ curl http://127.0.0.1:8000/api/product-categories \
 
 ### GET `/api/product-units`
 
-Butuh token. Mengambil daftar satuan produk aktif yang dapat digunakan pada field `unit` saat membuat atau mengubah produk.
+Butuh token. Mengambil daftar satuan produk aktif yang dapat digunakan pada field `product_unit_id` saat membuat atau mengubah produk.
 
 ```bash
 curl http://127.0.0.1:8000/api/product-units \
@@ -700,7 +700,7 @@ Body:
 - `price` wajib, integer minimal 0
 - `original_price` opsional, harus lebih besar atau sama dengan `price`
 - `stock` wajib, 0 sampai 999999
-- `unit` wajib, max 50, harus terdaftar dan aktif di master satuan produk (`GET /api/product-units`)
+- `product_unit_id` wajib UUID, harus terdaftar dan aktif di master satuan produk (`GET /api/product-units`)
 - `minimum_stock` opsional
 - `is_active` opsional boolean
 - `weight_label` opsional, max 100
@@ -711,7 +711,7 @@ Body:
 curl -X POST http://127.0.0.1:8000/api/seller/products \
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam","category":"Sayur","image_url":"https://example.com/bayam.png","price":7000,"original_price":9000,"stock":100,"unit":"ikat","minimum_stock":5,"is_active":true,"weight_label":"250gr","description":"Sayur segar.","delivery_estimate":"Hari ini"}'
+  -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam","category":"Sayur","image_url":"https://example.com/bayam.png","price":7000,"original_price":9000,"stock":100,"product_unit_id":"22222222-2222-4222-8222-222222222222","minimum_stock":5,"is_active":true,"weight_label":"250gr","description":"Sayur segar.","delivery_estimate":"Hari ini"}'
 ```
 
 Untuk multipart:
@@ -725,7 +725,7 @@ curl -X POST http://127.0.0.1:8000/api/seller/products \
   -F "image=@/path/to/bayam.jpg" \
   -F "price=7000" \
   -F "stock=100" \
-  -F "unit=ikat"
+  -F "product_unit_id=22222222-2222-4222-8222-222222222222"
 ```
 
 ### GET `/api/seller/products/{id}`
@@ -745,7 +745,7 @@ Mengubah produk seller. Body mirip create product, tetapi gambar opsional.
 curl -X PUT http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam Super","category":"Sayur","image_url":"https://example.com/bayam-super.png","price":8000,"original_price":10000,"stock":80,"unit":"ikat","minimum_stock":5,"is_active":true}'
+  -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam Super","category":"Sayur","image_url":"https://example.com/bayam-super.png","price":8000,"original_price":10000,"stock":80,"product_unit_id":"22222222-2222-4222-8222-222222222222","minimum_stock":5,"is_active":true}'
 ```
 
 ### POST `/api/seller/products/{id}`
@@ -761,7 +761,7 @@ curl -X POST http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-b
   -F "image=@/path/to/bayam-super.jpg" \
   -F "price=8000" \
   -F "stock=80" \
-  -F "unit=ikat"
+  -F "product_unit_id=22222222-2222-4222-8222-222222222222"
 ```
 
 ### DELETE `/api/seller/products/{id}`

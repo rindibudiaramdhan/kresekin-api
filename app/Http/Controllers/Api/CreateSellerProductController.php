@@ -17,8 +17,7 @@ class CreateSellerProductController extends Controller
         $validated = $request->safe()->except('image');
         $validated['minimum_stock'] = $validated['minimum_stock'] ?? 1;
         $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : true;
-        $productUnit = ProductUnit::query()->where('name', $validated['unit'])->firstOrFail();
-        $validated['product_unit_id'] = $productUnit->id;
+        $productUnit = ProductUnit::query()->findOrFail($validated['product_unit_id']);
         $validated['unit'] = $productUnit->name;
 
         if ($request->hasFile('image')) {

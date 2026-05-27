@@ -6,6 +6,7 @@ use App\Models\CancellationReasonCategory;
 use App\Models\HousingArea;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductUnit;
 use App\Models\Tenant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
@@ -172,6 +173,8 @@ class SellerApiTest extends TestCase
             'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
+        $unit = ProductUnit::query()->where('name', 'ikat')->firstOrFail();
+
         $createResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/seller/products', [
                 'tenant_id' => $tenant->id,
@@ -181,7 +184,7 @@ class SellerApiTest extends TestCase
                 'price' => 7000,
                 'original_price' => 9000,
                 'stock' => 100,
-                'unit' => 'ikat',
+                'product_unit_id' => $unit->id,
                 'minimum_stock' => 5,
                 'is_active' => true,
                 'weight_label' => '250gr',
@@ -231,10 +234,10 @@ class SellerApiTest extends TestCase
                 'image_url' => 'https://example.com/bayam.png',
                 'price' => 7000,
                 'stock' => 10,
-                'unit' => 'karung',
+                'product_unit_id' => (string) str()->uuid(),
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['unit']);
+            ->assertJsonValidationErrors(['product_unit_id']);
     }
 
     public function test_seller_cannot_update_product_with_unregistered_unit(): void
@@ -267,10 +270,10 @@ class SellerApiTest extends TestCase
                 'image_url' => 'https://example.com/bayam.png',
                 'price' => 7000,
                 'stock' => 10,
-                'unit' => 'karung',
+                'product_unit_id' => (string) str()->uuid(),
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['unit']);
+            ->assertJsonValidationErrors(['product_unit_id']);
     }
 
     public function test_seller_cannot_create_product_for_other_sellers_tenant(): void
@@ -286,6 +289,8 @@ class SellerApiTest extends TestCase
             'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
+        $unit = ProductUnit::query()->where('name', 'ikat')->firstOrFail();
+
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/seller/products', [
                 'tenant_id' => $tenant->id,
@@ -293,7 +298,7 @@ class SellerApiTest extends TestCase
                 'category' => Tenant::CATEGORY_VEGETABLES,
                 'price' => 7000,
                 'stock' => 10,
-                'unit' => 'ikat',
+                'product_unit_id' => $unit->id,
             ]);
 
         $response
@@ -315,6 +320,8 @@ class SellerApiTest extends TestCase
             'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
+        $unit = ProductUnit::query()->where('name', 'ikat')->firstOrFail();
+
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->post('/api/seller/products', [
                 'tenant_id' => $tenant->id,
@@ -324,7 +331,7 @@ class SellerApiTest extends TestCase
                 'price' => 9999,
                 'original_price' => 12000,
                 'stock' => 100,
-                'unit' => 'ikat',
+                'product_unit_id' => $unit->id,
                 'minimum_stock' => 5,
                 'is_active' => true,
             ]);
@@ -368,6 +375,8 @@ class SellerApiTest extends TestCase
 
         Storage::disk(Product::imageDisk())->assertExists($imagePath);
 
+        $unit = ProductUnit::query()->where('name', 'kilogram')->firstOrFail();
+
         $createResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/seller/products', [
                 'tenant_id' => $tenant->id,
@@ -376,7 +385,7 @@ class SellerApiTest extends TestCase
                 'image_path' => $imagePath,
                 'price' => 10000,
                 'stock' => 50,
-                'unit' => 'kilogram',
+                'product_unit_id' => $unit->id,
             ]);
 
         $createResponse
@@ -390,6 +399,7 @@ class SellerApiTest extends TestCase
             'image_path' => $imagePath,
             'stock' => 50,
             'unit' => 'kilogram',
+            'product_unit_id' => $unit->id,
         ]);
     }
 
