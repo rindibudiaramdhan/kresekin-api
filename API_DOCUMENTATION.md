@@ -798,7 +798,7 @@ curl -X POST http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-b
 
 ### DELETE `/api/seller/products/{id}`
 
-Menghapus produk seller.
+Menghapus produk seller dengan soft delete. Produk tidak hilang fisik dari database, tetapi tidak muncul lagi di list/detail produk normal.
 
 ```bash
 curl -X DELETE http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
@@ -2224,7 +2224,7 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
 
 ```json
 {
-  "message": "Produk berhasil dihapus."
+  "message": "Produk seller berhasil dihapus."
 }
 ```
 

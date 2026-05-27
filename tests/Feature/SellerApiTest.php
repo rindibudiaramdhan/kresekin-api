@@ -707,6 +707,49 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('message', 'Produk tidak ditemukan.');
     }
 
+    public function test_seller_delete_product_uses_soft_delete(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-soft-delete@example.com', '+6281200000051', 'seller-soft-delete-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Soft Delete Product',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $product = Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Bayam Soft Delete',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'image_url' => 'https://example.com/bayam-soft-delete.png',
+            'price' => 7000,
+            'stock' => 10,
+            'unit' => 'ikat',
+            'is_active' => true,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->deleteJson('/api/seller/products/'.$product->id)
+            ->assertOk()
+            ->assertJsonPath('message', 'Produk seller berhasil dihapus.');
+
+        $this->assertSoftDeleted('products', [
+            'id' => $product->id,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/products/'.$product->id)
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Produk tidak ditemukan.');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/products')
+            ->assertOk()
+            ->assertJsonMissing(['id' => $product->id]);
+    }
+
     public function test_buyer_cannot_access_seller_endpoints(): void
     {
         [, $token] = $this->createAuthenticatedUser('buyer@example.com', '+6281200000005', 'buyer-token', User::ROLE_BUYER);
