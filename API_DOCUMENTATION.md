@@ -283,6 +283,15 @@ curl http://127.0.0.1:8000/api/product-categories \
   -H "Authorization: Bearer $TOKEN"
 ```
 
+### GET `/api/product-units`
+
+Butuh token. Mengambil daftar satuan produk aktif yang dapat digunakan pada field `unit` saat membuat atau mengubah produk.
+
+```bash
+curl http://127.0.0.1:8000/api/product-units \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ## Data Wilayah Indonesia
 
 Endpoint wilayah mengambil data dari service BPS. Endpoint ini tidak memakai bearer token.
@@ -691,7 +700,7 @@ Body:
 - `price` wajib, integer minimal 0
 - `original_price` opsional, harus lebih besar atau sama dengan `price`
 - `stock` wajib, 0 sampai 999999
-- `unit` wajib, max 50
+- `unit` wajib, max 50, harus terdaftar dan aktif di master satuan produk (`GET /api/product-units`)
 - `minimum_stock` opsional
 - `is_active` opsional boolean
 - `weight_label` opsional, max 100
@@ -1305,6 +1314,26 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
       "name": "Sembako",
       "slug": "sembako",
       "image_url": "http://127.0.0.1:8000/images/ic_groceries_category.svg"
+    }
+  ]
+}
+```
+
+#### GET `/api/product-units`
+
+```json
+{
+  "message": "Daftar satuan produk berhasil diambil.",
+  "data": [
+    {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "name": "ikat",
+      "slug": "ikat"
+    },
+    {
+      "id": "33333333-3333-4333-8333-333333333333",
+      "name": "kilogram",
+      "slug": "kilogram"
     }
   ]
 }
@@ -2020,6 +2049,12 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
       "price": 7000,
       "stock": 100,
       "unit": "ikat",
+      "product_unit_id": "22222222-2222-4222-8222-222222222222",
+      "product_unit": {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "name": "ikat",
+        "slug": "ikat"
+      },
       "is_active": true
     }
   ]
@@ -2052,6 +2087,12 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "original_price": 9000,
     "stock": 100,
     "unit": "ikat",
+    "product_unit_id": "22222222-2222-4222-8222-222222222222",
+    "product_unit": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "name": "ikat",
+      "slug": "ikat"
+    },
     "minimum_stock": 5,
     "is_active": true,
     "image_url": "https://example.com/bayam.png"
@@ -2072,6 +2113,12 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "price": 7000,
     "stock": 100,
     "unit": "ikat",
+    "product_unit_id": "22222222-2222-4222-8222-222222222222",
+    "product_unit": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "name": "ikat",
+      "slug": "ikat"
+    },
     "description": "Sayur segar.",
     "is_active": true
   }
@@ -2093,6 +2140,12 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
     "price": 8000,
     "stock": 80,
     "unit": "ikat",
+    "product_unit_id": "22222222-2222-4222-8222-222222222222",
+    "product_unit": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "name": "ikat",
+      "slug": "ikat"
+    },
     "is_active": true
   }
 }
@@ -2111,6 +2164,12 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
     "price": 8000,
     "stock": 80,
     "unit": "ikat",
+    "product_unit_id": "22222222-2222-4222-8222-222222222222",
+    "product_unit": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "name": "ikat",
+      "slug": "ikat"
+    },
     "is_active": true
   }
 }

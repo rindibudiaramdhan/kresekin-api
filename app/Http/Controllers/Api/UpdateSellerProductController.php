@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateSellerProductRequest;
 use App\Models\Product;
+use App\Models\ProductUnit;
 use App\Support\ProductImageStorage;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,7 +15,7 @@ class UpdateSellerProductController extends Controller
     public function __invoke(UpdateSellerProductRequest $request, string $id): JsonResponse
     {
         $product = Product::query()
-            ->with('tenant')
+            ->with(['tenant', 'productUnit'])
             ->where('id', $id)
             ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
             ->first();
@@ -26,6 +27,9 @@ class UpdateSellerProductController extends Controller
         }
 
         $validated = $request->safe()->except('image');
+        $productUnit = ProductUnit::query()->where('name', $validated['unit'])->firstOrFail();
+        $validated['product_unit_id'] = $productUnit->id;
+        $validated['unit'] = $productUnit->name;
         $imageStorage = new ProductImageStorage;
 
         if ($request->hasFile('image')) {
@@ -50,7 +54,7 @@ class UpdateSellerProductController extends Controller
         }
 
         $product->update($validated);
-        $product->load('tenant');
+        $product->load(['tenant', 'productUnit']);
 
         return response()->json([
             'message' => 'Produk seller berhasil diperbarui.',
@@ -71,6 +75,12 @@ class UpdateSellerProductController extends Controller
             'original_price' => $product->original_price,
             'stock' => $product->stock,
             'unit' => $product->unit,
+            'product_unit_id' => $product->product_unit_id,
+            'product_unit' => $product->productUnit ? [
+                'id' => $product->productUnit->id,
+                'name' => $product->productUnit->name,
+                'slug' => $product->productUnit->slug,
+            ] : null,
             'minimum_stock' => $product->minimum_stock,
             'is_low_stock' => $product->isLowStock(),
             'is_active' => $product->is_active,

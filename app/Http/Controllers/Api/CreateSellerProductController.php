@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateSellerProductRequest;
 use App\Models\Product;
+use App\Models\ProductUnit;
 use App\Support\ProductImageStorage;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,6 +17,9 @@ class CreateSellerProductController extends Controller
         $validated = $request->safe()->except('image');
         $validated['minimum_stock'] = $validated['minimum_stock'] ?? 1;
         $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : true;
+        $productUnit = ProductUnit::query()->where('name', $validated['unit'])->firstOrFail();
+        $validated['product_unit_id'] = $productUnit->id;
+        $validated['unit'] = $productUnit->name;
 
         if ($request->hasFile('image')) {
             $imageStorage = new ProductImageStorage;
@@ -26,7 +30,7 @@ class CreateSellerProductController extends Controller
         }
 
         $product = Product::query()->create($validated);
-        $product->load('tenant');
+        $product->load(['tenant', 'productUnit']);
 
         return response()->json([
             'message' => 'Produk seller berhasil dibuat.',
@@ -47,6 +51,12 @@ class CreateSellerProductController extends Controller
             'original_price' => $product->original_price,
             'stock' => $product->stock,
             'unit' => $product->unit,
+            'product_unit_id' => $product->product_unit_id,
+            'product_unit' => $product->productUnit ? [
+                'id' => $product->productUnit->id,
+                'name' => $product->productUnit->name,
+                'slug' => $product->productUnit->slug,
+            ] : null,
             'minimum_stock' => $product->minimum_stock,
             'is_low_stock' => $product->isLowStock(),
             'is_active' => $product->is_active,

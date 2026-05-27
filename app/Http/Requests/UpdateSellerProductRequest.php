@@ -29,7 +29,12 @@ class UpdateSellerProductRequest extends FormRequest
             'price' => ['required', 'integer', 'min:0'],
             'original_price' => ['nullable', 'integer', 'min:0', 'gte:price'],
             'stock' => ['required', 'integer', 'min:0', 'max:999999'],
-            'unit' => ['required', 'string', 'max:50'],
+            'unit' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::exists('product_units', 'name')->where(fn ($query) => $query->where('is_active', true)),
+            ],
             'minimum_stock' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'is_active' => ['nullable', 'boolean'],
             'weight_label' => ['nullable', 'string', 'max:100'],

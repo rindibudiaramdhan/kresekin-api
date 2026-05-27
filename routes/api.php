@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\GetPaymentMethodsController;
 use App\Http\Controllers\Api\GetProductCategoriesController;
 use App\Http\Controllers\Api\GetProductDetailController;
 use App\Http\Controllers\Api\GetProductListController;
+use App\Http\Controllers\Api\GetProductUnitsController;
 use App\Http\Controllers\Api\GetSellerDashboardController;
 use App\Http\Controllers\Api\GetSellerOrderDetailController;
 use App\Http\Controllers\Api\GetSellerOrderListController;
@@ -96,6 +97,7 @@ Route::get('/users/profile', GetUserProfileController::class)->middleware('sessi
 Route::put('/users/profile', UpdateUserProfileController::class)->middleware('session.token');
 Route::get('/housing-areas', GetHousingAreaListController::class)->middleware('session.token');
 Route::get('/product-categories', GetProductCategoriesController::class)->middleware('session.token');
+Route::get('/product-units', GetProductUnitsController::class)->middleware('session.token');
 
 Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::post('/checkout', CheckoutController::class);

@@ -12,7 +12,7 @@ class GetSellerProductListController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $products = Product::query()
-            ->with('tenant')
+            ->with(['tenant', 'productUnit'])
             ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
             ->latest()
             ->get()
@@ -27,6 +27,12 @@ class GetSellerProductListController extends Controller
                 'original_price' => $product->original_price,
                 'stock' => $product->stock,
                 'unit' => $product->unit,
+                'product_unit_id' => $product->product_unit_id,
+                'product_unit' => $product->productUnit ? [
+                    'id' => $product->productUnit->id,
+                    'name' => $product->productUnit->name,
+                    'slug' => $product->productUnit->slug,
+                ] : null,
                 'minimum_stock' => $product->minimum_stock,
                 'is_low_stock' => $product->isLowStock(),
                 'is_active' => $product->is_active,

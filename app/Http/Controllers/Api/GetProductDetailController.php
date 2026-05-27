@@ -14,7 +14,7 @@ class GetProductDetailController extends Controller
     public function __invoke(Request $request, string $id): JsonResponse
     {
         $product = Product::query()
-            ->with('tenant')
+            ->with(['tenant', 'productUnit'])
             ->where('is_active', true)
             ->find($id);
 
@@ -57,6 +57,12 @@ class GetProductDetailController extends Controller
                 'discount_percentage' => $this->discountPercentage($product->price, $product->original_price),
                 'stock' => $product->stock,
                 'unit' => $product->unit,
+                'product_unit_id' => $product->product_unit_id,
+                'product_unit' => $product->productUnit ? [
+                    'id' => $product->productUnit->id,
+                    'name' => $product->productUnit->name,
+                    'slug' => $product->productUnit->slug,
+                ] : null,
                 'minimum_stock' => $product->minimum_stock,
                 'is_low_stock' => $product->isLowStock(),
                 'weight_label' => $product->weight_label,

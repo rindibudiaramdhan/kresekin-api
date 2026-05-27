@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Product;
+use App\Models\ProductUnit;
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
 
@@ -84,6 +85,9 @@ class TenantSeeder extends Seeder
             );
 
             foreach ($products as $productData) {
+                $unitName = $productData['unit'] ?? 'pcs';
+                $productUnit = ProductUnit::query()->where('name', $unitName)->first();
+
                 Product::query()->updateOrCreate(
                     [
                         'tenant_id' => $tenant->id,
@@ -95,7 +99,8 @@ class TenantSeeder extends Seeder
                         'price' => $productData['price'],
                         'original_price' => $productData['original_price'] ?? null,
                         'stock' => $productData['stock'] ?? 100,
-                        'unit' => $productData['unit'] ?? 'pcs',
+                        'unit' => $unitName,
+                        'product_unit_id' => $productUnit?->id,
                         'minimum_stock' => $productData['minimum_stock'] ?? 1,
                         'is_active' => $productData['is_active'] ?? true,
                         'weight_label' => $productData['weight_label'] ?? null,

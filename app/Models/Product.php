@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
     'original_price',
     'stock',
     'unit',
+    'product_unit_id',
     'minimum_stock',
     'is_active',
     'weight_label',
@@ -66,5 +67,10 @@ class Product extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function productUnit(): BelongsTo
+    {
+        return $this->belongsTo(ProductUnit::class);
     }
 }

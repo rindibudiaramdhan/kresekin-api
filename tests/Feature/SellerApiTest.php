@@ -195,6 +195,7 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.name', 'Bayam')
             ->assertJsonPath('data.stock', 100)
             ->assertJsonPath('data.unit', 'ikat')
+            ->assertJsonPath('data.product_unit.name', 'ikat')
             ->assertJsonPath('data.minimum_stock', 5)
             ->assertJsonPath('data.is_active', true);
 
@@ -206,7 +207,70 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.0.tenant_id', $tenant->id)
             ->assertJsonPath('data.0.name', 'Bayam')
             ->assertJsonPath('data.0.stock', 100)
-            ->assertJsonPath('data.0.unit', 'ikat');
+            ->assertJsonPath('data.0.unit', 'ikat')
+            ->assertJsonPath('data.0.product_unit.name', 'ikat');
+    }
+
+    public function test_seller_cannot_create_product_with_unregistered_unit(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-invalid-unit@example.com', '+6281200000045', 'seller-invalid-unit-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Invalid Unit',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/seller/products', [
+                'tenant_id' => $tenant->id,
+                'name' => 'Bayam',
+                'category' => Tenant::CATEGORY_VEGETABLES,
+                'image_url' => 'https://example.com/bayam.png',
+                'price' => 7000,
+                'stock' => 10,
+                'unit' => 'karung',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['unit']);
+    }
+
+    public function test_seller_cannot_update_product_with_unregistered_unit(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-invalid-update-unit@example.com', '+6281200000046', 'seller-invalid-update-unit-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Invalid Update Unit',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $product = Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Bayam',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'image_url' => 'https://example.com/bayam.png',
+            'price' => 7000,
+            'stock' => 10,
+            'unit' => 'ikat',
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->putJson('/api/seller/products/'.$product->id, [
+                'tenant_id' => $tenant->id,
+                'name' => 'Bayam',
+                'category' => Tenant::CATEGORY_VEGETABLES,
+                'image_url' => 'https://example.com/bayam.png',
+                'price' => 7000,
+                'stock' => 10,
+                'unit' => 'karung',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['unit']);
     }
 
     public function test_seller_cannot_create_product_for_other_sellers_tenant(): void
@@ -239,7 +303,7 @@ class SellerApiTest extends TestCase
 
     public function test_seller_can_upload_product_image_when_creating_product(): void
     {
-        Storage::fake('local');
+        Storage::fake(Product::imageDisk());
 
         [$seller, $token] = $this->createAuthenticatedUser('seller-upload@example.com', '+6281200000043', 'seller-upload-token', User::ROLE_SELLER);
 
@@ -274,12 +338,12 @@ class SellerApiTest extends TestCase
         $product = Product::query()->where('name', 'Pakcoy Lokal')->firstOrFail();
 
         $this->assertNotNull($product->image_path);
-        Storage::disk('local')->assertExists($product->image_path);
+        Storage::disk(Product::imageDisk())->assertExists($product->image_path);
     }
 
     public function test_seller_can_upload_product_image_separately_and_create_product_with_image_path(): void
     {
-        Storage::fake('local');
+        Storage::fake(Product::imageDisk());
 
         [$seller, $token] = $this->createAuthenticatedUser('seller-upload-path@example.com', '+6281200000044', 'seller-upload-path-token', User::ROLE_SELLER);
 
@@ -302,7 +366,7 @@ class SellerApiTest extends TestCase
 
         $imagePath = $uploadResponse->json('data.image_path');
 
-        Storage::disk('local')->assertExists($imagePath);
+        Storage::disk(Product::imageDisk())->assertExists($imagePath);
 
         $createResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/seller/products', [
