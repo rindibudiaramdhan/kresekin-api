@@ -3,7 +3,7 @@
 @push('styles')
 <style>
     body {
-        background: #050505;
+        background: #fff;
         color: #1c1f26;
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
@@ -18,7 +18,7 @@
         height: 100dvh;
         padding: 6px 34px 10px;
         overflow: hidden;
-        background: #050505;
+        background: #fff;
         display: flex;
         flex-direction: column;
         align-items: center;
