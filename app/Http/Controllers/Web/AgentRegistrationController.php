@@ -36,8 +36,11 @@ class AgentRegistrationController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->where('role', User::ROLE_AGENT)],
             'phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9]{8,15}$/', Rule::unique('users', 'phone')->where('role', User::ROLE_AGENT)],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'identity_document' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
             'terms' => ['accepted'],
         ]);
+
+        $identityDocumentPath = $request->file('identity_document')->store('agent-identity-documents', 'public');
 
         User::create([
             'name' => $validated['name'],
@@ -49,6 +52,7 @@ class AgentRegistrationController extends Controller
             'password' => Hash::make($validated['password']),
             'otp_code' => null,
             'otp_sent_at' => null,
+            'identity_document_path' => $identityDocumentPath,
         ]);
 
         return redirect()

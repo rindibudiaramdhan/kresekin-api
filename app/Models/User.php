@@ -32,6 +32,7 @@ use Illuminate\Notifications\Notifiable;
     'bank_name',
     'bank_account_name',
     'bank_account_number',
+    'identity_document_path',
 ])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
 class User extends Authenticatable
