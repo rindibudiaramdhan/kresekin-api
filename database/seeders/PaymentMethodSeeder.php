@@ -24,24 +24,24 @@ class PaymentMethodSeeder extends Seeder
                     ['code' => 'bni', 'name' => 'BNI', 'icon_key' => 'bank_bni', 'sort_order' => 4],
                 ],
             ],
-            [
-                'code' => PaymentMethod::QR_PAYMENT,
-                'name' => 'QR Payment',
-                'icon_key' => 'qris',
-                'requires_option' => false,
-                'sort_order' => 2,
-                'is_active' => true,
-                'options' => [],
-            ],
-            [
-                'code' => PaymentMethod::COD,
-                'name' => 'COD',
-                'icon_key' => 'cod',
-                'requires_option' => false,
-                'sort_order' => 3,
-                'is_active' => true,
-                'options' => [],
-            ],
+            // [
+            //     'code' => PaymentMethod::QR_PAYMENT,
+            //     'name' => 'QR Payment',
+            //     'icon_key' => 'qris',
+            //     'requires_option' => false,
+            //     'sort_order' => 2,
+            //     'is_active' => true,
+            //     'options' => [],
+            // ],
+            // [
+            //     'code' => PaymentMethod::COD,
+            //     'name' => 'COD',
+            //     'icon_key' => 'cod',
+            //     'requires_option' => false,
+            //     'sort_order' => 3,
+            //     'is_active' => true,
+            //     'options' => [],
+            // ],
         ];
 
         foreach ($paymentMethods as $paymentMethodData) {

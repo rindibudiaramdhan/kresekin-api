@@ -21,17 +21,17 @@ class DatabaseSeeder extends Seeder
             HousingAreaSeeder::class,
             ProductCategorySeeder::class,
             ProductUnitSeeder::class,
-            TenantSeeder::class,
-            PromoProductSeeder::class,
-            PromoCodeSeeder::class,
+            // TenantSeeder::class,
+            // PromoProductSeeder::class,
+            // PromoCodeSeeder::class,
             OrderTimeOptionSeeder::class,
             PaymentMethodSeeder::class,
             DeliveryMethodSeeder::class,
         ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
     }
 }
