@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateSellerProductRequest;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\ProductUnit;
 use App\Support\ProductImageStorage;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +18,9 @@ class CreateSellerProductController extends Controller
         $validated = $request->safe()->except('image');
         $validated['minimum_stock'] = $validated['minimum_stock'] ?? 1;
         $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : true;
+        $productCategory = ProductCategory::query()->findOrFail($validated['product_category_id']);
+        $validated['category'] = $productCategory->name;
+        unset($validated['product_category_id']);
         $productUnit = ProductUnit::query()->findOrFail($validated['product_unit_id']);
         $validated['unit'] = $productUnit->name;
 

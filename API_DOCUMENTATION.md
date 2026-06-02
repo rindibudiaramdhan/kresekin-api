@@ -7,7 +7,7 @@ Dokumentasi ini dibuat dari route, controller, request validation, model, dan fe
 - Base URL lokal default: `http://127.0.0.1:8000`
 - Prefix API: `/api`
 - Format body: `application/json`, kecuali upload gambar memakai `multipart/form-data`
-- Semua field identifier entity aplikasi memakai UUID string, misalnya `id`, `user_id`, `tenant_id`, `product_id`, `transaction_id`, `housing_area_id`, `category_id`, dan path parameter seperti `{id}` atau `{transactionId}`. Field numerik bisnis seperti `quantity`, `price`, `amount`, `sort_order`, `limit`, dan `page` tetap integer.
+- Semua field identifier entity aplikasi memakai UUID string, misalnya `id`, `user_id`, `tenant_id`, `product_id`, `transaction_id`, `housing_area_id`, `category_id`, `product_category_id`, dan path parameter seperti `{id}` atau `{transactionId}`. Field numerik bisnis seperti `quantity`, `price`, `amount`, `sort_order`, `limit`, dan `page` tetap integer.
 - Format response umum:
 
 ```json
@@ -712,7 +712,7 @@ Mapping input form Tambah Produk:
 |---|---|---|
 | Tambah Foto Produk | `image` / `image_path` / `image_url` | Salah satu wajib. `image` untuk multipart upload langsung. |
 | Nama Produk | `name` | Wajib. |
-| Kategori Produk | `category` | Wajib, nama kategori dari master kategori produk. |
+| Kategori Produk | `product_category_id` | Wajib, ID dari master kategori produk (`GET /api/product-categories`). |
 | Deskripsi Produk | `description` | Opsional. |
 | Harga Produk | `price` | Wajib, integer. |
 | Harga Diskon | `original_price` | Opsional. Dipakai sebagai harga coret sebelum diskon. |
@@ -721,13 +721,13 @@ Mapping input form Tambah Produk:
 | Peringatan stok minimum | `minimum_stock` | Opsional, default `1`. |
 | Status Produk | `is_active` | Opsional boolean, default `true`. |
 
-Catatan: client tidak mengirim field `unit`. Field `unit` pada response diisi otomatis dari `product_units.name` berdasarkan `product_unit_id`.
+Catatan: client tidak mengirim field `unit` dan `category`. Field `unit` pada response diisi otomatis dari `product_units.name` berdasarkan `product_unit_id`. Field `category` pada response diisi otomatis dari `product_categories.name` berdasarkan `product_category_id`.
 
 Body:
 
 - `tenant_id` wajib UUID, tenant harus milik seller aktif
 - `name` wajib
-- `category` wajib, salah satu `Tenant::CATEGORIES`
+- `product_category_id` wajib UUID, harus ada di `product_categories.id`
 - salah satu dari `image`, `image_path`, atau `image_url` wajib
 - `image`: file jpg/jpeg/png max 5120 KB
 - `image_path`: string max 255, harus diawali `products/`
@@ -746,7 +746,7 @@ Body:
 curl -X POST http://127.0.0.1:8000/api/seller/products \
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam","category":"Sayur","image_url":"https://example.com/bayam.png","price":7000,"original_price":9000,"stock":100,"product_unit_id":"22222222-2222-4222-8222-222222222222","minimum_stock":5,"is_active":true,"weight_label":"250gr","description":"Sayur segar.","delivery_estimate":"Hari ini"}'
+  -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam","product_category_id":"ffffffff-ffff-4fff-8fff-ffffffffffff","image_url":"https://example.com/bayam.png","price":7000,"original_price":9000,"stock":100,"product_unit_id":"22222222-2222-4222-8222-222222222222","minimum_stock":5,"is_active":true,"weight_label":"250gr","description":"Sayur segar.","delivery_estimate":"Hari ini"}'
 ```
 
 Untuk multipart:
@@ -756,7 +756,7 @@ curl -X POST http://127.0.0.1:8000/api/seller/products \
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -F "tenant_id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" \
   -F "name=Bayam" \
-  -F "category=Sayur" \
+  -F "product_category_id=ffffffff-ffff-4fff-8fff-ffffffffffff" \
   -F "image=@/path/to/bayam.jpg" \
   -F "price=7000" \
   -F "stock=100" \

@@ -172,14 +172,15 @@ class SellerApiTest extends TestCase
             'rating' => 0,
             'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
+        $category = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
 
-        $unit = ProductUnit::query()->where('name', 'ikat')->firstOrFail();
+        $unit = $this->createProductUnit('ikat');
 
         $createResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/seller/products', [
                 'tenant_id' => $tenant->id,
                 'name' => 'Bayam',
-                'category' => Tenant::CATEGORY_VEGETABLES,
+                'product_category_id' => $category->id,
                 'image_url' => 'https://example.com/bayam.png',
                 'price' => 7000,
                 'original_price' => 9000,
@@ -196,6 +197,7 @@ class SellerApiTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.tenant_id', $tenant->id)
             ->assertJsonPath('data.name', 'Bayam')
+            ->assertJsonPath('data.category', Tenant::CATEGORY_VEGETABLES)
             ->assertJsonPath('data.stock', 100)
             ->assertJsonPath('data.unit', 'ikat')
             ->assertJsonPath('data.product_unit.name', 'ikat')
@@ -225,12 +227,13 @@ class SellerApiTest extends TestCase
             'rating' => 0,
             'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
+        $category = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/seller/products', [
                 'tenant_id' => $tenant->id,
                 'name' => 'Bayam',
-                'category' => Tenant::CATEGORY_VEGETABLES,
+                'product_category_id' => $category->id,
                 'image_url' => 'https://example.com/bayam.png',
                 'price' => 7000,
                 'stock' => 10,
@@ -238,6 +241,34 @@ class SellerApiTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['product_unit_id']);
+    }
+
+    public function test_seller_cannot_create_product_with_unregistered_category(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-invalid-category@example.com', '+6281200000047', 'seller-invalid-category-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Invalid Category',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $unit = $this->createProductUnit('ikat');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/seller/products', [
+                'tenant_id' => $tenant->id,
+                'name' => 'Bayam',
+                'product_category_id' => (string) str()->uuid(),
+                'image_url' => 'https://example.com/bayam.png',
+                'price' => 7000,
+                'stock' => 10,
+                'product_unit_id' => $unit->id,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['product_category_id']);
     }
 
     public function test_seller_cannot_update_product_with_unregistered_unit(): void
@@ -288,14 +319,15 @@ class SellerApiTest extends TestCase
             'rating' => 0,
             'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
+        $category = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
 
-        $unit = ProductUnit::query()->where('name', 'ikat')->firstOrFail();
+        $unit = $this->createProductUnit('ikat');
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/seller/products', [
                 'tenant_id' => $tenant->id,
                 'name' => 'Bayam',
-                'category' => Tenant::CATEGORY_VEGETABLES,
+                'product_category_id' => $category->id,
                 'price' => 7000,
                 'stock' => 10,
                 'product_unit_id' => $unit->id,
@@ -319,14 +351,15 @@ class SellerApiTest extends TestCase
             'rating' => 0,
             'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
+        $category = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
 
-        $unit = ProductUnit::query()->where('name', 'ikat')->firstOrFail();
+        $unit = $this->createProductUnit('ikat');
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->post('/api/seller/products', [
                 'tenant_id' => $tenant->id,
                 'name' => 'Pakcoy Lokal',
-                'category' => Tenant::CATEGORY_VEGETABLES,
+                'product_category_id' => $category->id,
                 'image' => UploadedFile::fake()->image('pakcoy.jpg'),
                 'price' => 9999,
                 'original_price' => 12000,
@@ -361,6 +394,7 @@ class SellerApiTest extends TestCase
             'rating' => 0,
             'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
+        $category = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
 
         $uploadResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->post('/api/seller/product-images', [
@@ -375,13 +409,13 @@ class SellerApiTest extends TestCase
 
         Storage::disk(Product::imageDisk())->assertExists($imagePath);
 
-        $unit = ProductUnit::query()->where('name', 'kilogram')->firstOrFail();
+        $unit = $this->createProductUnit('kilogram');
 
         $createResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/seller/products', [
                 'tenant_id' => $tenant->id,
                 'name' => 'Wortel Lokal',
-                'category' => Tenant::CATEGORY_VEGETABLES,
+                'product_category_id' => $category->id,
                 'image_path' => $imagePath,
                 'price' => 10000,
                 'stock' => 50,
@@ -939,5 +973,27 @@ class SellerApiTest extends TestCase
         ]);
 
         return [$user, $plainTextToken];
+    }
+
+    private function createProductCategory(string $name): ProductCategory
+    {
+        return ProductCategory::query()->firstOrCreate(
+            ['slug' => str($name)->slug()->toString()],
+            [
+                'name' => $name,
+                'image_path' => 'images/ic_'.str($name)->slug('_')->toString().'_category.svg',
+            ],
+        );
+    }
+
+    private function createProductUnit(string $name): ProductUnit
+    {
+        return ProductUnit::query()->firstOrCreate(
+            ['slug' => str($name)->slug()->toString()],
+            [
+                'name' => $name,
+                'is_active' => true,
+            ],
+        );
     }
 }
