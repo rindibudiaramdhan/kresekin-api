@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\HousingArea;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserSessionToken;
@@ -134,6 +135,93 @@ class TenantApiTest extends TestCase
         $this->assertCount(3, $response->json('data'));
 
         Carbon::setTestNow();
+    }
+
+    public function test_tenant_list_can_be_filtered_by_housing_area_id(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'budi-area@example.com',
+            'phone' => '+6281234567003',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $plainTextToken = 'tenant-housing-area-token';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $targetArea = HousingArea::query()->create([
+            'name' => 'Komp Setra Dago',
+            'code' => 'AREA-001',
+        ]);
+        $otherArea = HousingArea::query()->create([
+            'name' => 'Komp Antapani Indah',
+            'code' => 'AREA-002',
+        ]);
+
+        $targetTenant = Tenant::query()->create([
+            'name' => 'Toko Area Target',
+            'profile_picture_url' => 'https://example.com/target-area.png',
+            'rating' => 4.8,
+            'category' => Tenant::CATEGORY_FOOD,
+            'open_time' => '07:00',
+            'close_time' => '21:00',
+        ]);
+        $targetTenant->housingAreas()->sync([$targetArea->id]);
+
+        $otherTenant = Tenant::query()->create([
+            'name' => 'Toko Area Lain',
+            'profile_picture_url' => 'https://example.com/other-area.png',
+            'rating' => 4.1,
+            'category' => Tenant::CATEGORY_GROCERIES,
+            'open_time' => '07:00',
+            'close_time' => '21:00',
+        ]);
+        $otherTenant->housingAreas()->sync([$otherArea->id]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/tenants?housing_area_id='.$targetArea->id);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', $targetTenant->id)
+            ->assertJsonPath('data.0.name', 'Toko Area Target');
+    }
+
+    public function test_tenant_list_returns_validation_error_for_unknown_housing_area_id(): void
+    {
+        $user = User::query()->create([
+            'name' => 'Budi',
+            'email' => 'budi-invalid-area@example.com',
+            'phone' => '+6281234567004',
+            'type' => 'phone',
+            'password' => null,
+            'otp_code' => null,
+            'otp_sent_at' => null,
+        ]);
+
+        $plainTextToken = 'tenant-invalid-housing-area-token';
+
+        UserSessionToken::query()->create([
+            'user_id' => $user->id,
+            'token' => hash('sha256', $plainTextToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/tenants?housing_area_id=11111111-1111-1111-1111-111111111111');
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['housing_area_id']);
     }
 
     public function test_tenant_list_can_be_filtered_by_category_and_sorted_by_nearest_distance(): void

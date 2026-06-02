@@ -18,6 +18,7 @@ class GetBuyerTenantListController extends Controller
         $validator = Validator::make($request->query(), [
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
+            'housing_area_id' => ['nullable', 'uuid', 'exists:housing_areas,id'],
             'product_category' => ['nullable', 'string', 'exists:product_categories,slug'],
         ]);
 
@@ -46,6 +47,13 @@ class GetBuyerTenantListController extends Controller
             ->when(
                 $productCategory,
                 fn ($query) => $query->whereHas('products', fn ($productQuery) => $productQuery->where('category', $productCategory->name))
+            )
+            ->when(
+                isset($validated['housing_area_id']),
+                fn ($query) => $query->whereHas(
+                    'housingAreas',
+                    fn ($housingAreaQuery) => $housingAreaQuery->where('housing_areas.id', $validated['housing_area_id'])
+                )
             )
             ->latest()
             ->get()
