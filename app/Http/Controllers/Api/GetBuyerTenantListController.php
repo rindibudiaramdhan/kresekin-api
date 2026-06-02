@@ -38,12 +38,15 @@ class GetBuyerTenantListController extends Controller
             : null;
 
         $tenantItems = Tenant::query()
-            ->with(['products' => function ($query) use ($productCategory): void {
-                $query->when(
-                    $productCategory,
-                    fn ($query) => $query->where('category', $productCategory->name)
-                );
-            }])
+            ->with([
+                'housingAreas',
+                'products' => function ($query) use ($productCategory): void {
+                    $query->when(
+                        $productCategory,
+                        fn ($query) => $query->where('category', $productCategory->name)
+                    );
+                },
+            ])
             ->when(
                 $productCategory,
                 fn ($query) => $query->whereHas('products', fn ($productQuery) => $productQuery->where('category', $productCategory->name))
@@ -71,6 +74,14 @@ class GetBuyerTenantListController extends Controller
                     'category_icon_key' => $categoryUiMetadata['icon_key'],
                     'category_background_color' => $categoryUiMetadata['background_color'],
                     'category_icon_color' => $categoryUiMetadata['icon_color'],
+                    'housing_areas' => $tenant->housingAreas
+                        ->map(fn ($housingArea): array => [
+                            'id' => $housingArea->id,
+                            'name' => $housingArea->name,
+                            'code' => $housingArea->code,
+                            'village_code' => $housingArea->village_code,
+                        ])
+                        ->values(),
                     'product_categories' => $tenant->products
                         ->pluck('category')
                         ->unique()

@@ -160,10 +160,12 @@ class TenantApiTest extends TestCase
         $targetArea = HousingArea::query()->create([
             'name' => 'Komp Setra Dago',
             'code' => 'AREA-001',
+            'village_code' => '3273141003',
         ]);
         $otherArea = HousingArea::query()->create([
             'name' => 'Komp Antapani Indah',
             'code' => 'AREA-002',
+            'village_code' => '3273141004',
         ]);
 
         $targetTenant = Tenant::query()->create([
@@ -193,7 +195,11 @@ class TenantApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.id', $targetTenant->id)
-            ->assertJsonPath('data.0.name', 'Toko Area Target');
+            ->assertJsonPath('data.0.name', 'Toko Area Target')
+            ->assertJsonPath('data.0.housing_areas.0.id', $targetArea->id)
+            ->assertJsonPath('data.0.housing_areas.0.name', 'Komp Setra Dago')
+            ->assertJsonPath('data.0.housing_areas.0.code', 'AREA-001')
+            ->assertJsonPath('data.0.housing_areas.0.village_code', '3273141003');
     }
 
     public function test_tenant_list_returns_validation_error_for_unknown_housing_area_id(): void
