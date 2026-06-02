@@ -16,6 +16,7 @@ use App\Models\UserSessionToken;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -75,6 +76,13 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.category_master.slug', 'sembako')
             ->assertJsonPath('data.location', 'Jl Asri Raya No 45')
             ->assertJsonPath('data.housing_areas.0.id', $housingArea->id);
+
+        $pivotId = DB::table('housing_area_tenant')
+            ->where('tenant_id', $createResponse->json('data.id'))
+            ->where('housing_area_id', $housingArea->id)
+            ->value('id');
+
+        $this->assertNotNull($pivotId);
 
         $listResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/tenants');

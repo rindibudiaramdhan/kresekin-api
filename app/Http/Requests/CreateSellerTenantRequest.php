@@ -57,7 +57,6 @@ class CreateSellerTenantRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'profile_picture_url' => ['nullable', 'url', 'max:255'],
             'category_id' => ['required', 'uuid', Rule::exists('product_categories', 'id')],
-            'category' => ['nullable', 'string', Rule::in(Tenant::CATEGORIES)],
             'location' => ['required', 'string', 'max:1000'],
             'housing_area_ids' => ['required', 'array', 'min:1', 'max:3'],
             'housing_area_ids.*' => ['required', 'uuid', 'distinct', Rule::exists('housing_areas', 'id')],

@@ -27,6 +27,8 @@ class HousingArea extends Model
 
     public function tenants(): BelongsToMany
     {
-        return $this->belongsToMany(Tenant::class)->withTimestamps();
+        return $this->belongsToMany(Tenant::class)
+            ->using(HousingAreaTenant::class)
+            ->withTimestamps();
     }
 }

@@ -217,7 +217,9 @@ class Tenant extends Model
 
     public function housingAreas(): BelongsToMany
     {
-        return $this->belongsToMany(HousingArea::class)->withTimestamps();
+        return $this->belongsToMany(HousingArea::class)
+            ->using(HousingAreaTenant::class)
+            ->withTimestamps();
     }
 
     public static function categoryUiMetadata(string $category): array
