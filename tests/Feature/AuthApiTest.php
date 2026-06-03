@@ -314,6 +314,62 @@ class AuthApiTest extends TestCase
         $this->assertSame(hash('sha256', $plainTextToken), $sessionToken->token);
     }
 
+    public function test_verify_otp_defaults_to_buyer_role_when_role_is_empty(): void
+    {
+        $user = User::query()->create([
+            'name' => null,
+            'email' => 'buyer@example.com',
+            'phone' => null,
+            'type' => 'email',
+            'role' => User::ROLE_BUYER,
+            'password' => null,
+            'otp_code' => Hash::make('123456'),
+            'otp_sent_at' => now(),
+        ]);
+
+        $this->postJson('/api/users/verify-otp', [
+            'type' => 'email',
+            'role' => '',
+            'email' => 'buyer@example.com',
+            'otp' => '123456',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user.role', User::ROLE_BUYER);
+    }
+
+    public function test_verify_otp_uses_payload_role_to_find_user(): void
+    {
+        $seller = User::query()->create([
+            'name' => 'Seller',
+            'email' => 'same@example.com',
+            'phone' => null,
+            'type' => 'email',
+            'role' => User::ROLE_SELLER,
+            'password' => null,
+            'otp_code' => Hash::make('123456'),
+            'otp_sent_at' => now(),
+        ]);
+
+        $this->postJson('/api/users/verify-otp', [
+            'type' => 'email',
+            'email' => 'same@example.com',
+            'otp' => '123456',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Kode OTP tidak valid.');
+
+        $this->postJson('/api/users/verify-otp', [
+            'type' => 'email',
+            'role' => User::ROLE_SELLER,
+            'email' => 'same@example.com',
+            'otp' => '123456',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.user.id', $seller->id)
+            ->assertJsonPath('data.user.role', User::ROLE_SELLER);
+    }
+
     public function test_verify_otp_returns_error_when_code_is_invalid(): void
     {
         User::query()->create([

@@ -18,6 +18,7 @@ class VerifyOtpController extends Controller
         $validated = $request->validated();
 
         $user = User::query()
+            ->where('role', $validated['role'])
             ->when(
                 $validated['type'] === User::AUTH_TYPE_EMAIL,
                 fn ($query) => $query->where('email', $validated['email']),

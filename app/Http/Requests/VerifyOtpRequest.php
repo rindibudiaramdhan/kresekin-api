@@ -15,6 +15,12 @@ class VerifyOtpRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        if (! $this->filled('role')) {
+            $this->merge([
+                'role' => User::ROLE_BUYER,
+            ]);
+        }
+
         if ($this->input('type') !== User::AUTH_TYPE_PHONE) {
             return;
         }
@@ -31,6 +37,7 @@ class VerifyOtpRequest extends FormRequest
     {
         return [
             'type' => ['required', Rule::in([User::AUTH_TYPE_EMAIL, User::AUTH_TYPE_PHONE])],
+            'role' => ['required', Rule::in(User::roles())],
             'otp' => ['required', 'digits:6'],
             'email' => [
                 'nullable',

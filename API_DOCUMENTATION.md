@@ -302,6 +302,7 @@ Memverifikasi OTP 6 digit dan membuat session token.
 Body:
 
 - `type` wajib: `email` atau `phone`
+- `role` opsional: `buyer`, `seller`, `finance`, atau `agent`. Jika kosong, default `buyer`.
 - `otp` wajib: 6 digit
 - `email` wajib jika `type=email`
 - `phone` wajib jika `type=phone`
@@ -309,7 +310,7 @@ Body:
 ```bash
 curl -X POST http://127.0.0.1:8000/api/users/verify-otp \
   -H "Content-Type: application/json" \
-  -d '{"type":"email","email":"buyer@example.com","otp":"123456"}'
+  -d '{"type":"email","role":"buyer","email":"buyer@example.com","otp":"123456"}'
 ```
 
 ### POST `/api/users/logout`
