@@ -68,7 +68,7 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.agent_user_id', $agent->id)
             ->assertJsonPath('data.agent_code', 'KA-20265')
             ->assertJsonPath('data.owner.name', 'Asep Pemilik')
-            ->assertJsonPath('data.owner.phone', '+6281234567890')
+            ->assertJsonPath('data.owner.phone', '081234567890')
             ->assertJsonPath('data.owner.email', 'asep@example.com')
             ->assertJsonPath('data.name', 'Tenant Seller')
             ->assertJsonPath('data.category_id', $category->id)

@@ -522,7 +522,7 @@ class AuthApiTest extends TestCase
 
         $response = $this->postJson('/api/users/buyer/resend-otp', [
             'type' => 'phone',
-            'phone' => '081234567890',
+            'phone' => '+6281234567890',
         ]);
 
         $response

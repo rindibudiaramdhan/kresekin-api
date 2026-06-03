@@ -20,10 +20,6 @@ class CreateSellerTenantRequest extends FormRequest
 
         if (is_string($ownerPhone)) {
             $ownerPhone = preg_replace('/\s+/', '', $ownerPhone) ?? '';
-
-            if (str_starts_with($ownerPhone, '0')) {
-                $ownerPhone = '+62'.substr($ownerPhone, 1);
-            }
         }
 
         $this->merge([

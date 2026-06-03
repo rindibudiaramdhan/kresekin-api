@@ -62,7 +62,7 @@ Authentication flow:
 2. Verifikasi OTP melalui `POST /api/users/verify-otp`.
 3. Simpan `data.token` dari response verifikasi OTP sebagai bearer token.
 
-Nomor telepon menerima format `+6281234567890`. Beberapa endpoint login/OTP menormalisasi nomor yang diawali `0` menjadi `+62`.
+Nomor telepon menerima format seperti `+6281234567890` atau `081234567890` dan disimpan/dicari sesuai nilai yang dikirim.
 
 ## Status dan Error Umum
 
@@ -723,7 +723,7 @@ Membuat tenant/toko untuk seller aktif.
 Body:
 
 - `owner_name` wajib
-- `owner_phone` opsional, dinormalisasi dari `08...` ke `+628...`
+- `owner_phone` opsional
 - `owner_email` opsional
 - `agent_code` opsional, harus milik user role `agent`
 - `name` wajib
