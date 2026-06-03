@@ -22,10 +22,6 @@ class AgentRegistrationController extends Controller
         if ($request->filled('phone')) {
             $phone = preg_replace('/\s+/', '', (string) $request->input('phone')) ?? '';
 
-            if (str_starts_with($phone, '0')) {
-                $phone = '+62'.substr($phone, 1);
-            }
-
             $request->merge([
                 'phone' => $phone,
             ]);
