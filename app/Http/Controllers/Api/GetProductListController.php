@@ -19,6 +19,7 @@ class GetProductListController extends Controller
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
             'category' => ['nullable', 'string', 'exists:product_categories,slug'],
             'tenant_id' => ['nullable', 'uuid', 'exists:tenants,id'],
+            'housing_area_id' => ['nullable', 'uuid', 'exists:housing_areas,id'],
             'name' => ['nullable', 'string', 'max:255'],
             'is_promo' => ['nullable', 'in:true,false,1,0'],
         ]);
@@ -49,6 +50,13 @@ class GetProductListController extends Controller
             ->when(
                 isset($validated['tenant_id']),
                 fn ($query) => $query->where('tenant_id', $validated['tenant_id'])
+            )
+            ->when(
+                isset($validated['housing_area_id']),
+                fn ($query) => $query->whereHas(
+                    'tenant.housingAreas',
+                    fn ($housingAreaQuery) => $housingAreaQuery->where('housing_areas.id', $validated['housing_area_id'])
+                )
             )
             ->when(
                 isset($validated['name']),

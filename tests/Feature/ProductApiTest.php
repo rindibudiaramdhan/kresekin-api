@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\HousingArea;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Tenant;
@@ -156,6 +157,83 @@ class ProductApiTest extends TestCase
             ->assertJsonPath('data.0.name', 'Pakcoy')
             ->assertJsonPath('data.0.tenant_id', $tenantA->id)
             ->assertJsonPath('data.0.category', Tenant::CATEGORY_VEGETABLES);
+    }
+
+    public function test_product_list_can_be_filtered_by_housing_area_id(): void
+    {
+        [, $token] = $this->createAuthenticatedUser();
+
+        $targetArea = HousingArea::query()->create([
+            'name' => 'Komp Setra Dago',
+            'code' => 'AREA-001',
+        ]);
+        $otherArea = HousingArea::query()->create([
+            'name' => 'Komp Antapani Indah',
+            'code' => 'AREA-002',
+        ]);
+
+        $targetTenant = Tenant::query()->create([
+            'name' => 'Toko Area Target',
+            'profile_picture_url' => null,
+            'rating' => 4.8,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+        $targetTenant->housingAreas()->sync([$targetArea->id]);
+
+        $otherTenant = Tenant::query()->create([
+            'name' => 'Toko Area Lain',
+            'profile_picture_url' => null,
+            'rating' => 4.1,
+            'category' => Tenant::CATEGORY_GROCERIES,
+        ]);
+        $otherTenant->housingAreas()->sync([$otherArea->id]);
+
+        Product::query()->create([
+            'tenant_id' => $targetTenant->id,
+            'name' => 'Bayam Area Target',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'image_url' => null,
+            'price' => 8000,
+            'original_price' => null,
+            'weight_label' => '250gr',
+            'description' => 'Sayur area target.',
+            'delivery_estimate' => 'Hari ini',
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $otherTenant->id,
+            'name' => 'Beras Area Lain',
+            'category' => Tenant::CATEGORY_GROCERIES,
+            'image_url' => null,
+            'price' => 70000,
+            'original_price' => null,
+            'weight_label' => '5kg',
+            'description' => 'Sembako area lain.',
+            'delivery_estimate' => 'Hari ini',
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/products?housing_area_id='.$targetArea->id);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.name', 'Bayam Area Target')
+            ->assertJsonPath('data.0.tenant_id', $targetTenant->id)
+            ->assertJsonPath('data.0.tenant_name', 'Toko Area Target');
+    }
+
+    public function test_product_list_returns_validation_error_for_unknown_housing_area_id(): void
+    {
+        [, $token] = $this->createAuthenticatedUser();
+
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/products?housing_area_id=11111111-1111-1111-1111-111111111111');
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Data yang diberikan tidak valid.')
+            ->assertJsonValidationErrors(['housing_area_id']);
     }
 
     public function test_product_list_requires_authentication(): void
