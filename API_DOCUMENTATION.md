@@ -85,6 +85,119 @@ Contoh validasi gagal:
 }
 ```
 
+## Daftar API Aktif
+
+Daftar ini diselaraskan dengan `php artisan route:list --path=api`. Method `GET|HEAD` pada Laravel route list ditulis sebagai `GET`.
+
+### Public
+
+| Method | Endpoint | Deskripsi |
+| --- | --- | --- |
+| GET | `/api/vershealthcheck` | Healthcheck API. |
+| POST | `/api/users/{role}/register` | Register user role `buyer`, `seller`, `agent`, atau `finance`. |
+| POST | `/api/users/{role}/login` | Login user dan kirim OTP. |
+| POST | `/api/users/{role}/resend-otp` | Kirim ulang OTP user. |
+| POST | `/api/agent/register` | Alias register role `agent`. |
+| POST | `/api/agent/login` | Alias login role `agent`. |
+| POST | `/api/agent/resend-otp` | Alias kirim ulang OTP role `agent`. |
+| POST | `/api/finance/register` | Alias register role `finance`. |
+| POST | `/api/finance/login` | Alias login role `finance`. |
+| POST | `/api/finance/resend-otp` | Alias kirim ulang OTP role `finance`. |
+| POST | `/api/users/verify-otp` | Verifikasi OTP dan buat session token. |
+| GET | `/api/indonesia/provinces` | Daftar provinsi Indonesia dari BPS. |
+| GET | `/api/indonesia/regencies` | Daftar kabupaten/kota berdasarkan provinsi. |
+| GET | `/api/indonesia/districts` | Daftar kecamatan berdasarkan kabupaten/kota. |
+| GET | `/api/indonesia/villages` | Daftar desa/kelurahan berdasarkan kecamatan. |
+
+### Authenticated Umum
+
+| Method | Endpoint | Deskripsi |
+| --- | --- | --- |
+| POST | `/api/users/logout` | Logout session aktif. |
+| POST | `/api/users/refresh-session` | Refresh session token aktif. |
+| POST | `/api/users/devices` | Daftar atau update device token user. |
+| GET | `/api/users/profile` | Profil user aktif. |
+| PUT | `/api/users/profile` | Update profil user aktif. |
+| GET | `/api/housing-areas` | Master area perumahan. |
+| GET | `/api/product-categories` | Master kategori produk. |
+| GET | `/api/product-units` | Master satuan produk. |
+
+### Buyer
+
+| Method | Endpoint | Deskripsi |
+| --- | --- | --- |
+| GET | `/api/delivery-methods` | Master metode pengiriman aktif. |
+| GET | `/api/order-time-options` | Master opsi waktu pesanan aktif. |
+| GET | `/api/payment-methods` | Master metode pembayaran aktif. |
+| GET | `/api/products` | Daftar produk aktif. |
+| GET | `/api/products/{id}` | Detail produk aktif. |
+| GET | `/api/tenants` | Daftar tenant untuk buyer. |
+| GET | `/api/tenants/categories` | Daftar kategori tenant. |
+| GET | `/api/cart` | Cart buyer aktif. |
+| PATCH | `/api/cart/delivery-method` | Set metode pengiriman cart. |
+| POST | `/api/cart/items` | Tambah atau upsert item cart. |
+| PATCH | `/api/cart/items/{id}` | Update quantity item cart. |
+| DELETE | `/api/cart/items/{id}` | Hapus item cart. |
+| POST | `/api/promo-codes/validate` | Validasi kode promo. |
+| POST | `/api/checkout` | Checkout cart menjadi transaksi. |
+| GET | `/api/users/transactions` | Riwayat transaksi buyer. |
+| GET | `/api/users/transactions/{transactionId}` | Detail transaksi buyer. |
+| GET | `/api/cancellation-reason-categories` | Kategori alasan pembatalan aktif. |
+
+### Seller
+
+| Method | Endpoint | Deskripsi |
+| --- | --- | --- |
+| GET | `/api/seller/dashboard` | Ringkasan dashboard seller. |
+| GET | `/api/seller/dashboard/profile` | Profil toko utama seller. |
+| GET | `/api/seller/dashboard/revenue-today` | Revenue hari ini. |
+| GET | `/api/seller/dashboard/revenue-change` | Perubahan revenue. |
+| GET | `/api/seller/dashboard/transactions-today` | Jumlah transaksi hari ini. |
+| GET | `/api/seller/dashboard/orders-today/counts` | Count order hari ini per status. |
+| GET | `/api/seller/dashboard/orders/new-preview` | Preview order baru. |
+| GET | `/api/seller/dashboard/top-products-today` | Produk terlaris hari ini. |
+| GET | `/api/seller/tenants` | Daftar tenant seller aktif. |
+| POST | `/api/seller/tenants` | Buat tenant seller aktif. |
+| GET | `/api/seller/orders` | Daftar order seller. |
+| GET | `/api/seller/orders/{id}` | Detail order seller. |
+| PATCH | `/api/seller/orders/{id}/status` | Update status order seller. |
+| GET | `/api/seller/cancellation-reason-categories` | Kategori alasan pembatalan aktif. |
+| GET | `/api/seller/products` | Daftar produk seller. |
+| GET | `/api/seller/products/summary` | Ringkasan produk seller. |
+| POST | `/api/seller/product-images` | Upload gambar produk. |
+| POST | `/api/seller/products` | Buat produk seller. |
+| GET | `/api/seller/products/{id}` | Detail produk seller. |
+| PUT | `/api/seller/products/{id}` | Update produk seller. |
+| POST | `/api/seller/products/{id}` | Alias update produk seller untuk multipart form. |
+| PATCH | `/api/seller/products/{id}/status` | Update status aktif/nonaktif produk. |
+| DELETE | `/api/seller/products/{id}` | Soft delete produk seller. |
+
+### Agent
+
+| Method | Endpoint | Deskripsi |
+| --- | --- | --- |
+| GET | `/api/agent/dashboard` | Ringkasan dashboard agent. |
+| GET | `/api/agent/sellers` | Daftar seller/tenant terkait agent. |
+| GET | `/api/agent/sellers/{sellerId}` | Detail seller untuk agent. |
+| GET | `/api/agent/profile` | Profil agent dan data payout. |
+| PUT | `/api/agent/profile` | Update profil payout agent. |
+| GET | `/api/agent/commission-withdrawals` | Daftar withdrawal komisi agent. |
+| POST | `/api/agent/commission-withdrawals` | Buat permintaan withdrawal komisi. |
+
+### Finance
+
+| Method | Endpoint | Deskripsi |
+| --- | --- | --- |
+| GET | `/api/finance/dashboard` | Ringkasan dashboard finance. |
+| GET | `/api/finance/transactions` | Daftar transaksi/disbursement finance. |
+| GET | `/api/finance/transactions/{id}` | Detail transaksi finance. |
+| PATCH | `/api/finance/transactions/{id}/confirm-buyer-payment` | Konfirmasi pembayaran buyer. |
+| PATCH | `/api/finance/disbursements/{id}/disburse-to-seller` | Tandai disbursement sudah dicairkan ke seller. |
+| GET | `/api/finance/cancellation-reason-categories` | Daftar kategori alasan pembatalan. |
+| POST | `/api/finance/cancellation-reason-categories` | Buat kategori alasan pembatalan. |
+| PUT | `/api/finance/cancellation-reason-categories/{id}` | Update kategori alasan pembatalan. |
+| DELETE | `/api/finance/cancellation-reason-categories/{id}` | Hapus kategori alasan pembatalan. |
+
 ## Healthcheck
 
 ### GET `/api/vershealthcheck`
@@ -774,7 +887,23 @@ curl http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbb
 
 ### PUT `/api/seller/products/{id}`
 
-Mengubah produk seller. Body mirip create product, tetapi gambar opsional.
+Mengubah produk seller. Body mirip create product, tetapi gambar opsional. Sesuai validation saat ini, update masih membutuhkan `category` legacy dan `product_unit_id`.
+
+Body:
+
+- `tenant_id` wajib UUID, tenant harus milik seller aktif
+- `name` wajib
+- `category` wajib, salah satu `Tenant::CATEGORIES`
+- `image`, `image_path`, atau `image_url` opsional
+- `price` wajib, integer minimal 0
+- `original_price` opsional, harus lebih besar atau sama dengan `price`
+- `stock` wajib, 0 sampai 999999
+- `product_unit_id` wajib UUID, harus terdaftar dan aktif
+- `minimum_stock` opsional
+- `is_active` opsional boolean
+- `weight_label` opsional, max 100
+- `description` opsional
+- `delivery_estimate` opsional, max 100
 
 ```bash
 curl -X PUT http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
