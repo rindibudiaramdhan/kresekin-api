@@ -35,7 +35,7 @@ services:
       POSTGRES_USER: kresekin
       POSTGRES_PASSWORD: secret
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_v18:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U kresekin -d kresekin_api"]
       interval: 10s
@@ -45,4 +45,4 @@ services:
 volumes:
   app_vendor:
   app_public_build:
-  postgres_data:
+  postgres_data_v18:
