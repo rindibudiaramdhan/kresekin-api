@@ -15,7 +15,7 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
-    'product_images_disk' => env('PRODUCT_IMAGES_DISK', env('FILESYSTEM_DISK', 'local')),
+    'product_images_disk' => env('PRODUCT_IMAGES_DISK', 'public'),
 
     /*
     |--------------------------------------------------------------------------
