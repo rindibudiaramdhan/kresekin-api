@@ -24,3 +24,4 @@ Homestead.yaml
 Thumbs.db
 /coverage
 .codex
+.env.local
