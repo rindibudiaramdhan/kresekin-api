@@ -56,7 +56,7 @@
 
         .auth-card {
             width: min(1180px, 100%);
-            height: min(700px, calc(100dvh - 32px));
+            height: min(820px, calc(100dvh - 32px));
             max-height: calc(100dvh - 32px);
             display: grid;
             grid-template-columns: minmax(360px, .95fr) minmax(420px, 1fr);
@@ -72,7 +72,7 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            padding: clamp(34px, 6dvh, 56px) 64px clamp(18px, 3dvh, 28px);
+            padding: clamp(30px, 5dvh, 50px) 64px clamp(16px, 2.6dvh, 24px);
         }
 
         .brand {
@@ -97,7 +97,7 @@
         }
 
         .login-copy {
-            margin-top: clamp(34px, 7dvh, 58px);
+            margin-top: clamp(28px, 5.8dvh, 52px);
         }
 
         .login-copy h1 {
@@ -119,7 +119,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
-            margin-top: clamp(18px, 3.2dvh, 28px);
+            margin-top: clamp(16px, 2.8dvh, 24px);
             padding: 6px;
             border: 1px solid var(--line);
             border-radius: 14px;
@@ -144,8 +144,8 @@
 
         .login-form {
             display: grid;
-            gap: clamp(16px, 2.7dvh, 22px);
-            margin-top: clamp(20px, 3.6dvh, 32px);
+            gap: clamp(14px, 2.3dvh, 20px);
+            margin-top: clamp(18px, 3dvh, 28px);
         }
 
         .form-row {
@@ -168,7 +168,7 @@
         }
 
         .field {
-            min-height: 56px;
+            min-height: 54px;
             display: flex;
             align-items: center;
             gap: 14px;
@@ -281,7 +281,7 @@
         }
 
         .register-copy {
-            margin-top: clamp(24px, 4.5dvh, 38px);
+            margin-top: clamp(20px, 3.4dvh, 32px);
             color: var(--muted);
             text-align: center;
             font-size: 17px;
@@ -293,7 +293,7 @@
 
         .copyright {
             margin-top: auto;
-            padding-top: clamp(18px, 3dvh, 30px);
+            padding-top: clamp(14px, 2.4dvh, 24px);
             color: #9ba3b3;
             text-align: center;
             font-size: 15px;
@@ -319,11 +319,12 @@
                 linear-gradient(115deg, transparent 0 33%, rgba(255, 255, 255, .52) 33% 52%, transparent 52%),
                 radial-gradient(circle at 90% 12%, rgba(255, 255, 255, .68), transparent 16%);
             pointer-events: none;
+            z-index: 1;
         }
 
         .story-content {
             position: relative;
-            z-index: 1;
+            z-index: 2;
             width: 100%;
             height: 100%;
             min-height: 100%;
@@ -334,7 +335,7 @@
             display: block;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             object-position: center;
         }
 
