@@ -13,6 +13,9 @@ Route::get('/login', function () {
     return redirect('/');
 })->name('login');
 
+Route::view('/agent/dashboard', 'dashboard.blank', ['title' => 'Agent Dashboard'])->name('agent.dashboard');
+Route::view('/finance/dashboard', 'dashboard.blank', ['title' => 'Finance Dashboard'])->name('finance.dashboard');
+
 Route::prefix('seller')->name('seller.')->group(function (): void {
     Route::middleware(['auth', 'role:seller'])->group(function (): void {
         Route::post('/logout', [SellerAuthController::class, 'destroy'])->name('logout');

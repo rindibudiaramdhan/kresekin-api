@@ -1081,6 +1081,10 @@
             return formData;
         }
 
+        function dashboardUrlForRole(role) {
+            return role === 'finance' ? '{{ route('finance.dashboard') }}' : '{{ route('agent.dashboard') }}';
+        }
+
         roleTabs.forEach((tab) => {
             tab.addEventListener('click', () => updateRole(tab));
         });
@@ -1130,6 +1134,7 @@
 
                     setStatus(payload.message || `OTP ${role.label} berhasil diverifikasi.`, 'success');
                     otpInput.value = '';
+                    window.location.assign(dashboardUrlForRole(payload.data?.user?.role ?? activeRole()));
                     return;
                 }
 
