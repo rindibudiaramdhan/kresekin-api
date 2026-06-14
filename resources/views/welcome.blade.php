@@ -16,10 +16,8 @@
                 <div class="card shadow-lg border-0">
                     <div class="card-body p-5">
                         <h1 class="display-5 fw-bold mb-3">Kresekin API</h1>
-                        <p class="lead text-secondary mb-4">Panel login dan manajemen untuk seller serta agent tersedia di aplikasi ini.</p>
+                        <p class="lead text-secondary mb-4">Panel login dan manajemen untuk seller tersedia di aplikasi ini.</p>
                         <div class="d-flex flex-wrap gap-2">
-                            <a class="btn btn-success" href="{{ route('agent.login') }}">Agent Login</a>
-                            <a class="btn btn-outline-success" href="{{ route('agent.register') }}">Agent Register</a>
                             <a class="btn btn-outline-secondary" href="{{ route('seller.login') }}">Seller Login</a>
                         </div>
                     </div>
