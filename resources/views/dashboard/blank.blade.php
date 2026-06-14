@@ -26,12 +26,29 @@
         .dashboard-main {
             flex: 1;
             min-width: 0;
+            height: 100vh;
+            overflow-y: auto;
             background: #f8fafc;
+        }
+
+        .dashboard-content {
+            min-height: 120vh;
+            padding: 28px 34px;
         }
 
         @media (max-width: 860px) {
             .dashboard-shell {
                 flex-direction: column;
+            }
+
+            .dashboard-main {
+                height: auto;
+                min-height: 100vh;
+                overflow: visible;
+            }
+
+            .dashboard-content {
+                padding: 22px 18px;
             }
         }
     </style>
@@ -40,7 +57,11 @@
     <div class="dashboard-shell">
         <x-dashboard.sidebar :role="$role ?? 'agent'" :active="$active ?? 'dashboard'" />
 
-        <main class="dashboard-main" aria-label="{{ $title ?? 'Dashboard' }}"></main>
+        <main class="dashboard-main" aria-label="{{ $title ?? 'Dashboard' }}">
+            <x-dashboard.header :title="$headerTitle ?? 'Admin Views'" :user-name="$userName ?? 'System Administrator'" />
+
+            <div class="dashboard-content"></div>
+        </main>
     </div>
 </body>
 </html>

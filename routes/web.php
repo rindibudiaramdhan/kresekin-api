@@ -15,11 +15,15 @@ Route::get('/login', function () {
 
 Route::view('/agent/dashboard', 'dashboard.blank', [
     'title' => 'Agent Dashboard',
+    'headerTitle' => 'Agent Views',
+    'userName' => 'Agent Administrator',
     'role' => 'agent',
     'active' => 'dashboard',
 ])->name('agent.dashboard');
 Route::view('/finance/dashboard', 'dashboard.blank', [
     'title' => 'Finance Dashboard',
+    'headerTitle' => 'Finance Views',
+    'userName' => 'Finance Administrator',
     'role' => 'finance',
     'active' => 'dashboard',
 ])->name('finance.dashboard');
