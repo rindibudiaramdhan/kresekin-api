@@ -13,14 +13,14 @@ Route::get('/login', function () {
     return redirect('/');
 })->name('login');
 
-Route::view('/agent/dashboard', 'dashboard.blank', [
+Route::view('/agent/dashboard', 'dashboard.index', [
     'title' => 'Agent Dashboard',
     'headerTitle' => 'Agent Views',
     'userName' => 'Agent Administrator',
     'role' => 'agent',
     'active' => 'dashboard',
 ])->name('agent.dashboard');
-Route::view('/finance/dashboard', 'dashboard.blank', [
+Route::view('/finance/dashboard', 'dashboard.index', [
     'title' => 'Finance Dashboard',
     'headerTitle' => 'Finance Views',
     'userName' => 'Finance Administrator',
