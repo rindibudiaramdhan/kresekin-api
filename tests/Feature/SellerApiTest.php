@@ -224,6 +224,58 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.0.product_unit.name', 'ikat');
     }
 
+    public function test_seller_can_search_own_products_by_name(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-product-search@example.com', '+6281200000144', 'seller-product-search-token', User::ROLE_SELLER);
+        [$otherSeller] = $this->createAuthenticatedUser('other-product-search@example.com', '+6281200000145', 'other-product-search-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Product Search',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $otherTenant = Tenant::query()->create([
+            'owner_user_id' => $otherSeller->id,
+            'name' => 'Other Tenant Product Search',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Bayam Hijau',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'price' => 7000,
+            'stock' => 100,
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Wortel Segar',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'price' => 9000,
+            'stock' => 50,
+        ]);
+
+        Product::query()->create([
+            'tenant_id' => $otherTenant->id,
+            'name' => 'Bayam Seller Lain',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'price' => 8000,
+            'stock' => 20,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/products?name=bayam')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Bayam Hijau');
+    }
+
     public function test_seller_cannot_create_product_with_unregistered_unit(): void
     {
         [$seller, $token] = $this->createAuthenticatedUser('seller-invalid-unit@example.com', '+6281200000045', 'seller-invalid-unit-token', User::ROLE_SELLER);

@@ -6,14 +6,35 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 
 class GetSellerProductListController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
+        $validator = Validator::make($request->query(), [
+            'name' => ['nullable', 'string', 'max:255'],
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Data yang diberikan tidak valid.',
+                'errors' => $validator->errors(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $validated = $validator->validated();
+        $search = $validated['name'] ?? $validated['search'] ?? null;
+
         $products = Product::query()
             ->with(['tenant', 'productUnit'])
             ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
+            ->when(
+                $search,
+                fn ($query, string $search) => $query->whereRaw('LOWER(name) LIKE ?', ['%'.str($search)->lower()->toString().'%'])
+            )
             ->latest()
             ->get()
             ->map(fn (Product $product) => [
