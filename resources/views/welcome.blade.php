@@ -280,6 +280,10 @@
             gap: 9px;
         }
 
+        .form-row[hidden] {
+            display: none;
+        }
+
         .form-meta {
             display: flex;
             align-items: center;
