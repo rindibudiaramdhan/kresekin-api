@@ -30,6 +30,7 @@
         body {
             min-height: 100vh;
             margin: 0;
+            overflow: hidden;
             color: var(--ink);
             background:
                 radial-gradient(circle at 16% 12%, rgba(17, 190, 200, .12), transparent 30%),
@@ -46,14 +47,17 @@
         }
 
         .auth-shell {
-            min-height: 100vh;
+            min-height: 100dvh;
+            height: 100dvh;
             display: grid;
             place-items: center;
-            padding: 48px 24px;
+            padding: clamp(16px, 4dvh, 36px) 24px;
         }
 
         .auth-card {
             width: min(1180px, 100%);
+            height: min(700px, calc(100dvh - 32px));
+            max-height: calc(100dvh - 32px);
             display: grid;
             grid-template-columns: minmax(360px, .95fr) minmax(420px, 1fr);
             overflow: hidden;
@@ -64,10 +68,11 @@
         }
 
         .login-panel {
-            min-height: 720px;
+            min-height: 0;
+            height: 100%;
             display: flex;
             flex-direction: column;
-            padding: 72px 64px 32px;
+            padding: clamp(34px, 6dvh, 56px) 64px clamp(18px, 3dvh, 28px);
         }
 
         .brand {
@@ -81,7 +86,7 @@
             letter-spacing: 0;
         }
 
-        .brand svg {
+        .brand img {
             width: 45px;
             height: 45px;
             flex: 0 0 auto;
@@ -92,7 +97,7 @@
         }
 
         .login-copy {
-            margin-top: 78px;
+            margin-top: clamp(34px, 7dvh, 58px);
         }
 
         .login-copy h1 {
@@ -114,7 +119,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
-            margin-top: 28px;
+            margin-top: clamp(18px, 3.2dvh, 28px);
             padding: 6px;
             border: 1px solid var(--line);
             border-radius: 14px;
@@ -139,8 +144,8 @@
 
         .login-form {
             display: grid;
-            gap: 22px;
-            margin-top: 32px;
+            gap: clamp(16px, 2.7dvh, 22px);
+            margin-top: clamp(20px, 3.6dvh, 32px);
         }
 
         .form-row {
@@ -180,10 +185,15 @@
             box-shadow: 0 0 0 4px rgba(17, 190, 200, .14);
         }
 
-        .field svg {
+        .field-icon {
             width: 25px;
             height: 25px;
-            color: #767d8f;
+            flex: 0 0 auto;
+        }
+
+        .button-icon {
+            width: 30px;
+            height: 30px;
             flex: 0 0 auto;
         }
 
@@ -237,12 +247,12 @@
         }
 
         .submit-button {
-            min-height: 58px;
+            min-height: 56px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 14px;
-            margin-top: 10px;
+            margin-top: 4px;
             border: 0;
             border-radius: 10px;
             color: #ffffff;
@@ -271,7 +281,7 @@
         }
 
         .register-copy {
-            margin-top: 46px;
+            margin-top: clamp(24px, 4.5dvh, 38px);
             color: var(--muted);
             text-align: center;
             font-size: 17px;
@@ -283,7 +293,7 @@
 
         .copyright {
             margin-top: auto;
-            padding-top: 40px;
+            padding-top: clamp(18px, 3dvh, 30px);
             color: #9ba3b3;
             text-align: center;
             font-size: 15px;
@@ -293,7 +303,8 @@
 
         .story-panel {
             position: relative;
-            min-height: 720px;
+            min-height: 0;
+            height: 100%;
             overflow: hidden;
             background:
                 linear-gradient(90deg, rgba(245, 252, 255, .98) 0%, rgba(229, 244, 255, .86) 38%, rgba(9, 79, 128, .13) 100%),
@@ -326,7 +337,7 @@
             font-weight: 900;
         }
 
-        .story-brand svg {
+        .story-brand img {
             width: 34px;
             height: 34px;
         }
@@ -606,9 +617,19 @@
         }
 
         @media (max-width: 1060px) {
+            body {
+                overflow: auto;
+            }
+
+            .auth-shell {
+                height: auto;
+            }
+
             .auth-card {
                 grid-template-columns: 1fr;
                 max-width: 680px;
+                height: auto;
+                max-height: none;
             }
 
             .login-panel {
@@ -657,7 +678,7 @@
                 font-size: 27px;
             }
 
-            .brand svg {
+            .brand img {
                 width: 39px;
                 height: 39px;
             }
@@ -744,13 +765,7 @@
         <section class="auth-card" aria-label="Portal masuk Kresek.in">
             <div class="login-panel">
                 <a class="brand" href="{{ url('/') }}" aria-label="Kresek.in">
-                    <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-                        <rect x="10" y="15" width="44" height="42" rx="10" fill="currentColor"/>
-                        <path d="M22 24c0-8 4-13 10-13s10 5 10 13" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
-                        <path d="M21 36c5 7 17 7 22 0" fill="none" stroke="#c7ef4f" stroke-width="5" stroke-linecap="round"/>
-                        <circle cx="22" cy="30" r="2.5" fill="#ffffff"/>
-                        <circle cx="42" cy="30" r="2.5" fill="#ffffff"/>
-                    </svg>
+                    <img src="{{ asset('images/kresekin-bag-mark.svg') }}" alt="" aria-hidden="true">
                     <span>kresek.<strong>in</strong></span>
                 </a>
 
@@ -777,10 +792,7 @@
                     <div class="form-row">
                         <label for="email">Email</label>
                         <div class="field">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                                <rect x="3" y="5" width="18" height="14" rx="2"/>
-                                <path d="m3 7 9 6 9-6"/>
-                            </svg>
+                            <img class="field-icon" src="{{ asset('images/icon-mail.svg') }}" alt="" aria-hidden="true">
                             <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="nama@email.com" autocomplete="email" required autofocus>
                         </div>
                     </div>
@@ -791,27 +803,17 @@
                             <a class="forgot-link" href="{{ route('seller.login') }}">Lupa password?</a>
                         </div>
                         <div class="field">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                                <rect x="5" y="10" width="14" height="10" rx="2"/>
-                                <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
-                                <path d="M12 14v2"/>
-                            </svg>
+                            <img class="field-icon" src="{{ asset('images/icon-lock.svg') }}" alt="" aria-hidden="true">
                             <input id="password" name="password" type="password" placeholder="Masukkan password" autocomplete="current-password" required>
                             <button class="icon-button" type="button" id="toggle-password" aria-label="Tampilkan password" aria-pressed="false">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
-                                    <circle cx="12" cy="12" r="3"/>
-                                </svg>
+                                <img class="field-icon" src="{{ asset('images/icon-eye.svg') }}" alt="" aria-hidden="true">
                             </button>
                         </div>
                     </div>
 
                     <button class="submit-button" type="submit" id="submit-button">
                         <span>Masuk</span>
-                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                            <path d="M5 12h14"/>
-                            <path d="m13 6 6 6-6 6"/>
-                        </svg>
+                        <img class="button-icon" src="{{ asset('images/icon-arrow-right.svg') }}" alt="" aria-hidden="true">
                     </button>
                 </form>
 
@@ -822,57 +824,8 @@
 
                 <p class="copyright">&copy; {{ now()->year }} Kresek.in. All rights reserved.</p>
             </div>
-
             <aside class="story-panel" id="agent-program" aria-label="Program agent Kresek.in">
                 <div class="story-content">
-                    <div class="story-brand" aria-hidden="true">
-                        <svg viewBox="0 0 64 64" focusable="false">
-                            <rect x="10" y="15" width="44" height="42" rx="10" fill="currentColor"/>
-                            <path d="M22 24c0-8 4-13 10-13s10 5 10 13" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
-                            <path d="M21 36c5 7 17 7 22 0" fill="none" stroke="#c7ef4f" stroke-width="5" stroke-linecap="round"/>
-                        </svg>
-                        <span>kresek.in</span>
-                    </div>
-
-                    <h2 class="story-title">Program Seller & Agent <span>Kresek.in</span></h2>
-                    <p class="story-subtitle">Bantu UMKM Indonesia <strong>tumbuh lebih besar</strong> dengan transaksi yang lebih rapi.</p>
-
-                    <div class="commission-card" aria-label="Contoh ringkasan komisi bulan ini">
-                        <div>
-                            <span>Total Komisi</span>
-                            <strong>Rp 24.680.000</strong>
-                            <small><b>+28.5%</b> dari bulan lalu</small>
-                        </div>
-                        <div class="wallet" aria-hidden="true">
-                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false">
-                                <path d="M4 7h14a2 2 0 0 1 2 2v9H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h12"/>
-                                <path d="M16 13h5v4h-5a2 2 0 0 1 0-4Z"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div class="seller-sign" aria-hidden="true">UMKM<br>Naik Kelas<br>Bersama<br><strong>Kresek.in</strong></div>
-                    <div class="coin" aria-hidden="true">Rp</div>
-
-                    <div class="people-scene" aria-hidden="true">
-                        <div class="person left">
-                            <div class="head"></div>
-                            <div class="body"></div>
-                        </div>
-                        <div class="person right">
-                            <div class="head"></div>
-                            <div class="body"></div>
-                        </div>
-                        <div class="bag"></div>
-                    </div>
-
-                    <div class="program-card">
-                        <span>KRESEK AGENT PROGRAM</span>
-                        <h2>Bantu UMKM berkembang dan dapatkan komisi dari setiap transaksi seller binaan Anda.</h2>
-                        <div class="program-actions">
-                            <a class="secondary-button" href="mailto:admin@kresek.in?subject=Pendaftaran%20Agent%20Kresek.in">Daftar Agent</a>
-                        </div>
-                    </div>
                 </div>
             </aside>
         </section>
