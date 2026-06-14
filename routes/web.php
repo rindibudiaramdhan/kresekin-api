@@ -13,8 +13,16 @@ Route::get('/login', function () {
     return redirect('/');
 })->name('login');
 
-Route::view('/agent/dashboard', 'dashboard.blank', ['title' => 'Agent Dashboard'])->name('agent.dashboard');
-Route::view('/finance/dashboard', 'dashboard.blank', ['title' => 'Finance Dashboard'])->name('finance.dashboard');
+Route::view('/agent/dashboard', 'dashboard.blank', [
+    'title' => 'Agent Dashboard',
+    'role' => 'agent',
+    'active' => 'dashboard',
+])->name('agent.dashboard');
+Route::view('/finance/dashboard', 'dashboard.blank', [
+    'title' => 'Finance Dashboard',
+    'role' => 'finance',
+    'active' => 'dashboard',
+])->name('finance.dashboard');
 
 Route::prefix('seller')->name('seller.')->group(function (): void {
     Route::middleware(['auth', 'role:seller'])->group(function (): void {
