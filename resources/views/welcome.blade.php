@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <title>{{ config('app.name', 'Kresek.in') }} - Portal</title>
+    <script>
+        (() => {
+            try {
+                const token = localStorage.getItem('kresekin_token');
+
+                if (!token) {
+                    return;
+                }
+
+                const role = localStorage.getItem('kresekin_user_role');
+                const dashboardUrl = role === 'finance'
+                    ? '{{ route('finance.dashboard') }}'
+                    : '{{ route('agent.dashboard') }}';
+
+                window.location.replace(dashboardUrl);
+            } catch (error) {
+                localStorage.removeItem('kresekin_token');
+                localStorage.removeItem('kresekin_token_type');
+                localStorage.removeItem('kresekin_user_role');
+            }
+        })();
+    </script>
     <style>
         :root {
             --brand: #11bec8;
