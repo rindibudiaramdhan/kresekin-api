@@ -27,9 +27,19 @@ class VerifyOtpController extends Controller
             ->first();
 
         if (! $user || ! $user->otp_code || ! Hash::check($validated['otp'], $user->otp_code)) {
-            return response()->json([
+            $response = [
                 'message' => 'Kode OTP tidak valid.',
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            ];
+
+            if (config('app.env') === 'local') {
+                $response['debug'] = [
+                    'payload' => $validated,
+                    'user_id' => $user?->id,
+                    'otp_code' => $user?->otp_code,
+                    'hash_check' => $user ? Hash::check($validated['otp'], $user->otp_code) : null,
+                ];
+            }
+            return response()->json($response, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $plainTextToken = Str::random(64);

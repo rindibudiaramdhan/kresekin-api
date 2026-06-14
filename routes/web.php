@@ -9,14 +9,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/login', [SellerAuthController::class, 'create'])->name('login');
+Route::get('/login', function () {
+    return redirect('/');
+})->name('login');
 
 Route::prefix('seller')->name('seller.')->group(function (): void {
-    Route::middleware('guest')->group(function (): void {
-        Route::get('/login', [SellerAuthController::class, 'create'])->name('login');
-        Route::post('/login', [SellerAuthController::class, 'store'])->name('login.store');
-    });
-
     Route::middleware(['auth', 'role:seller'])->group(function (): void {
         Route::post('/logout', [SellerAuthController::class, 'destroy'])->name('logout');
         Route::get('/', SellerDashboardController::class)->name('dashboard');

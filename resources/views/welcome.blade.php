@@ -117,7 +117,7 @@
 
         .role-tabs {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 8px;
             margin-top: clamp(16px, 2.8dvh, 24px);
             padding: 6px;
@@ -126,20 +126,125 @@
             background: #f7f9fc;
         }
 
-        .role-tabs a {
+        .role-tabs button {
             min-height: 40px;
             display: grid;
             place-items: center;
+            border: 0;
             border-radius: 10px;
             color: #4b5568;
+            background: transparent;
+            cursor: pointer;
             font-size: 14px;
             font-weight: 700;
         }
 
-        .role-tabs a[aria-current="true"] {
+        .role-tabs button[aria-selected="true"] {
             color: #ffffff;
             background: var(--brand);
             box-shadow: 0 8px 18px rgba(17, 190, 200, .24);
+        }
+
+        .method-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .login-fields[hidden] {
+            display: none;
+        }
+
+        .method-option {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #ffffff;
+            padding: 0 14px;
+            color: #4b5568;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .method-option:has(input:checked) {
+            border-color: rgba(17, 190, 200, .5);
+            color: var(--brand-dark);
+            background: var(--brand-soft);
+        }
+
+        .method-option input {
+            accent-color: var(--brand);
+        }
+
+        .form-help {
+            margin: -2px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .otp-panel[hidden] {
+            display: none;
+        }
+
+        .otp-panel {
+            display: grid;
+            gap: 9px;
+            border: 1px solid rgba(17, 190, 200, .22);
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(231, 251, 253, .9), rgba(255, 255, 255, .94));
+            padding: 16px;
+        }
+
+        .otp-panel label {
+            color: #12324a;
+        }
+
+        .otp-destination {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .otp-destination strong {
+            color: #12324a;
+        }
+
+        .otp-panel .field input {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: .22em;
+        }
+
+        .status-message {
+            display: none;
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.45;
+        }
+
+        .status-message.is-visible {
+            display: block;
+        }
+
+        .status-message.success {
+            color: #066b50;
+            background: #e8f8f1;
+            border: 1px solid rgba(4, 132, 95, .18);
+        }
+
+        .status-message.error {
+            color: var(--danger);
+            background: #fff1f1;
+            border: 1px solid rgba(197, 37, 37, .2);
         }
 
         .login-form {
@@ -706,6 +811,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .method-options {
+                grid-template-columns: 1fr;
+            }
+
             .form-meta {
                 align-items: flex-start;
                 flex-direction: column;
@@ -781,56 +890,69 @@
                 </a>
 
                 <div class="login-copy">
-                    <h1>Masuk ke Portal Kresek.in</h1>
-                    <p>Kelola UMKM, transaksi, produk, dan komisi dalam satu dashboard operasional.</p>
+                    <h1 id="portal-title">Masuk sebagai Agent</h1>
+                    <p id="portal-description">Pantau UMKM binaan, aktivitas seller, dan komisi agent Anda melalui OTP.</p>
                 </div>
 
-                <nav class="role-tabs" aria-label="Pilihan akses portal">
-                    <a href="{{ route('seller.login') }}" aria-current="true">Seller</a>
-                    <a href="#agent-program">Agent</a>
-                    <a href="#agent-program">Finance</a>
+                <nav class="role-tabs" aria-label="Pilihan role portal" role="tablist">
+                    <button type="button" role="tab" aria-selected="true" data-role-tab="agent" data-action="{{ url('/api/agent/login') }}">Agent</button>
+                    <button type="button" role="tab" aria-selected="false" data-role-tab="finance" data-action="{{ url('/api/finance/login') }}">Finance</button>
                 </nav>
 
-                <form method="POST" action="{{ route('seller.login.store') }}" class="login-form" id="login-form">
-                    @csrf
-
-                    @if ($errors->any())
-                        <div class="alert" role="alert">
-                            {{ $errors->first() }}
+                <form method="POST" action="{{ url('/api/agent/login') }}" class="login-form" id="portal-login-form" novalidate>
+                    <div class="login-fields" id="login-fields">
+                        <div class="form-row">
+                            <label>Metode OTP</label>
+                            <div class="method-options" role="radiogroup" aria-label="Metode pengiriman OTP">
+                                <label class="method-option">
+                                    <input type="radio" name="type" value="email" checked>
+                                    Email
+                                </label>
+                                <label class="method-option">
+                                    <input type="radio" name="type" value="phone">
+                                    WhatsApp
+                                </label>
+                            </div>
                         </div>
-                    @endif
 
-                    <div class="form-row">
-                        <label for="email">Email</label>
-                        <div class="field">
-                            <img class="field-icon" src="{{ asset('images/icon-mail.svg') }}" alt="" aria-hidden="true">
-                            <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="nama@email.com" autocomplete="email" required autofocus>
+                        <div class="form-row" id="email-row">
+                            <label for="email">Email</label>
+                            <div class="field">
+                                <img class="field-icon" src="{{ asset('images/icon-mail.svg') }}" alt="" aria-hidden="true">
+                                <input id="email" name="email" type="email" placeholder="nama@email.com" autocomplete="email" required autofocus>
+                            </div>
                         </div>
+
+                        <div class="form-row" id="phone-row" hidden>
+                            <label for="phone">Nomor WhatsApp</label>
+                            <div class="field">
+                                <img class="field-icon" src="{{ asset('images/icon-phone.svg') }}" alt="" aria-hidden="true">
+                                <input id="phone" name="phone" type="tel" placeholder="+6281234567890" autocomplete="tel" disabled>
+                            </div>
+                        </div>
+
+                        <p class="form-help" id="form-help">Kami akan mengirim kode OTP ke kontak Agent yang terdaftar.</p>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-meta">
-                            <label for="password">Password</label>
-                            <a class="forgot-link" href="{{ route('seller.login') }}">Lupa password?</a>
-                        </div>
+                    <div class="otp-panel" id="otp-panel" hidden>
+                        <p class="otp-destination" id="otp-destination"></p>
+                        <label for="otp">Kode OTP</label>
                         <div class="field">
-                            <img class="field-icon" src="{{ asset('images/icon-lock.svg') }}" alt="" aria-hidden="true">
-                            <input id="password" name="password" type="password" placeholder="Masukkan password" autocomplete="current-password" required>
-                            <button class="icon-button" type="button" id="toggle-password" aria-label="Tampilkan password" aria-pressed="false">
-                                <img class="field-icon" src="{{ asset('images/icon-eye.svg') }}" alt="" aria-hidden="true">
-                            </button>
+                            <input id="otp" name="otp" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" autocomplete="one-time-code" disabled>
                         </div>
+                        <p class="form-help">Masukkan 6 digit OTP yang dikirim ke kontak Anda.</p>
                     </div>
+                    <div class="status-message" id="login-status" role="status" aria-live="polite"></div>
 
                     <button class="submit-button" type="submit" id="submit-button">
-                        <span>Masuk</span>
+                        <span id="submit-label">Kirim OTP Agent</span>
                         <img class="button-icon" src="{{ asset('images/icon-arrow-right.svg') }}" alt="" aria-hidden="true">
                     </button>
                 </form>
 
                 <p class="register-copy">
-                    Belum punya akun seller?
-                    <a href="mailto:admin@kresek.in?subject=Pendaftaran%20Akun%20Seller%20Kresek.in">Hubungi administrator</a>
+                    Belum punya akun?
+                    <a href="mailto:admin@kresek.in?subject=Bantuan%20Akses%20Kresek.in">Hubungi administrator</a>
                 </p>
 
                 <p class="copyright">&copy; {{ now()->year }} Kresek.in. All rights reserved.</p>
@@ -844,22 +966,181 @@
     </main>
 
     <script>
-        const passwordInput = document.getElementById('password');
-        const togglePassword = document.getElementById('toggle-password');
-        const loginForm = document.getElementById('login-form');
+        const roleTabs = document.querySelectorAll('[data-role-tab]');
+        const loginForm = document.getElementById('portal-login-form');
+        const portalTitle = document.getElementById('portal-title');
+        const portalDescription = document.getElementById('portal-description');
         const submitButton = document.getElementById('submit-button');
+        const submitLabel = document.getElementById('submit-label');
+        const formHelp = document.getElementById('form-help');
+        const statusMessage = document.getElementById('login-status');
+        const loginFields = document.getElementById('login-fields');
+        const emailRow = document.getElementById('email-row');
+        const phoneRow = document.getElementById('phone-row');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const otpPanel = document.getElementById('otp-panel');
+        const otpDestination = document.getElementById('otp-destination');
+        const otpInput = document.getElementById('otp');
+        const methodInputs = document.querySelectorAll('input[name="type"]');
+        let otpSent = false;
 
-        togglePassword?.addEventListener('click', () => {
-            const isHidden = passwordInput.type === 'password';
-            passwordInput.type = isHidden ? 'text' : 'password';
-            togglePassword.setAttribute('aria-pressed', String(isHidden));
-            togglePassword.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
+        const roleCopy = {
+            agent: {
+                label: 'Agent',
+                title: 'Masuk sebagai Agent',
+                description: 'Pantau UMKM binaan, aktivitas seller, dan komisi agent Anda melalui OTP.',
+                help: 'Kami akan mengirim kode OTP ke kontak Agent yang terdaftar.',
+            },
+            finance: {
+                label: 'Finance',
+                title: 'Masuk sebagai Finance',
+                description: 'Kelola validasi pembayaran, transaksi, dan proses disbursement melalui OTP.',
+                help: 'Kami akan mengirim kode OTP ke kontak Finance yang terdaftar.',
+            },
+        };
+
+        function activeRole() {
+            return document.querySelector('[data-role-tab][aria-selected="true"]')?.dataset.roleTab ?? 'agent';
+        }
+
+        function setStatus(message = '', type = '') {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message';
+
+            if (message && type) {
+                statusMessage.classList.add('is-visible', type);
+            }
+        }
+
+        function updateRole(tab) {
+            roleTabs.forEach((roleTab) => roleTab.setAttribute('aria-selected', String(roleTab === tab)));
+
+            const role = tab.dataset.roleTab;
+            const copy = roleCopy[role];
+
+            loginForm.action = tab.dataset.action;
+            portalTitle.textContent = copy.title;
+            portalDescription.textContent = copy.description;
+            formHelp.textContent = copy.help;
+            submitLabel.textContent = `Kirim OTP ${copy.label}`;
+            resetOtpStep();
+        }
+
+        function updateMethod() {
+            const method = document.querySelector('input[name="type"]:checked')?.value ?? 'email';
+            const isEmail = method === 'email';
+
+            emailRow.hidden = !isEmail;
+            phoneRow.hidden = isEmail;
+            emailInput.disabled = !isEmail;
+            phoneInput.disabled = isEmail;
+            emailInput.required = isEmail;
+            phoneInput.required = !isEmail;
+
+            if (isEmail) {
+                emailInput.focus();
+            } else {
+                phoneInput.focus();
+            }
+
+            resetOtpStep();
+        }
+
+        function resetOtpStep() {
+            otpSent = false;
+            loginFields.hidden = false;
+            otpPanel.hidden = true;
+            otpDestination.textContent = '';
+            otpInput.disabled = true;
+            otpInput.required = false;
+            otpInput.value = '';
+            submitLabel.textContent = `Kirim OTP ${roleCopy[activeRole()].label}`;
+            setStatus();
+        }
+
+        function enableOtpStep(message) {
+            const method = document.querySelector('input[name="type"]:checked')?.value ?? 'email';
+            const destination = method === 'email' ? emailInput.value : phoneInput.value;
+            const destinationLabel = method === 'email' ? 'email' : 'WhatsApp';
+
+            otpSent = true;
+            loginFields.hidden = true;
+            otpPanel.hidden = false;
+            otpDestination.innerHTML = `OTP dikirim ke <strong>${destinationLabel} ${destination}</strong>.`;
+            otpInput.disabled = false;
+            otpInput.required = true;
+            submitLabel.textContent = 'Verifikasi OTP';
+            setStatus(message, 'success');
+            otpInput.focus();
+        }
+
+        function formDataWithRole() {
+            const formData = new FormData(loginForm);
+            formData.set('role', activeRole());
+            return formData;
+        }
+
+        roleTabs.forEach((tab) => {
+            tab.addEventListener('click', () => updateRole(tab));
         });
 
-        loginForm?.addEventListener('submit', () => {
-            submitButton.setAttribute('aria-busy', 'true');
+        methodInputs.forEach((input) => {
+            input.addEventListener('change', updateMethod);
+        });
+
+        loginForm?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            if (!loginForm.reportValidity()) {
+                return;
+            }
+
+            const role = roleCopy[activeRole()];
+            const originalLabel = submitLabel.textContent;
+
             submitButton.disabled = true;
-            submitButton.querySelector('span').textContent = 'Memproses';
+            submitButton.setAttribute('aria-busy', 'true');
+            submitLabel.textContent = otpSent ? 'Memverifikasi OTP' : 'Mengirim OTP';
+            setStatus();
+
+            try {
+                const response = await fetch(otpSent ? '{{ url('/api/users/verify-otp') }}' : loginForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    body: formDataWithRole(),
+                });
+
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(payload.message || 'OTP gagal dikirim. Periksa data login Anda.');
+                }
+
+                if (otpSent) {
+                    const token = payload.data?.token;
+
+                    if (token) {
+                        localStorage.setItem('kresekin_token', token);
+                        localStorage.setItem('kresekin_token_type', payload.data?.token_type ?? 'Bearer');
+                        localStorage.setItem('kresekin_user_role', payload.data?.user?.role ?? activeRole());
+                    }
+
+                    setStatus(payload.message || `OTP ${role.label} berhasil diverifikasi.`, 'success');
+                    otpInput.value = '';
+                    return;
+                }
+
+                enableOtpStep(payload.message || `OTP ${role.label} berhasil dikirim.`);
+            } catch (error) {
+                setStatus(error.message, 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.removeAttribute('aria-busy');
+                submitLabel.textContent = otpSent ? 'Verifikasi OTP' : originalLabel;
+            }
         });
     </script>
 </body>
