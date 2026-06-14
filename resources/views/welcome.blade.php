@@ -324,8 +324,18 @@
         .story-content {
             position: relative;
             z-index: 1;
+            width: 100%;
+            height: 100%;
             min-height: 100%;
-            padding: 42px 42px 0;
+            padding: 0;
+        }
+
+        .story-hero-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
         }
 
         .story-brand {
@@ -719,7 +729,7 @@
             }
 
             .story-content {
-                padding: 28px 20px 0;
+                padding: 0;
             }
 
             .story-brand,
@@ -826,6 +836,7 @@
             </div>
             <aside class="story-panel" id="agent-program" aria-label="Program agent Kresek.in">
                 <div class="story-content">
+                    <img class="story-hero-image" src="{{ asset('images/agent-program-hero.svg') }}" alt="Program Agent Kresek.in untuk seller UMKM">
                 </div>
             </aside>
         </section>
