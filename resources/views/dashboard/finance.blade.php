@@ -1,38 +1,3 @@
-@php
-    $transactions = [
-        [
-            'id' => 'WD-20230914-0042',
-            'agent' => 'Budi Sentosa',
-            'bank' => 'BCA - 8830129xxx',
-            'nominal' => 'Rp 5.200.456',
-            'date' => '2 Jan 2026',
-            'status' => 'success',
-            'status_label' => 'Berhasil',
-        ],
-        [
-            'id' => 'WD-20230914-0042',
-            'agent' => 'Santi',
-            'bank' => 'Mandiri - 1240098xxx',
-            'nominal' => 'Rp 2.450.999',
-            'date' => '15 Feb 2026',
-            'status' => 'pending',
-            'status_label' => 'Pengajuan',
-        ],
-        [
-            'id' => 'WD-20230914-0042',
-            'agent' => 'Denny',
-            'bank' => 'BSI - 012322xxx',
-            'nominal' => 'Rp 1.025.873',
-            'date' => '6 Mar 2026',
-            'status' => 'rejected',
-            'status_label' => 'Ditolak',
-            'rejection_reason' => 'Data akun belum lengkap',
-            'rejected_at' => '6 Mar 2026, 14:20',
-            'rejected_by' => 'Finance Administrator',
-        ],
-    ];
-@endphp
-
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -223,6 +188,87 @@
             outline: 0;
         }
 
+        .finance-page__error {
+            display: none;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            background: #fff1f2;
+            color: #b91c1c;
+            font-size: 16px;
+            font-weight: 900;
+            padding: 16px 18px;
+        }
+
+        .finance-page__error.is-visible {
+            display: block;
+        }
+
+        .finance-skeleton-line {
+            display: inline-block;
+            width: 100%;
+            height: 18px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+            background-size: 200% 100%;
+            animation: finance-loading-shimmer 1.2s ease-in-out infinite;
+        }
+
+        .finance-skeleton-line--sm {
+            width: 72px;
+        }
+
+        .finance-skeleton-line--md {
+            width: 132px;
+        }
+
+        .finance-skeleton-line--lg {
+            width: 190px;
+        }
+
+        .finance-table__empty {
+            height: 128px;
+            color: #52617f;
+            font-size: 18px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .metric-card.is-loading .metric-card__value {
+            width: min(280px, 82%);
+            min-height: 42px;
+            color: transparent;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+            background-size: 200% 100%;
+            animation: finance-loading-shimmer 1.2s ease-in-out infinite;
+        }
+
+        .metric-card.is-loading .icon-tile {
+            color: transparent;
+            background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+            background-size: 200% 100%;
+            animation: finance-loading-shimmer 1.2s ease-in-out infinite;
+        }
+
+        .filter-bar.is-loading {
+            opacity: .68;
+        }
+
+        .filter-bar.is-loading .filter-field__control,
+        .filter-bar.is-loading .filter-bar__button {
+            cursor: wait;
+        }
+
+        @keyframes finance-loading-shimmer {
+            0% {
+                background-position: 100% 0;
+            }
+
+            100% {
+                background-position: -100% 0;
+            }
+        }
+
         @media (max-width: 1180px) {
             .finance-page__metrics {
                 grid-template-columns: 1fr;
@@ -259,37 +305,48 @@
         <main class="dashboard-main" aria-label="{{ $title ?? 'Finance' }}">
             <x-dashboard.header :title="$headerTitle ?? 'Finance Views'" :user-name="$userName ?? 'Finance Administrator'" />
 
-            <div class="finance-page">
+            <div class="finance-page" data-finance-page>
                 <section aria-labelledby="finance-page-title">
                     <h1 class="finance-page__title" id="finance-page-title">Finance Management</h1>
                     <p class="finance-page__subtitle">Meninjau dan mengelola aktivitas dan persetujuan keuangan</p>
                 </section>
 
+                <div class="finance-page__error" data-finance-error role="status"></div>
+
                 <section class="finance-page__metrics" aria-label="Ringkasan finance">
                     <x-dashboard.metric-card
+                        class="is-loading"
+                        aria-busy="true"
+                        data-finance-metric="disbursed"
                         title="Total Dana Tersalurkan"
-                        value="Rp 45.000.000"
+                        value="-"
                         icon="check"
                         tone="green"
                         variant="horizontal"
                     />
                     <x-dashboard.metric-card
+                        class="is-loading"
+                        aria-busy="true"
+                        data-finance-metric="pending"
                         title="Total Dana Tertunda"
-                        value="Rp 45.000.000"
+                        value="-"
                         icon="wallet"
                         tone="blue"
                         variant="horizontal"
                     />
                     <x-dashboard.metric-card
+                        class="is-loading"
+                        aria-busy="true"
+                        data-finance-metric="withdrawals"
                         title="Jumlah Pencairan Komisi"
-                        value="249"
+                        value="-"
                         icon="clipboard-clock"
                         tone="yellow"
                         variant="horizontal"
                     />
                 </section>
 
-                <x-dashboard.filter-bar>
+                <x-dashboard.filter-bar class="is-loading" data-finance-filter aria-busy="true">
                     <x-dashboard.filter-field label="Cari nama atau ID agent" icon="users" placeholder="Cari Nama atau ID Agent..." />
                     <x-dashboard.filter-field
                         label="Status"
@@ -306,7 +363,7 @@
                     <x-dashboard.filter-field label="Rentang tanggal" icon="calendar" value="Oct 1 - Oct 31, 2026" />
                 </x-dashboard.filter-bar>
 
-                <section class="finance-table-card" aria-label="Transaksi pencairan">
+                <section class="finance-table-card is-loading" data-finance-table-card aria-label="Transaksi pencairan" aria-busy="true">
                     <x-dashboard.table-tabs
                         active="agent"
                         :tabs="[
@@ -328,53 +385,23 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @foreach ($transactions as $transaction)
-                                    <tr
-                                        data-transaction-id="{{ $transaction['id'] }}"
-                                        data-transaction-agent="{{ $transaction['agent'] }}"
-                                        data-transaction-bank="{{ $transaction['bank'] }}"
-                                        data-transaction-nominal="{{ $transaction['nominal'] }}"
-                                        data-rejection-reason="{{ $transaction['rejection_reason'] ?? '' }}"
-                                        data-rejected-at="{{ $transaction['rejected_at'] ?? '' }}"
-                                        data-rejected-by="{{ $transaction['rejected_by'] ?? '' }}"
-                                    >
-                                        <td><span class="finance-table__id">{{ $transaction['id'] }}</span></td>
-                                        <td>{{ $transaction['agent'] }}</td>
-                                        <td><span class="finance-table__bank">{{ $transaction['bank'] }}</span></td>
-                                        <td><span class="finance-table__money">{{ $transaction['nominal'] }}</span></td>
-                                        <td>{{ $transaction['date'] }}</td>
-                                        <td class="finance-table__status-cell">
-                                            <x-dashboard.status-badge :status="$transaction['status']" :label="$transaction['status_label']" />
-                                        </td>
-                                        <td class="finance-table__actions-cell">
-                                            @if ($transaction['status'] === 'pending')
-                                                <x-dashboard.approval-actions />
-                                            @elseif ($transaction['status'] === 'processing')
-                                                <button class="finance-table__finish" type="button" data-finance-complete>Selesai</button>
-                                            @elseif ($transaction['status'] === 'rejected')
-                                                <button class="finance-table__detail" type="button" data-finance-rejection-detail aria-label="Lihat Detail Penolakan" title="Lihat Detail Penolakan">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
-                                                        <circle cx="12" cy="12" r="3"/>
-                                                    </svg>
-                                                </button>
-                                            @else
-                                                <button class="finance-table__action" type="button" aria-label="Detail transaksi belum tersedia" disabled>
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
-                                                        <circle cx="12" cy="12" r="3"/>
-                                                    </svg>
-                                                </button>
-                                            @endif
-                                        </td>
+                            <tbody data-finance-transactions>
+                                @for ($index = 0; $index < 5; $index++)
+                                    <tr class="finance-table__loading-row">
+                                        <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
+                                        <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
+                                        <td><span class="finance-skeleton-line finance-skeleton-line--lg"></span></td>
+                                        <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
+                                        <td><span class="finance-skeleton-line finance-skeleton-line--sm"></span></td>
+                                        <td><span class="finance-skeleton-line finance-skeleton-line--sm"></span></td>
+                                        <td><span class="finance-skeleton-line finance-skeleton-line--sm"></span></td>
                                     </tr>
-                                @endforeach
+                                @endfor
                             </tbody>
                         </table>
                     </div>
 
-                    <x-dashboard.pagination summary="Menampilkan 1-5 dari 24 Transaksi Pencairan" :pages="[1, 2, 3, '...', 5]" :current="1" />
+                    <x-dashboard.pagination data-finance-pagination summary="Memuat Transaksi Pencairan" :pages="[1]" :current="1" />
                 </section>
             </div>
         </main>
@@ -389,6 +416,10 @@
     />
     <x-dashboard.rejection-confirmation-modal />
     <x-dashboard.rejection-detail-modal />
+    <div hidden aria-hidden="true">
+        <x-dashboard.approval-actions />
+        <x-dashboard.status-badge status="pending" label="Pengajuan" />
+    </div>
     <script>
         (() => {
             const decisions = {
@@ -534,6 +565,283 @@
                 applyDecision(pendingRow, decisions.reject, rejectionDetailAction());
             };
 
+            const page = document.querySelector('[data-finance-page]');
+            const errorBox = document.querySelector('[data-finance-error]');
+            const tableCard = document.querySelector('[data-finance-table-card]');
+            const tableBody = document.querySelector('[data-finance-transactions]');
+            const filterBar = document.querySelector('[data-finance-filter]');
+            const pagination = document.querySelector('[data-finance-pagination]');
+            const token = localStorage.getItem('kresekin_token');
+            const tokenType = localStorage.getItem('kresekin_token_type') || 'Bearer';
+            const headers = {
+                Accept: 'application/json',
+                ...(token ? { Authorization: `${tokenType} ${token}` } : {}),
+            };
+
+            const money = (value) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+            const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            }[char]));
+            const sumByStatus = (rows, status) => rows
+                .filter((row) => row.status === status)
+                .reduce((total, row) => total + Number(row.rawAmount || 0), 0);
+            const clearLoading = (element) => {
+                element?.classList.remove('is-loading');
+                element?.removeAttribute('aria-busy');
+            };
+            const setControlsDisabled = (disabled) => {
+                filterBar?.querySelectorAll('input, select, button').forEach((control) => {
+                    control.disabled = disabled;
+                });
+            };
+            const showError = (message) => {
+                if (!errorBox) {
+                    return;
+                }
+
+                errorBox.textContent = message;
+                errorBox.classList.add('is-visible');
+            };
+            const fetchJson = async (url) => {
+                const response = await fetch(url, { headers });
+
+                if (!response.ok) {
+                    throw new Error(`Request failed: ${response.status}`);
+                }
+
+                return response.json();
+            };
+            const valueFrom = (...values) => values.find((value) => value !== undefined && value !== null && value !== '');
+            const formatDate = (value) => {
+                if (!value) {
+                    return '-';
+                }
+
+                const date = new Date(value);
+
+                if (Number.isNaN(date.getTime())) {
+                    return value;
+                }
+
+                return new Intl.DateTimeFormat('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                }).format(date);
+            };
+            const statusFromApi = (value) => {
+                const status = String(value || '').toLowerCase();
+
+                if (['success', 'berhasil', 'paid', 'completed'].includes(status) || status.includes('disbursed')) {
+                    return 'success';
+                }
+
+                if (['processing', 'diproses', 'approved'].includes(status) || status.includes('confirmed')) {
+                    return 'processing';
+                }
+
+                if (['rejected', 'ditolak', 'failed'].includes(status) || status.includes('reject')) {
+                    return 'rejected';
+                }
+
+                return 'pending';
+            };
+            const statusLabel = (status) => ({
+                success: 'Berhasil',
+                processing: 'Diproses',
+                rejected: 'Ditolak',
+                pending: 'Pengajuan',
+            }[status] || 'Pengajuan');
+            const mapTransaction = (item) => {
+                const status = statusFromApi(valueFrom(item.status, item.status_code, item.withdrawal_status));
+                const rawAmount = Number(valueFrom(item.amount, item.nominal, item.total_amount, item.transaction?.total_amount, 0));
+
+                return {
+                    id: valueFrom(item.id_transaksi, item.transaction_id, item.unique_code, item.transaction?.order_number, item.id, '-'),
+                    agent: valueFrom(item.agent?.name, item.agent_name, item.seller?.name, item.store?.name, item.name, '-'),
+                    bank: valueFrom(item.bank_tujuan, item.bank_destination, item.bank_label, item.bank, item.payout_account, '-'),
+                    nominal: valueFrom(item.nominal_label, item.nominal_formatted, item.amount_label, item.amount_formatted, item.transaction?.total_amount_label, money(rawAmount)),
+                    rawAmount,
+                    date: valueFrom(item.tanggal_pengajuan_label, item.submitted_at_label, item.created_at_label, formatDate(valueFrom(item.submitted_at, item.created_at, item.buyer_payment_confirmed_at))),
+                    status,
+                    statusLabel: valueFrom(item.status_label, statusLabel(status)),
+                    rejectionReason: valueFrom(item.rejection_reason_label, item.rejection_reason, item.rejected_reason, ''),
+                    rejectedAt: valueFrom(item.rejected_at_label, item.rejected_at, ''),
+                    rejectedBy: valueFrom(item.rejected_by?.name, item.rejected_by_name, item.reviewer?.name, ''),
+                };
+            };
+            const approvalActions = () => `
+                <div class="approval-actions">
+                    <button class="approval-actions__button approval-actions__button--approve" type="button" data-finance-decision="approve" aria-label="Disetujui" title="Disetujui">
+                        <svg class="approval-actions__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m5 12 4.5 4.5L19 7"/>
+                        </svg>
+                    </button>
+                    <button class="approval-actions__button approval-actions__button--reject" type="button" data-finance-decision="reject" aria-label="Ditolak" title="Ditolak">
+                        <svg class="approval-actions__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M6 6l12 12M18 6 6 18"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            const actionFor = (status) => {
+                if (status === 'pending') {
+                    return approvalActions();
+                }
+
+                if (status === 'processing') {
+                    return finishAction();
+                }
+
+                if (status === 'rejected') {
+                    return rejectionDetailAction();
+                }
+
+                return resolvedAction();
+            };
+            const renderMetric = (key, value) => {
+                const card = document.querySelector(`[data-finance-metric="${key}"]`);
+                const target = card?.querySelector('.metric-card__value');
+
+                if (target) {
+                    target.textContent = value ?? '-';
+                }
+
+                clearLoading(card);
+            };
+            const renderMetrics = (dashboardData, rows) => {
+                const summary = valueFrom(dashboardData?.finance_management, dashboardData?.summary, dashboardData, {});
+                const disbursed = valueFrom(
+                    summary.total_disbursed_formatted,
+                    summary.total_dana_tersalurkan,
+                    summary.total_disbursed?.formatted,
+                    dashboardData?.total_transaction_amount_label,
+                    money(sumByStatus(rows, 'success')),
+                );
+                const pending = valueFrom(
+                    summary.total_pending_formatted,
+                    summary.total_dana_tertunda,
+                    summary.total_pending?.formatted,
+                    money(sumByStatus(rows, 'pending') + sumByStatus(rows, 'processing')),
+                );
+                const withdrawals = valueFrom(
+                    summary.total_commission_withdrawals_formatted,
+                    summary.jumlah_pencairan_komisi,
+                    summary.total_commission_withdrawals,
+                    rows.length,
+                );
+
+                renderMetric('disbursed', disbursed);
+                renderMetric('pending', pending);
+                renderMetric('withdrawals', withdrawals);
+            };
+            const renderRows = (rows) => {
+                if (!tableBody) {
+                    return;
+                }
+
+                if (!rows.length) {
+                    tableBody.innerHTML = '<tr><td class="finance-table__empty" colspan="7">Belum ada transaksi pencairan.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = rows.map((row) => `
+                    <tr
+                        data-transaction-id="${escapeHtml(row.id)}"
+                        data-transaction-agent="${escapeHtml(row.agent)}"
+                        data-transaction-bank="${escapeHtml(row.bank)}"
+                        data-transaction-nominal="${escapeHtml(row.nominal)}"
+                        data-rejection-reason="${escapeHtml(row.rejectionReason)}"
+                        data-rejected-at="${escapeHtml(row.rejectedAt)}"
+                        data-rejected-by="${escapeHtml(row.rejectedBy)}"
+                    >
+                        <td><span class="finance-table__id">${escapeHtml(row.id)}</span></td>
+                        <td>${escapeHtml(row.agent)}</td>
+                        <td><span class="finance-table__bank">${escapeHtml(row.bank)}</span></td>
+                        <td><span class="finance-table__money">${escapeHtml(row.nominal)}</span></td>
+                        <td>${escapeHtml(row.date)}</td>
+                        <td class="finance-table__status-cell"><span class="status-badge status-badge--${escapeHtml(row.status)}">${escapeHtml(row.statusLabel)}</span></td>
+                        <td class="finance-table__actions-cell">${actionFor(row.status)}</td>
+                    </tr>
+                `).join('');
+            };
+            const pageLink = (label, current = false) => `
+                <a class="dashboard-pagination__page ${current ? 'is-current' : ''}" href="#" ${current ? 'aria-current="page"' : ''}>${label}</a>
+            `;
+            const renderPagination = (meta = {}) => {
+                const summary = pagination?.querySelector('.dashboard-pagination__summary');
+                const controls = pagination?.querySelector('.dashboard-pagination__controls');
+                const current = Number(meta.current_page || 1);
+                const last = Number(meta.last_page || 1);
+                const total = Number(meta.total || 0);
+                const from = meta.from || (total ? 1 : 0);
+                const to = meta.to || total;
+
+                if (summary) {
+                    summary.textContent = total
+                        ? `Menampilkan ${from}-${to} dari ${total} Transaksi Pencairan`
+                        : 'Menampilkan 0 Transaksi Pencairan';
+                }
+
+                if (!controls) {
+                    return;
+                }
+
+                const pages = Array.from({ length: Math.min(last, 5) }, (_, index) => index + 1);
+                controls.innerHTML = `
+                    <a class="dashboard-pagination__button" href="#" aria-disabled="${current <= 1}" aria-label="Halaman sebelumnya">
+                        <svg class="dashboard-pagination__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </a>
+                    ${pages.map((pageNumber) => pageLink(pageNumber, pageNumber === current)).join('')}
+                    ${last > 5 ? '<span class="dashboard-pagination__ellipsis">...</span>' : ''}
+                    ${last > 5 ? pageLink(last, last === current) : ''}
+                    <a class="dashboard-pagination__button" href="#" aria-label="Halaman berikutnya">
+                        <svg class="dashboard-pagination__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </a>
+                `;
+            };
+            const loadFinancePage = async () => {
+                setControlsDisabled(true);
+
+                try {
+                    const [dashboardPayload, transactionsPayload] = await Promise.all([
+                        fetchJson('/api/finance/dashboard'),
+                        fetchJson('/api/finance/transactions'),
+                    ]);
+                    const dashboardData = dashboardPayload?.data || {};
+                    const transactionItems = Array.isArray(transactionsPayload?.data) ? transactionsPayload.data : [];
+                    const rows = transactionItems.map(mapTransaction);
+                    const meta = transactionsPayload?.meta || {
+                        current_page: 1,
+                        last_page: 1,
+                        total: rows.length,
+                        from: rows.length ? 1 : 0,
+                        to: rows.length,
+                    };
+
+                    renderMetrics(dashboardData, rows);
+                    renderRows(rows);
+                    renderPagination(meta);
+                    clearLoading(tableCard);
+                    clearLoading(filterBar);
+                    setControlsDisabled(false);
+                } catch (error) {
+                    renderMetric('disbursed', '-');
+                    renderMetric('pending', '-');
+                    renderMetric('withdrawals', '-');
+                    renderRows([]);
+                    renderPagination({ total: 0 });
+                    clearLoading(tableCard);
+                    clearLoading(filterBar);
+                    setControlsDisabled(false);
+                    showError('Gagal memuat data finance. Silakan coba lagi.');
+                }
+            };
+
             document.addEventListener('click', (event) => {
                 const button = event.target.closest('[data-finance-decision]');
 
@@ -623,6 +931,8 @@
                     closeModal();
                 }
             });
+
+            loadFinancePage();
         })();
     </script>
 </body>
