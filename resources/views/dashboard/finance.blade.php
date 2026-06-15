@@ -26,6 +26,9 @@
             'date' => '6 Mar 2026',
             'status' => 'rejected',
             'status_label' => 'Ditolak',
+            'rejection_reason' => 'Data akun belum lengkap',
+            'rejected_at' => '6 Mar 2026, 14:20',
+            'rejected_by' => 'Finance Administrator',
         ],
     ];
 @endphp
@@ -175,6 +178,30 @@
             height: 20px;
         }
 
+        .finance-table__detail {
+            width: 42px;
+            height: 42px;
+            display: inline-grid;
+            place-items: center;
+            border: 1px solid #d7dce7;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #4f586b;
+            cursor: pointer;
+        }
+
+        .finance-table__detail:hover,
+        .finance-table__detail:focus-visible {
+            border-color: #11bec8;
+            color: #11bec8;
+            outline: 0;
+        }
+
+        .finance-table__detail svg {
+            width: 20px;
+            height: 20px;
+        }
+
         .finance-table__finish {
             min-width: 116px;
             min-height: 48px;
@@ -308,6 +335,9 @@
                                         data-transaction-agent="{{ $transaction['agent'] }}"
                                         data-transaction-bank="{{ $transaction['bank'] }}"
                                         data-transaction-nominal="{{ $transaction['nominal'] }}"
+                                        data-rejection-reason="{{ $transaction['rejection_reason'] ?? '' }}"
+                                        data-rejected-at="{{ $transaction['rejected_at'] ?? '' }}"
+                                        data-rejected-by="{{ $transaction['rejected_by'] ?? '' }}"
                                     >
                                         <td><span class="finance-table__id">{{ $transaction['id'] }}</span></td>
                                         <td>{{ $transaction['agent'] }}</td>
@@ -322,6 +352,13 @@
                                                 <x-dashboard.approval-actions />
                                             @elseif ($transaction['status'] === 'processing')
                                                 <button class="finance-table__finish" type="button" data-finance-complete>Selesai</button>
+                                            @elseif ($transaction['status'] === 'rejected')
+                                                <button class="finance-table__detail" type="button" data-finance-rejection-detail aria-label="Lihat Detail Penolakan" title="Lihat Detail Penolakan">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
+                                                        <circle cx="12" cy="12" r="3"/>
+                                                    </svg>
+                                                </button>
                                             @else
                                                 <button class="finance-table__action" type="button" aria-label="Detail transaksi belum tersedia" disabled>
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -351,6 +388,7 @@
         confirm-label="Ya, Selesai"
     />
     <x-dashboard.rejection-confirmation-modal />
+    <x-dashboard.rejection-detail-modal />
     <script>
         (() => {
             const decisions = {
@@ -376,12 +414,21 @@
                     </svg>
                 </button>
             `;
+            const rejectionDetailAction = () => `
+                <button class="finance-table__detail" type="button" data-finance-rejection-detail aria-label="Lihat Detail Penolakan" title="Lihat Detail Penolakan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+            `;
             const finishAction = () => '<button class="finance-table__finish" type="button" data-finance-complete>Selesai</button>';
             const modalByName = (name) => document.querySelector(`[data-finance-modal="${name}"]`);
             const modals = {
                 approval: modalByName('approval'),
                 completion: modalByName('completion'),
                 rejection: modalByName('rejection'),
+                rejectionDetail: modalByName('rejection-detail'),
             };
             let pendingRow = null;
             let activeModal = null;
@@ -395,7 +442,20 @@
                 modal.querySelector('[data-finance-modal-field="agent"]').textContent = row.dataset.transactionAgent || '-';
                 modal.querySelector('[data-finance-modal-field="nominal"]').textContent = row.dataset.transactionNominal || '-';
                 modal.querySelector('[data-finance-modal-field="bank"]').textContent = row.dataset.transactionBank || '-';
+                modal.querySelector('[data-finance-modal-field="reason"]')?.replaceChildren(document.createTextNode(row.dataset.rejectionReason || '-'));
+                modal.querySelector('[data-finance-modal-field="rejectedAt"]')?.replaceChildren(document.createTextNode(row.dataset.rejectedAt || '-'));
+                modal.querySelector('[data-finance-modal-field="rejectedBy"]')?.replaceChildren(document.createTextNode(row.dataset.rejectedBy || '-'));
             };
+
+            const currentRejectedAt = () => new Intl.DateTimeFormat('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            }).format(new Date()).replace('.', ':');
+
+            const selectedRejectionReason = () => modals.rejection?.querySelector('input[name="rejection_reason"]:checked');
 
             const resetRejectionReason = () => {
                 const modal = modals.rejection;
@@ -407,7 +467,7 @@
             };
 
             const hasSelectedRejectionReason = () => Boolean(
-                modals.rejection?.querySelector('input[name="rejection_reason"]:checked'),
+                selectedRejectionReason(),
             );
 
             const openModal = (name, row) => {
@@ -461,6 +521,19 @@
                 actions.innerHTML = nextAction;
             };
 
+            const applyRejection = () => {
+                const reason = selectedRejectionReason();
+
+                if (!pendingRow || !reason) {
+                    return;
+                }
+
+                pendingRow.dataset.rejectionReason = reason.closest('.rejection-modal__reason')?.textContent.trim() || reason.value;
+                pendingRow.dataset.rejectedAt = currentRejectedAt();
+                pendingRow.dataset.rejectedBy = @json($userName ?? 'Finance Administrator');
+                applyDecision(pendingRow, decisions.reject, rejectionDetailAction());
+            };
+
             document.addEventListener('click', (event) => {
                 const button = event.target.closest('[data-finance-decision]');
 
@@ -496,6 +569,20 @@
                 }
             });
 
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-finance-rejection-detail]');
+
+                if (!button) {
+                    return;
+                }
+
+                const row = button.closest('tr');
+
+                if (row) {
+                    openModal('rejectionDetail', row);
+                }
+            });
+
             Object.entries(modals).forEach(([name, modal]) => {
                 modal?.querySelector('[data-finance-modal-confirm]')?.addEventListener('click', () => {
                     if (name === 'rejection' && !hasSelectedRejectionReason()) {
@@ -504,13 +591,15 @@
                         return;
                     }
 
-                    applyDecision(
-                        pendingRow,
-                        name === 'completion'
-                            ? decisions.success
-                            : (name === 'rejection' ? decisions.reject : decisions.processing),
-                        name === 'approval' ? finishAction() : resolvedAction(),
-                    );
+                    if (name === 'rejection') {
+                        applyRejection();
+                    } else {
+                        applyDecision(
+                            pendingRow,
+                            name === 'completion' ? decisions.success : decisions.processing,
+                            name === 'approval' ? finishAction() : resolvedAction(),
+                        );
+                    }
                     closeModal();
                 });
 
