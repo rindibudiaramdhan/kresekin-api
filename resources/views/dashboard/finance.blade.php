@@ -282,7 +282,12 @@
                             </thead>
                             <tbody>
                                 @foreach ($transactions as $transaction)
-                                    <tr>
+                                    <tr
+                                        data-transaction-id="{{ $transaction['id'] }}"
+                                        data-transaction-agent="{{ $transaction['agent'] }}"
+                                        data-transaction-bank="{{ $transaction['bank'] }}"
+                                        data-transaction-nominal="{{ $transaction['nominal'] }}"
+                                    >
                                         <td><span class="finance-table__id">{{ $transaction['id'] }}</span></td>
                                         <td>{{ $transaction['agent'] }}</td>
                                         <td><span class="finance-table__bank">{{ $transaction['bank'] }}</span></td>
@@ -314,12 +319,13 @@
             </div>
         </main>
     </div>
+    <x-dashboard.approval-confirmation-modal />
     <script>
         (() => {
             const decisions = {
-                approve: {
-                    status: 'success',
-                    label: 'Berhasil',
+                processing: {
+                    status: 'processing',
+                    label: 'Diproses',
                 },
                 reject: {
                     status: 'rejected',
@@ -335,16 +341,50 @@
                     </svg>
                 </button>
             `;
+            const modal = document.querySelector('[data-approval-modal]');
+            const modalConfirm = modal?.querySelector('[data-approval-modal-confirm]');
+            const modalFields = {
+                id: modal?.querySelector('[data-approval-modal-field="id"]'),
+                agent: modal?.querySelector('[data-approval-modal-field="agent"]'),
+                nominal: modal?.querySelector('[data-approval-modal-field="nominal"]'),
+                bank: modal?.querySelector('[data-approval-modal-field="bank"]'),
+            };
+            let pendingApprovalRow = null;
 
-            document.addEventListener('click', (event) => {
-                const button = event.target.closest('[data-finance-decision]');
-
-                if (!button) {
+            const setModalDetails = (row) => {
+                if (!row) {
                     return;
                 }
 
-                const decision = decisions[button.dataset.financeDecision];
-                const row = button.closest('tr');
+                modalFields.id.textContent = row.dataset.transactionId || '-';
+                modalFields.agent.textContent = row.dataset.transactionAgent || '-';
+                modalFields.nominal.textContent = row.dataset.transactionNominal || '-';
+                modalFields.bank.textContent = row.dataset.transactionBank || '-';
+            };
+
+            const openModal = (row) => {
+                if (!modal) {
+                    return;
+                }
+
+                pendingApprovalRow = row;
+                setModalDetails(row);
+                modal.hidden = false;
+                document.body.style.overflow = 'hidden';
+                modalConfirm?.focus();
+            };
+
+            const closeModal = () => {
+                if (!modal) {
+                    return;
+                }
+
+                modal.hidden = true;
+                document.body.style.overflow = '';
+                pendingApprovalRow = null;
+            };
+
+            const applyDecision = (row, decision) => {
                 const badge = row?.querySelector('.status-badge');
                 const actions = row?.querySelector('.finance-table__actions-cell');
 
@@ -355,6 +395,44 @@
                 badge.className = `status-badge status-badge--${decision.status}`;
                 badge.textContent = decision.label;
                 actions.innerHTML = resolvedAction();
+            };
+
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-finance-decision]');
+
+                if (!button) {
+                    return;
+                }
+
+                const row = button.closest('tr');
+
+                if (!row) {
+                    return;
+                }
+
+                if (button.dataset.financeDecision === 'approve') {
+                    openModal(row);
+                    return;
+                }
+
+                applyDecision(row, decisions.reject);
+            });
+
+            modalConfirm?.addEventListener('click', () => {
+                applyDecision(pendingApprovalRow, decisions.processing);
+                closeModal();
+            });
+
+            modal?.addEventListener('click', (event) => {
+                if (event.target === modal || event.target.closest('[data-approval-modal-close]')) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && modal && !modal.hidden) {
+                    closeModal();
+                }
             });
         })();
     </script>
