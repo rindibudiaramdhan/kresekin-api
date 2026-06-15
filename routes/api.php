@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\DeleteCartItemController;
 use App\Http\Controllers\Api\DeleteFinanceCancellationReasonCategoryController;
 use App\Http\Controllers\Api\DeleteSellerProductController;
 use App\Http\Controllers\Api\DisburseFinanceTransactionController;
+use App\Http\Controllers\Api\FinanceCommissionWithdrawalController;
 use App\Http\Controllers\Api\GetAgentCommissionWithdrawalListController;
 use App\Http\Controllers\Api\GetAgentDashboardController;
 use App\Http\Controllers\Api\GetAgentProfileController;
@@ -159,6 +160,12 @@ Route::middleware(['session.token', 'role:agent'])->prefix('agent')->group(funct
 
 Route::middleware(['session.token', 'role:finance'])->prefix('finance')->group(function (): void {
     Route::get('/dashboard', GetFinanceDashboardController::class);
+    Route::get('/commission-withdrawals/summary', [FinanceCommissionWithdrawalController::class, 'summary']);
+    Route::get('/commission-withdrawals', [FinanceCommissionWithdrawalController::class, 'index']);
+    Route::get('/commission-withdrawals/{id}', [FinanceCommissionWithdrawalController::class, 'show']);
+    Route::patch('/commission-withdrawals/{id}/approve', [FinanceCommissionWithdrawalController::class, 'approve']);
+    Route::patch('/commission-withdrawals/{id}/reject', [FinanceCommissionWithdrawalController::class, 'reject']);
+    Route::patch('/commission-withdrawals/{id}/mark-as-paid', [FinanceCommissionWithdrawalController::class, 'markAsPaid']);
     Route::get('/transactions', GetFinanceTransactionListController::class);
     Route::get('/transactions/{id}', GetFinanceTransactionDetailController::class);
     Route::patch('/transactions/{id}/confirm-buyer-payment', ConfirmFinanceBuyerPaymentController::class);

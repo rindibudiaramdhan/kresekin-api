@@ -12,8 +12,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'amount',
     'status',
     'note',
+    'rejection_reason',
     'requested_at',
     'processed_at',
+    'approved_by_user_id',
+    'rejected_by_user_id',
+    'paid_by_user_id',
+    'approved_at',
+    'rejected_at',
+    'paid_at',
 ])]
 class AgentCommissionWithdrawal extends Model
 {
@@ -27,6 +34,12 @@ class AgentCommissionWithdrawal extends Model
 
     public const STATUS_REJECTED = 'rejected';
 
+    public const REJECTION_INVALID_ACCOUNT = 'invalid_account';
+
+    public const REJECTION_INCOMPLETE_ACCOUNT = 'incomplete_account';
+
+    public const REJECTION_SUSPICIOUS_REQUEST = 'suspicious_request';
+
     public static function lockedStatuses(): array
     {
         return [
@@ -36,17 +49,44 @@ class AgentCommissionWithdrawal extends Model
         ];
     }
 
+    public static function rejectionReasons(): array
+    {
+        return [
+            self::REJECTION_INVALID_ACCOUNT,
+            self::REJECTION_INCOMPLETE_ACCOUNT,
+            self::REJECTION_SUSPICIOUS_REQUEST,
+        ];
+    }
+
     protected function casts(): array
     {
         return [
             'amount' => 'integer',
             'requested_at' => 'datetime',
             'processed_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'paid_at' => 'datetime',
         ];
     }
 
     public function agent(): BelongsTo
     {
         return $this->belongsTo(User::class, 'agent_user_id');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by_user_id');
+    }
+
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by_user_id');
+    }
+
+    public function paidBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'paid_by_user_id');
     }
 }

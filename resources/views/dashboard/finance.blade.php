@@ -347,20 +347,21 @@
                 </section>
 
                 <x-dashboard.filter-bar class="is-loading" data-finance-filter aria-busy="true">
-                    <x-dashboard.filter-field label="Cari nama atau ID agent" icon="users" placeholder="Cari Nama atau ID Agent..." />
+                    <x-dashboard.filter-field data-finance-search label="Cari nama atau ID agent" icon="users" placeholder="Cari Nama atau ID Agent..." />
                     <x-dashboard.filter-field
+                        data-finance-status
                         label="Status"
                         type="select"
                         :options="[
                             'all' => 'Semua Status',
-                            'success' => 'Berhasil',
-                            'pending' => 'Pengajuan',
-                            'processing' => 'Diproses',
+                            'paid' => 'Berhasil',
+                            'requested' => 'Pengajuan',
+                            'approved' => 'Diproses',
                             'rejected' => 'Ditolak',
                         ]"
                         icon=""
                     />
-                    <x-dashboard.filter-field label="Rentang tanggal" icon="calendar" value="Oct 1 - Oct 31, 2026" />
+                    <x-dashboard.filter-field data-finance-date-range label="Rentang tanggal" icon="calendar" placeholder="YYYY-MM-DD - YYYY-MM-DD" />
                 </x-dashboard.filter-bar>
 
                 <section class="finance-table-card is-loading" data-finance-table-card aria-label="Transaksi pencairan" aria-busy="true">
@@ -422,23 +423,8 @@
     </div>
     <script>
         (() => {
-            const decisions = {
-                processing: {
-                    status: 'processing',
-                    label: 'Diproses',
-                },
-                success: {
-                    status: 'success',
-                    label: 'Berhasil',
-                },
-                reject: {
-                    status: 'rejected',
-                    label: 'Ditolak',
-                },
-            };
-
             const resolvedAction = () => `
-                <button class="finance-table__action" type="button" aria-label="Detail transaksi belum tersedia" disabled>
+                <button class="finance-table__action" type="button" aria-label="Transaksi selesai" disabled>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
                         <circle cx="12" cy="12" r="3"/>
@@ -454,6 +440,20 @@
                 </button>
             `;
             const finishAction = () => '<button class="finance-table__finish" type="button" data-finance-complete>Selesai</button>';
+            const approvalActions = () => `
+                <div class="approval-actions">
+                    <button class="approval-actions__button approval-actions__button--approve" type="button" data-finance-decision="approve" aria-label="Disetujui" title="Disetujui">
+                        <svg class="approval-actions__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m5 12 4.5 4.5L19 7"/>
+                        </svg>
+                    </button>
+                    <button class="approval-actions__button approval-actions__button--reject" type="button" data-finance-decision="reject" aria-label="Ditolak" title="Ditolak">
+                        <svg class="approval-actions__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M6 6l12 12M18 6 6 18"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
             const modalByName = (name) => document.querySelector(`[data-finance-modal="${name}"]`);
             const modals = {
                 approval: modalByName('approval'),
@@ -461,9 +461,78 @@
                 rejection: modalByName('rejection'),
                 rejectionDetail: modalByName('rejection-detail'),
             };
+            const state = {
+                page: 1,
+                perPage: 10,
+            };
             let pendingRow = null;
             let activeModal = null;
 
+            const tableCard = document.querySelector('[data-finance-table-card]');
+            const tableBody = document.querySelector('[data-finance-transactions]');
+            const errorBox = document.querySelector('[data-finance-error]');
+            const filterBar = document.querySelector('[data-finance-filter]');
+            const pagination = document.querySelector('[data-finance-pagination]');
+            const searchInput = document.querySelector('[data-finance-search] input');
+            const statusSelect = document.querySelector('[data-finance-status] select');
+            const dateRangeInput = document.querySelector('[data-finance-date-range] input');
+            const filterButton = filterBar?.querySelector('.filter-bar__button');
+            const token = localStorage.getItem('kresekin_token');
+            const tokenType = localStorage.getItem('kresekin_token_type') || 'Bearer';
+            const headers = {
+                Accept: 'application/json',
+                ...(token ? { Authorization: `${tokenType} ${token}` } : {}),
+            };
+            const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            }[char]));
+            const valueFrom = (...values) => values.find((value) => value !== undefined && value !== null && value !== '');
+            const clearLoading = (element) => {
+                element?.classList.remove('is-loading');
+                element?.removeAttribute('aria-busy');
+            };
+            const setControlsDisabled = (disabled) => {
+                filterBar?.querySelectorAll('input, select, button').forEach((control) => {
+                    control.disabled = disabled;
+                });
+            };
+            const showError = (message) => {
+                if (!errorBox) {
+                    return;
+                }
+
+                errorBox.textContent = message;
+                errorBox.classList.add('is-visible');
+            };
+            const clearError = () => {
+                if (!errorBox) {
+                    return;
+                }
+
+                errorBox.textContent = '';
+                errorBox.classList.remove('is-visible');
+            };
+            const fetchJson = async (url, options = {}) => {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...headers,
+                        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+                        ...(options.headers || {}),
+                    },
+                });
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(payload.message || `Request failed: ${response.status}`);
+                }
+
+                return payload;
+            };
             const setModalDetails = (modal, row) => {
                 if (!modal || !row) {
                     return;
@@ -477,30 +546,13 @@
                 modal.querySelector('[data-finance-modal-field="rejectedAt"]')?.replaceChildren(document.createTextNode(row.dataset.rejectedAt || '-'));
                 modal.querySelector('[data-finance-modal-field="rejectedBy"]')?.replaceChildren(document.createTextNode(row.dataset.rejectedBy || '-'));
             };
-
-            const currentRejectedAt = () => new Intl.DateTimeFormat('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-            }).format(new Date()).replace('.', ':');
-
             const selectedRejectionReason = () => modals.rejection?.querySelector('input[name="rejection_reason"]:checked');
-
             const resetRejectionReason = () => {
-                const modal = modals.rejection;
-
-                modal?.querySelectorAll('input[name="rejection_reason"]').forEach((input) => {
+                modals.rejection?.querySelectorAll('input[name="rejection_reason"]').forEach((input) => {
                     input.checked = false;
                 });
-                modal?.querySelector('#rejection-modal-error')?.setAttribute('hidden', '');
+                modals.rejection?.querySelector('#rejection-modal-error')?.setAttribute('hidden', '');
             };
-
-            const hasSelectedRejectionReason = () => Boolean(
-                selectedRejectionReason(),
-            );
-
             const openModal = (name, row) => {
                 const modal = modals[name];
 
@@ -522,7 +574,6 @@
                     modal.querySelector('[data-finance-modal-confirm]')?.focus();
                 }
             };
-
             const closeModal = () => {
                 const modal = activeModal ? modals[activeModal] : null;
 
@@ -538,156 +589,12 @@
                 pendingRow = null;
                 activeModal = null;
             };
-
-            const applyDecision = (row, decision, nextAction = resolvedAction()) => {
-                const badge = row?.querySelector('.status-badge');
-                const actions = row?.querySelector('.finance-table__actions-cell');
-
-                if (!decision || !badge || !actions) {
-                    return;
-                }
-
-                badge.className = `status-badge status-badge--${decision.status}`;
-                badge.textContent = decision.label;
-                actions.innerHTML = nextAction;
-            };
-
-            const applyRejection = () => {
-                const reason = selectedRejectionReason();
-
-                if (!pendingRow || !reason) {
-                    return;
-                }
-
-                pendingRow.dataset.rejectionReason = reason.closest('.rejection-modal__reason')?.textContent.trim() || reason.value;
-                pendingRow.dataset.rejectedAt = currentRejectedAt();
-                pendingRow.dataset.rejectedBy = @json($userName ?? 'Finance Administrator');
-                applyDecision(pendingRow, decisions.reject, rejectionDetailAction());
-            };
-
-            const page = document.querySelector('[data-finance-page]');
-            const errorBox = document.querySelector('[data-finance-error]');
-            const tableCard = document.querySelector('[data-finance-table-card]');
-            const tableBody = document.querySelector('[data-finance-transactions]');
-            const filterBar = document.querySelector('[data-finance-filter]');
-            const pagination = document.querySelector('[data-finance-pagination]');
-            const token = localStorage.getItem('kresekin_token');
-            const tokenType = localStorage.getItem('kresekin_token_type') || 'Bearer';
-            const headers = {
-                Accept: 'application/json',
-                ...(token ? { Authorization: `${tokenType} ${token}` } : {}),
-            };
-
-            const money = (value) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
-            const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;',
-            }[char]));
-            const sumByStatus = (rows, status) => rows
-                .filter((row) => row.status === status)
-                .reduce((total, row) => total + Number(row.rawAmount || 0), 0);
-            const clearLoading = (element) => {
-                element?.classList.remove('is-loading');
-                element?.removeAttribute('aria-busy');
-            };
-            const setControlsDisabled = (disabled) => {
-                filterBar?.querySelectorAll('input, select, button').forEach((control) => {
-                    control.disabled = disabled;
-                });
-            };
-            const showError = (message) => {
-                if (!errorBox) {
-                    return;
-                }
-
-                errorBox.textContent = message;
-                errorBox.classList.add('is-visible');
-            };
-            const fetchJson = async (url) => {
-                const response = await fetch(url, { headers });
-
-                if (!response.ok) {
-                    throw new Error(`Request failed: ${response.status}`);
-                }
-
-                return response.json();
-            };
-            const valueFrom = (...values) => values.find((value) => value !== undefined && value !== null && value !== '');
-            const formatDate = (value) => {
-                if (!value) {
-                    return '-';
-                }
-
-                const date = new Date(value);
-
-                if (Number.isNaN(date.getTime())) {
-                    return value;
-                }
-
-                return new Intl.DateTimeFormat('id-ID', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                }).format(date);
-            };
-            const statusFromApi = (value) => {
-                const status = String(value || '').toLowerCase();
-
-                if (['success', 'berhasil', 'paid', 'completed'].includes(status) || status.includes('disbursed')) {
-                    return 'success';
-                }
-
-                if (['processing', 'diproses', 'approved'].includes(status) || status.includes('confirmed')) {
-                    return 'processing';
-                }
-
-                if (['rejected', 'ditolak', 'failed'].includes(status) || status.includes('reject')) {
-                    return 'rejected';
-                }
-
-                return 'pending';
-            };
-            const statusLabel = (status) => ({
-                success: 'Berhasil',
-                processing: 'Diproses',
-                rejected: 'Ditolak',
-                pending: 'Pengajuan',
-            }[status] || 'Pengajuan');
-            const mapTransaction = (item) => {
-                const status = statusFromApi(valueFrom(item.status, item.status_code, item.withdrawal_status));
-                const rawAmount = Number(valueFrom(item.amount, item.nominal, item.total_amount, item.transaction?.total_amount, 0));
-
-                return {
-                    id: valueFrom(item.id_transaksi, item.transaction_id, item.unique_code, item.transaction?.order_number, item.id, '-'),
-                    agent: valueFrom(item.agent?.name, item.agent_name, item.seller?.name, item.store?.name, item.name, '-'),
-                    bank: valueFrom(item.bank_tujuan, item.bank_destination, item.bank_label, item.bank, item.payout_account, '-'),
-                    nominal: valueFrom(item.nominal_label, item.nominal_formatted, item.amount_label, item.amount_formatted, item.transaction?.total_amount_label, money(rawAmount)),
-                    rawAmount,
-                    date: valueFrom(item.tanggal_pengajuan_label, item.submitted_at_label, item.created_at_label, formatDate(valueFrom(item.submitted_at, item.created_at, item.buyer_payment_confirmed_at))),
-                    status,
-                    statusLabel: valueFrom(item.status_label, statusLabel(status)),
-                    rejectionReason: valueFrom(item.rejection_reason_label, item.rejection_reason, item.rejected_reason, ''),
-                    rejectedAt: valueFrom(item.rejected_at_label, item.rejected_at, ''),
-                    rejectedBy: valueFrom(item.rejected_by?.name, item.rejected_by_name, item.reviewer?.name, ''),
-                };
-            };
-            const approvalActions = () => `
-                <div class="approval-actions">
-                    <button class="approval-actions__button approval-actions__button--approve" type="button" data-finance-decision="approve" aria-label="Disetujui" title="Disetujui">
-                        <svg class="approval-actions__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="m5 12 4.5 4.5L19 7"/>
-                        </svg>
-                    </button>
-                    <button class="approval-actions__button approval-actions__button--reject" type="button" data-finance-decision="reject" aria-label="Ditolak" title="Ditolak">
-                        <svg class="approval-actions__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M6 6l12 12M18 6 6 18"/>
-                        </svg>
-                    </button>
-                </div>
-            `;
+            const statusFromApi = (value) => ({
+                requested: 'pending',
+                approved: 'processing',
+                paid: 'success',
+                rejected: 'rejected',
+            }[String(value || '').toLowerCase()] || 'pending');
             const actionFor = (status) => {
                 if (status === 'pending') {
                     return approvalActions();
@@ -703,6 +610,25 @@
 
                 return resolvedAction();
             };
+            const mapWithdrawal = (item) => {
+                const status = statusFromApi(item.status);
+                const bankName = valueFrom(item.bank?.name, '-');
+                const bankAccount = valueFrom(item.bank?.account_number_masked, '');
+                const bankHolder = valueFrom(item.bank?.account_holder, '');
+
+                return {
+                    id: valueFrom(item.id, '-'),
+                    agent: valueFrom(item.agent?.name, '-'),
+                    bank: [bankName, bankAccount, bankHolder].filter((part) => part && part !== '-').join(' - ') || '-',
+                    nominal: valueFrom(item.amount_label, '-'),
+                    date: valueFrom(item.requested_at_label, '-'),
+                    status,
+                    statusLabel: valueFrom(item.status_label, 'Pengajuan'),
+                    rejectionReason: valueFrom(item.rejection?.reason_label, ''),
+                    rejectedAt: valueFrom(item.rejection?.rejected_at_label, ''),
+                    rejectedBy: valueFrom(item.rejection?.rejected_by?.name, ''),
+                };
+            };
             const renderMetric = (key, value) => {
                 const card = document.querySelector(`[data-finance-metric="${key}"]`);
                 const target = card?.querySelector('.metric-card__value');
@@ -713,31 +639,10 @@
 
                 clearLoading(card);
             };
-            const renderMetrics = (dashboardData, rows) => {
-                const summary = valueFrom(dashboardData?.finance_management, dashboardData?.summary, dashboardData, {});
-                const disbursed = valueFrom(
-                    summary.total_disbursed_formatted,
-                    summary.total_dana_tersalurkan,
-                    summary.total_disbursed?.formatted,
-                    dashboardData?.total_transaction_amount_label,
-                    money(sumByStatus(rows, 'success')),
-                );
-                const pending = valueFrom(
-                    summary.total_pending_formatted,
-                    summary.total_dana_tertunda,
-                    summary.total_pending?.formatted,
-                    money(sumByStatus(rows, 'pending') + sumByStatus(rows, 'processing')),
-                );
-                const withdrawals = valueFrom(
-                    summary.total_commission_withdrawals_formatted,
-                    summary.jumlah_pencairan_komisi,
-                    summary.total_commission_withdrawals,
-                    rows.length,
-                );
-
-                renderMetric('disbursed', disbursed);
-                renderMetric('pending', pending);
-                renderMetric('withdrawals', withdrawals);
+            const renderMetrics = (summary) => {
+                renderMetric('disbursed', valueFrom(summary?.total_disbursed_label, '-'));
+                renderMetric('pending', valueFrom(summary?.total_pending_label, '-'));
+                renderMetric('withdrawals', valueFrom(summary?.total_withdrawals, 0));
             };
             const renderRows = (rows) => {
                 if (!tableBody) {
@@ -770,7 +675,7 @@
                 `).join('');
             };
             const pageLink = (label, current = false) => `
-                <a class="dashboard-pagination__page ${current ? 'is-current' : ''}" href="#" ${current ? 'aria-current="page"' : ''}>${label}</a>
+                <a class="dashboard-pagination__page ${current ? 'is-current' : ''}" href="#" data-finance-page-link="${label}" ${current ? 'aria-current="page"' : ''}>${label}</a>
             `;
             const renderPagination = (meta = {}) => {
                 const summary = pagination?.querySelector('.dashboard-pagination__summary');
@@ -793,39 +698,62 @@
 
                 const pages = Array.from({ length: Math.min(last, 5) }, (_, index) => index + 1);
                 controls.innerHTML = `
-                    <a class="dashboard-pagination__button" href="#" aria-disabled="${current <= 1}" aria-label="Halaman sebelumnya">
+                    <a class="dashboard-pagination__button" href="#" data-finance-page-link="${Math.max(1, current - 1)}" aria-disabled="${current <= 1}" aria-label="Halaman sebelumnya">
                         <svg class="dashboard-pagination__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     </a>
                     ${pages.map((pageNumber) => pageLink(pageNumber, pageNumber === current)).join('')}
                     ${last > 5 ? '<span class="dashboard-pagination__ellipsis">...</span>' : ''}
                     ${last > 5 ? pageLink(last, last === current) : ''}
-                    <a class="dashboard-pagination__button" href="#" aria-label="Halaman berikutnya">
+                    <a class="dashboard-pagination__button" href="#" data-finance-page-link="${Math.min(last, current + 1)}" aria-disabled="${current >= last}" aria-label="Halaman berikutnya">
                         <svg class="dashboard-pagination__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </a>
                 `;
             };
+            const queryParams = () => {
+                const params = new URLSearchParams({
+                    page: state.page,
+                    per_page: state.perPage,
+                });
+                const search = searchInput?.value.trim();
+                const status = statusSelect?.value;
+                const dateRange = dateRangeInput?.value.trim();
+
+                if (search) {
+                    params.set('search', search);
+                }
+
+                if (status && status !== 'all') {
+                    params.set('status', status);
+                }
+
+                if (dateRange) {
+                    const [from, to] = dateRange.split(/\s+-\s+/);
+
+                    if (from) {
+                        params.set('date_from', from.trim());
+                    }
+
+                    if (to) {
+                        params.set('date_to', to.trim());
+                    }
+                }
+
+                return params;
+            };
             const loadFinancePage = async () => {
+                clearError();
                 setControlsDisabled(true);
 
                 try {
-                    const [dashboardPayload, transactionsPayload] = await Promise.all([
-                        fetchJson('/api/finance/dashboard'),
-                        fetchJson('/api/finance/transactions'),
+                    const [summaryPayload, withdrawalsPayload] = await Promise.all([
+                        fetchJson('/api/finance/commission-withdrawals/summary'),
+                        fetchJson(`/api/finance/commission-withdrawals?${queryParams()}`),
                     ]);
-                    const dashboardData = dashboardPayload?.data || {};
-                    const transactionItems = Array.isArray(transactionsPayload?.data) ? transactionsPayload.data : [];
-                    const rows = transactionItems.map(mapTransaction);
-                    const meta = transactionsPayload?.meta || {
-                        current_page: 1,
-                        last_page: 1,
-                        total: rows.length,
-                        from: rows.length ? 1 : 0,
-                        to: rows.length,
-                    };
+                    const rows = (Array.isArray(withdrawalsPayload?.data) ? withdrawalsPayload.data : []).map(mapWithdrawal);
 
-                    renderMetrics(dashboardData, rows);
+                    renderMetrics(summaryPayload?.data || {});
                     renderRows(rows);
-                    renderPagination(meta);
+                    renderPagination(withdrawalsPayload?.meta || { total: rows.length });
                     clearLoading(tableCard);
                     clearLoading(filterBar);
                     setControlsDisabled(false);
@@ -838,7 +766,44 @@
                     clearLoading(tableCard);
                     clearLoading(filterBar);
                     setControlsDisabled(false);
-                    showError('Gagal memuat data finance. Silakan coba lagi.');
+                    showError(error.message || 'Gagal memuat data finance. Silakan coba lagi.');
+                }
+            };
+            const mutateWithdrawal = async (row, action, body = null) => {
+                if (!row?.dataset.transactionId) {
+                    return;
+                }
+
+                setControlsDisabled(true);
+                clearError();
+
+                try {
+                    await fetchJson(`/api/finance/commission-withdrawals/${encodeURIComponent(row.dataset.transactionId)}/${action}`, {
+                        method: 'PATCH',
+                        ...(body ? { body: JSON.stringify(body) } : {}),
+                    });
+                    closeModal();
+                    await loadFinancePage();
+                } catch (error) {
+                    setControlsDisabled(false);
+                    showError(error.message || 'Gagal memperbarui status pencairan.');
+                }
+            };
+            const loadRejectionDetail = async (row) => {
+                if (!row?.dataset.transactionId) {
+                    return;
+                }
+
+                try {
+                    const payload = await fetchJson(`/api/finance/commission-withdrawals/${encodeURIComponent(row.dataset.transactionId)}`);
+                    const detail = mapWithdrawal(payload?.data || {});
+
+                    row.dataset.rejectionReason = detail.rejectionReason;
+                    row.dataset.rejectedAt = detail.rejectedAt;
+                    row.dataset.rejectedBy = detail.rejectedBy;
+                    openModal('rejectionDetail', row);
+                } catch (error) {
+                    showError(error.message || 'Gagal memuat detail penolakan.');
                 }
             };
 
@@ -855,14 +820,8 @@
                     return;
                 }
 
-                if (button.dataset.financeDecision === 'approve') {
-                    openModal('approval', row);
-                    return;
-                }
-
-                openModal('rejection', row);
+                openModal(button.dataset.financeDecision === 'approve' ? 'approval' : 'rejection', row);
             });
-
             document.addEventListener('click', (event) => {
                 const button = event.target.closest('[data-finance-complete]');
 
@@ -876,7 +835,6 @@
                     openModal('completion', row);
                 }
             });
-
             document.addEventListener('click', (event) => {
                 const button = event.target.closest('[data-finance-rejection-detail]');
 
@@ -887,30 +845,24 @@
                 const row = button.closest('tr');
 
                 if (row) {
-                    openModal('rejectionDetail', row);
+                    loadRejectionDetail(row);
                 }
             });
-
             Object.entries(modals).forEach(([name, modal]) => {
                 modal?.querySelector('[data-finance-modal-confirm]')?.addEventListener('click', () => {
-                    if (name === 'rejection' && !hasSelectedRejectionReason()) {
+                    if (name === 'rejection' && !selectedRejectionReason()) {
                         modal.querySelector('#rejection-modal-error')?.removeAttribute('hidden');
                         modal.querySelector('input[name="rejection_reason"]')?.focus();
                         return;
                     }
 
                     if (name === 'rejection') {
-                        applyRejection();
-                    } else {
-                        applyDecision(
-                            pendingRow,
-                            name === 'completion' ? decisions.success : decisions.processing,
-                            name === 'approval' ? finishAction() : resolvedAction(),
-                        );
+                        mutateWithdrawal(pendingRow, 'reject', { reason: selectedRejectionReason().value });
+                        return;
                     }
-                    closeModal();
-                });
 
+                    mutateWithdrawal(pendingRow, name === 'completion' ? 'mark-as-paid' : 'approve');
+                });
                 modal?.addEventListener('click', (event) => {
                     if (event.target === modal || event.target.closest('[data-finance-modal-close]')) {
                         closeModal();
@@ -925,11 +877,31 @@
                     });
                 }
             });
-
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'Escape' && activeModal) {
                     closeModal();
                 }
+            });
+            filterButton?.addEventListener('click', () => {
+                state.page = 1;
+                loadFinancePage();
+            });
+            filterBar?.addEventListener('submit', (event) => {
+                event.preventDefault();
+                state.page = 1;
+                loadFinancePage();
+            });
+            pagination?.addEventListener('click', (event) => {
+                const link = event.target.closest('[data-finance-page-link]');
+
+                if (!link || link.getAttribute('aria-disabled') === 'true') {
+                    event.preventDefault();
+                    return;
+                }
+
+                event.preventDefault();
+                state.page = Number(link.dataset.financePageLink || 1);
+                loadFinancePage();
             });
 
             loadFinancePage();
