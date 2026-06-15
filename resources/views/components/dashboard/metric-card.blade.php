@@ -65,7 +65,11 @@
         <x-dashboard.icon-tile :icon="$icon" :tone="$tone" />
 
         @if ($growth !== null)
-            <div class="metric-card__growth">↗ +{{ $growth }}%</div>
+            <div class="metric-card__growth">
+                @if ($growth !== '')
+                    ↗ +{{ $growth }}%
+                @endif
+            </div>
         @elseif ($caption)
             <div class="metric-card__caption">{{ $caption }}</div>
         @endif

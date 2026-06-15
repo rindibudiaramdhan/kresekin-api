@@ -5,12 +5,19 @@
 
 @php
     $dashboardRoute = $role === 'finance' ? route('finance.dashboard') : route('agent.dashboard');
+    $financeRoute = $role === 'finance' ? route('finance.finance') : route('agent.finance');
     $items = [
         [
             'key' => 'dashboard',
             'label' => 'Dashboard',
             'href' => $dashboardRoute,
             'icon' => 'dashboard',
+        ],
+        [
+            'key' => 'finance',
+            'label' => 'Finance',
+            'href' => $financeRoute,
+            'icon' => 'finance',
         ],
         [
             'key' => 'umkm',
