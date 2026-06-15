@@ -20,15 +20,6 @@
         ],
         [
             'id' => 'WD-20230914-0042',
-            'agent' => 'Asep',
-            'bank' => 'BNI - 098122xxx',
-            'nominal' => 'Rp 875.056',
-            'date' => '6 Mar 2026',
-            'status' => 'warning',
-            'status_label' => 'Diproses',
-        ],
-        [
-            'id' => 'WD-20230914-0042',
             'agent' => 'Denny',
             'bank' => 'BSI - 012322xxx',
             'nominal' => 'Rp 1.025.873',
