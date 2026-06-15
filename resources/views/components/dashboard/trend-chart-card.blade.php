@@ -43,7 +43,7 @@
     </style>
 @endonce
 
-<section class="trend-card">
+<section {{ $attributes->merge(['class' => 'trend-card']) }}>
     <div class="trend-card__header">
         <h2 class="trend-card__title">{{ $title }}</h2>
         <x-dashboard.period-toggle :active="$activePeriod" />
@@ -57,8 +57,8 @@
             </linearGradient>
         </defs>
         <path d="M22 278 H730 M22 204 H730 M22 130 H730 M22 56 H730" stroke="#e1e5eb" stroke-width="1"/>
-        <path d="M22 260 C85 225 135 232 180 236 C250 243 300 189 355 165 C430 132 474 152 512 208 C550 262 612 250 652 145 C682 65 720 42 752 106 L752 278 L22 278 Z" fill="url(#trendFill)"/>
-        <path d="M22 260 C85 225 135 232 180 236 C250 243 300 189 355 165 C430 132 474 152 512 208 C550 262 612 250 652 145 C682 65 720 42 752 106" fill="none" stroke="#11bec8" stroke-width="4" stroke-linecap="round"/>
+        <path class="trend-card__area" d="M22 260 C85 225 135 232 180 236 C250 243 300 189 355 165 C430 132 474 152 512 208 C550 262 612 250 652 145 C682 65 720 42 752 106 L752 278 L22 278 Z" fill="url(#trendFill)"/>
+        <path class="trend-card__line" d="M22 260 C85 225 135 232 180 236 C250 243 300 189 355 165 C430 132 474 152 512 208 C550 262 612 250 652 145 C682 65 720 42 752 106" fill="none" stroke="#11bec8" stroke-width="4" stroke-linecap="round"/>
         <text class="trend-card__axis" x="22" y="318">01 MAY</text>
         <text class="trend-card__axis" x="160" y="318">07 MAY</text>
         <text class="trend-card__axis" x="300" y="318">14 MAY</text>

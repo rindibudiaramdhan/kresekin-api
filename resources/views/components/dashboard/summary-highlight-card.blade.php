@@ -71,7 +71,7 @@
     </style>
 @endonce
 
-<section class="summary-highlight-card">
+<section {{ $attributes->merge(['class' => 'summary-highlight-card']) }}>
     <div class="summary-highlight-card__icon" aria-hidden="true">
         <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="6" width="18" height="12" rx="2"/>

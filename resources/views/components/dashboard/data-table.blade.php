@@ -92,7 +92,7 @@
     </style>
 @endonce
 
-<section class="data-table-card">
+<section {{ $attributes->merge(['class' => 'data-table-card']) }}>
     <div class="data-table-card__header">
         <h2 class="data-table-card__title">{{ $title }}</h2>
         <a class="data-table-card__action" href="{{ $actionUrl }}" aria-label="Lihat detail {{ $title }}">›</a>

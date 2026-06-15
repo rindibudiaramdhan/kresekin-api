@@ -60,7 +60,7 @@
     </style>
 @endonce
 
-<article class="metric-card">
+<article {{ $attributes->merge(['class' => 'metric-card']) }}>
     <div class="metric-card__top">
         <x-dashboard.icon-tile :icon="$icon" :tone="$tone" />
 

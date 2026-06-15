@@ -6,7 +6,7 @@
 @php
     $text = $label ?? match ($status) {
         'success', 'approved' => 'Success',
-        'pending', 'processing' => 'Pending',
+        'pending', 'processing', 'estimated' => 'Pending',
         'failed', 'rejected' => 'Failed',
         default => ucfirst($status),
     };
@@ -41,7 +41,8 @@
         }
 
         .status-badge--pending,
-        .status-badge--processing {
+        .status-badge--processing,
+        .status-badge--estimated {
             color: #0b53a4;
             background: #e8f0ff;
         }

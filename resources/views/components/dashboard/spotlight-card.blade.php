@@ -84,7 +84,7 @@
     </style>
 @endonce
 
-<section class="spotlight-card">
+<section {{ $attributes->merge(['class' => 'spotlight-card']) }}>
     <h2 class="spotlight-card__title">{{ $title }}</h2>
     <p class="spotlight-card__subtitle">{{ $subtitle }}</p>
 
