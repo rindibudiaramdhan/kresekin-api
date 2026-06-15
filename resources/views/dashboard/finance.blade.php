@@ -162,6 +162,11 @@
             white-space: nowrap;
         }
 
+        .finance-table__status-cell,
+        .finance-table__actions-cell {
+            white-space: nowrap;
+        }
+
         .finance-table__action {
             width: 42px;
             height: 42px;
@@ -292,16 +297,20 @@
                                         <td><span class="finance-table__bank">{{ $transaction['bank'] }}</span></td>
                                         <td><span class="finance-table__money">{{ $transaction['nominal'] }}</span></td>
                                         <td>{{ $transaction['date'] }}</td>
-                                        <td>
+                                        <td class="finance-table__status-cell">
                                             <x-dashboard.status-badge :status="$transaction['status']" :label="$transaction['status_label']" />
                                         </td>
-                                        <td>
-                                            <button class="finance-table__action" type="button" aria-label="Detail transaksi belum tersedia" disabled>
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
-                                                    <circle cx="12" cy="12" r="3"/>
-                                                </svg>
-                                            </button>
+                                        <td class="finance-table__actions-cell">
+                                            @if ($transaction['status'] === 'pending')
+                                                <x-dashboard.approval-actions />
+                                            @else
+                                                <button class="finance-table__action" type="button" aria-label="Detail transaksi belum tersedia" disabled>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
+                                                        <circle cx="12" cy="12" r="3"/>
+                                                    </svg>
+                                                </button>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -314,5 +323,49 @@
             </div>
         </main>
     </div>
+    <script>
+        (() => {
+            const decisions = {
+                approve: {
+                    status: 'success',
+                    label: 'Berhasil',
+                },
+                reject: {
+                    status: 'rejected',
+                    label: 'Ditolak',
+                },
+            };
+
+            const resolvedAction = () => `
+                <button class="finance-table__action" type="button" aria-label="Detail transaksi belum tersedia" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+            `;
+
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-finance-decision]');
+
+                if (!button) {
+                    return;
+                }
+
+                const decision = decisions[button.dataset.financeDecision];
+                const row = button.closest('tr');
+                const badge = row?.querySelector('.status-badge');
+                const actions = row?.querySelector('.finance-table__actions-cell');
+
+                if (!decision || !badge || !actions) {
+                    return;
+                }
+
+                badge.className = `status-badge status-badge--${decision.status}`;
+                badge.textContent = decision.label;
+                actions.innerHTML = resolvedAction();
+            });
+        })();
+    </script>
 </body>
 </html>
