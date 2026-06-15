@@ -175,6 +175,27 @@
             height: 20px;
         }
 
+        .finance-table__finish {
+            min-width: 116px;
+            min-height: 48px;
+            border: 0;
+            border-radius: 8px;
+            background: #11bec8;
+            color: #ffffff;
+            cursor: pointer;
+            font: inherit;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 0;
+            padding: 0 22px;
+        }
+
+        .finance-table__finish:hover,
+        .finance-table__finish:focus-visible {
+            background: #0aaab3;
+            outline: 0;
+        }
+
         @media (max-width: 1180px) {
             .finance-page__metrics {
                 grid-template-columns: 1fr;
@@ -299,6 +320,8 @@
                                         <td class="finance-table__actions-cell">
                                             @if ($transaction['status'] === 'pending')
                                                 <x-dashboard.approval-actions />
+                                            @elseif ($transaction['status'] === 'processing')
+                                                <button class="finance-table__finish" type="button" data-finance-complete>Selesai</button>
                                             @else
                                                 <button class="finance-table__action" type="button" aria-label="Detail transaksi belum tersedia" disabled>
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -320,12 +343,23 @@
         </main>
     </div>
     <x-dashboard.approval-confirmation-modal />
+    <x-dashboard.approval-confirmation-modal
+        name="completion"
+        title="Selesaikan Pencairan Dana"
+        description="Anda akan menyelesaikan pencairan dana agent berikut"
+        note="Pastikan dana sudah terkirim ke rekening tujuan sebelum menyelesaikan pencairan dana"
+        confirm-label="Ya, Selesai"
+    />
     <script>
         (() => {
             const decisions = {
                 processing: {
                     status: 'processing',
                     label: 'Diproses',
+                },
+                success: {
+                    status: 'success',
+                    label: 'Berhasil',
                 },
                 reject: {
                     status: 'rejected',
@@ -341,50 +375,55 @@
                     </svg>
                 </button>
             `;
-            const modal = document.querySelector('[data-approval-modal]');
-            const modalConfirm = modal?.querySelector('[data-approval-modal-confirm]');
-            const modalFields = {
-                id: modal?.querySelector('[data-approval-modal-field="id"]'),
-                agent: modal?.querySelector('[data-approval-modal-field="agent"]'),
-                nominal: modal?.querySelector('[data-approval-modal-field="nominal"]'),
-                bank: modal?.querySelector('[data-approval-modal-field="bank"]'),
+            const finishAction = () => '<button class="finance-table__finish" type="button" data-finance-complete>Selesai</button>';
+            const modalByName = (name) => document.querySelector(`[data-finance-modal="${name}"]`);
+            const modals = {
+                approval: modalByName('approval'),
+                completion: modalByName('completion'),
             };
-            let pendingApprovalRow = null;
+            let pendingRow = null;
+            let activeModal = null;
 
-            const setModalDetails = (row) => {
-                if (!row) {
+            const setModalDetails = (modal, row) => {
+                if (!modal || !row) {
                     return;
                 }
 
-                modalFields.id.textContent = row.dataset.transactionId || '-';
-                modalFields.agent.textContent = row.dataset.transactionAgent || '-';
-                modalFields.nominal.textContent = row.dataset.transactionNominal || '-';
-                modalFields.bank.textContent = row.dataset.transactionBank || '-';
+                modal.querySelector('[data-finance-modal-field="id"]').textContent = row.dataset.transactionId || '-';
+                modal.querySelector('[data-finance-modal-field="agent"]').textContent = row.dataset.transactionAgent || '-';
+                modal.querySelector('[data-finance-modal-field="nominal"]').textContent = row.dataset.transactionNominal || '-';
+                modal.querySelector('[data-finance-modal-field="bank"]').textContent = row.dataset.transactionBank || '-';
             };
 
-            const openModal = (row) => {
+            const openModal = (name, row) => {
+                const modal = modals[name];
+
                 if (!modal) {
                     return;
                 }
 
-                pendingApprovalRow = row;
-                setModalDetails(row);
+                pendingRow = row;
+                activeModal = name;
+                setModalDetails(modal, row);
                 modal.hidden = false;
                 document.body.style.overflow = 'hidden';
-                modalConfirm?.focus();
+                modal.querySelector('[data-finance-modal-confirm]')?.focus();
             };
 
             const closeModal = () => {
+                const modal = activeModal ? modals[activeModal] : null;
+
                 if (!modal) {
                     return;
                 }
 
                 modal.hidden = true;
                 document.body.style.overflow = '';
-                pendingApprovalRow = null;
+                pendingRow = null;
+                activeModal = null;
             };
 
-            const applyDecision = (row, decision) => {
+            const applyDecision = (row, decision, nextAction = resolvedAction()) => {
                 const badge = row?.querySelector('.status-badge');
                 const actions = row?.querySelector('.finance-table__actions-cell');
 
@@ -394,7 +433,7 @@
 
                 badge.className = `status-badge status-badge--${decision.status}`;
                 badge.textContent = decision.label;
-                actions.innerHTML = resolvedAction();
+                actions.innerHTML = nextAction;
             };
 
             document.addEventListener('click', (event) => {
@@ -411,26 +450,46 @@
                 }
 
                 if (button.dataset.financeDecision === 'approve') {
-                    openModal(row);
+                    openModal('approval', row);
                     return;
                 }
 
                 applyDecision(row, decisions.reject);
             });
 
-            modalConfirm?.addEventListener('click', () => {
-                applyDecision(pendingApprovalRow, decisions.processing);
-                closeModal();
-            });
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-finance-complete]');
 
-            modal?.addEventListener('click', (event) => {
-                if (event.target === modal || event.target.closest('[data-approval-modal-close]')) {
-                    closeModal();
+                if (!button) {
+                    return;
+                }
+
+                const row = button.closest('tr');
+
+                if (row) {
+                    openModal('completion', row);
                 }
             });
 
+            Object.entries(modals).forEach(([name, modal]) => {
+                modal?.querySelector('[data-finance-modal-confirm]')?.addEventListener('click', () => {
+                    applyDecision(
+                        pendingRow,
+                        name === 'completion' ? decisions.success : decisions.processing,
+                        name === 'completion' ? resolvedAction() : finishAction(),
+                    );
+                    closeModal();
+                });
+
+                modal?.addEventListener('click', (event) => {
+                    if (event.target === modal || event.target.closest('[data-finance-modal-close]')) {
+                        closeModal();
+                    }
+                });
+            });
+
             document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && modal && !modal.hidden) {
+                if (event.key === 'Escape' && activeModal) {
                     closeModal();
                 }
             });

@@ -1,6 +1,9 @@
 @props([
     'title' => 'Approve Pencairan Dana',
     'description' => 'Anda akan menyetujui pencairan dana agent berikut',
+    'note' => 'Dana akan diproses ke rekening tujuan dan status tidak dapat dibatalkan setelah dikonfirmasi',
+    'confirmLabel' => 'Ya, Approve',
+    'name' => 'approval',
 ])
 
 @once
@@ -175,11 +178,11 @@
     </style>
 @endonce
 
-<div {{ $attributes->class(['approval-modal']) }} hidden data-approval-modal role="dialog" aria-modal="true" aria-labelledby="approval-modal-title">
+<div {{ $attributes->class(['approval-modal']) }} hidden data-finance-modal="{{ $name }}" role="dialog" aria-modal="true" aria-labelledby="{{ $name }}-modal-title">
     <div class="approval-modal__panel">
         <div class="approval-modal__header">
-            <h2 class="approval-modal__title" id="approval-modal-title">{{ $title }}</h2>
-            <button class="approval-modal__close" type="button" data-approval-modal-close aria-label="Tutup modal">
+            <h2 class="approval-modal__title" id="{{ $name }}-modal-title">{{ $title }}</h2>
+            <button class="approval-modal__close" type="button" data-finance-modal-close aria-label="Tutup modal">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M18 6 6 18M6 6l12 12"/>
                 </svg>
@@ -190,20 +193,20 @@
 
         <dl class="approval-modal__details">
             <dt class="approval-modal__label">ID Transaksi</dt>
-            <dd class="approval-modal__value" data-approval-modal-field="id"></dd>
+            <dd class="approval-modal__value" data-finance-modal-field="id"></dd>
             <dt class="approval-modal__label">Nama Agent</dt>
-            <dd class="approval-modal__value" data-approval-modal-field="agent"></dd>
+            <dd class="approval-modal__value" data-finance-modal-field="agent"></dd>
             <dt class="approval-modal__label">Nominal</dt>
-            <dd class="approval-modal__value" data-approval-modal-field="nominal"></dd>
+            <dd class="approval-modal__value" data-finance-modal-field="nominal"></dd>
             <dt class="approval-modal__label">Bank Tujuan</dt>
-            <dd class="approval-modal__value" data-approval-modal-field="bank"></dd>
+            <dd class="approval-modal__value" data-finance-modal-field="bank"></dd>
         </dl>
 
-        <p class="approval-modal__note">Dana akan diproses ke rekening tujuan dan status tidak dapat dibatalkan setelah dikonfirmasi</p>
+        <p class="approval-modal__note">{{ $note }}</p>
 
         <div class="approval-modal__actions">
-            <button class="approval-modal__button approval-modal__button--cancel" type="button" data-approval-modal-close>Batal</button>
-            <button class="approval-modal__button approval-modal__button--confirm" type="button" data-approval-modal-confirm>Ya, Approve</button>
+            <button class="approval-modal__button approval-modal__button--cancel" type="button" data-finance-modal-close>Batal</button>
+            <button class="approval-modal__button approval-modal__button--confirm" type="button" data-finance-modal-confirm>{{ $confirmLabel }}</button>
         </div>
     </div>
 </div>
