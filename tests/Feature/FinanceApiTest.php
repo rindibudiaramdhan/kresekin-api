@@ -230,6 +230,17 @@ class FinanceApiTest extends TestCase
             'status' => AgentCommissionWithdrawal::STATUS_REQUESTED,
             'requested_at' => now(),
         ]);
+        $missingReasonWithdrawal = AgentCommissionWithdrawal::query()->create([
+            'agent_user_id' => $agent->id,
+            'amount' => 130000,
+            'status' => AgentCommissionWithdrawal::STATUS_REQUESTED,
+            'requested_at' => now(),
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$financeToken)
+            ->patchJson('/api/finance/commission-withdrawals/'.$missingReasonWithdrawal->id.'/reject')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('reason');
 
         $this->withHeader('Authorization', 'Bearer '.$financeToken)
             ->patchJson('/api/finance/commission-withdrawals/'.$pendingWithdrawal->id.'/reject', [
