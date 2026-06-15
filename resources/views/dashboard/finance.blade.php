@@ -350,6 +350,7 @@
         note="Pastikan dana sudah terkirim ke rekening tujuan sebelum menyelesaikan pencairan dana"
         confirm-label="Ya, Selesai"
     />
+    <x-dashboard.rejection-confirmation-modal />
     <script>
         (() => {
             const decisions = {
@@ -380,6 +381,7 @@
             const modals = {
                 approval: modalByName('approval'),
                 completion: modalByName('completion'),
+                rejection: modalByName('rejection'),
             };
             let pendingRow = null;
             let activeModal = null;
@@ -395,6 +397,19 @@
                 modal.querySelector('[data-finance-modal-field="bank"]').textContent = row.dataset.transactionBank || '-';
             };
 
+            const resetRejectionReason = () => {
+                const modal = modals.rejection;
+
+                modal?.querySelectorAll('input[name="rejection_reason"]').forEach((input) => {
+                    input.checked = false;
+                });
+                modal?.querySelector('#rejection-modal-error')?.setAttribute('hidden', '');
+            };
+
+            const hasSelectedRejectionReason = () => Boolean(
+                modals.rejection?.querySelector('input[name="rejection_reason"]:checked'),
+            );
+
             const openModal = (name, row) => {
                 const modal = modals[name];
 
@@ -405,9 +420,16 @@
                 pendingRow = row;
                 activeModal = name;
                 setModalDetails(modal, row);
+                if (name === 'rejection') {
+                    resetRejectionReason();
+                }
                 modal.hidden = false;
                 document.body.style.overflow = 'hidden';
-                modal.querySelector('[data-finance-modal-confirm]')?.focus();
+                if (name === 'rejection') {
+                    modal.querySelector('input[name="rejection_reason"]')?.focus();
+                } else {
+                    modal.querySelector('[data-finance-modal-confirm]')?.focus();
+                }
             };
 
             const closeModal = () => {
@@ -419,6 +441,9 @@
 
                 modal.hidden = true;
                 document.body.style.overflow = '';
+                if (activeModal === 'rejection') {
+                    resetRejectionReason();
+                }
                 pendingRow = null;
                 activeModal = null;
             };
@@ -454,7 +479,7 @@
                     return;
                 }
 
-                applyDecision(row, decisions.reject);
+                openModal('rejection', row);
             });
 
             document.addEventListener('click', (event) => {
@@ -473,10 +498,18 @@
 
             Object.entries(modals).forEach(([name, modal]) => {
                 modal?.querySelector('[data-finance-modal-confirm]')?.addEventListener('click', () => {
+                    if (name === 'rejection' && !hasSelectedRejectionReason()) {
+                        modal.querySelector('#rejection-modal-error')?.removeAttribute('hidden');
+                        modal.querySelector('input[name="rejection_reason"]')?.focus();
+                        return;
+                    }
+
                     applyDecision(
                         pendingRow,
-                        name === 'completion' ? decisions.success : decisions.processing,
-                        name === 'completion' ? resolvedAction() : finishAction(),
+                        name === 'completion'
+                            ? decisions.success
+                            : (name === 'rejection' ? decisions.reject : decisions.processing),
+                        name === 'approval' ? finishAction() : resolvedAction(),
                     );
                     closeModal();
                 });
@@ -486,6 +519,14 @@
                         closeModal();
                     }
                 });
+
+                if (name === 'rejection') {
+                    modal?.addEventListener('change', (event) => {
+                        if (event.target.matches('input[name="rejection_reason"]')) {
+                            modal.querySelector('#rejection-modal-error')?.setAttribute('hidden', '');
+                        }
+                    });
+                }
             });
 
             document.addEventListener('keydown', (event) => {
