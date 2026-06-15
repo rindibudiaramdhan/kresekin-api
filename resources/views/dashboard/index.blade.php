@@ -62,6 +62,160 @@
             font-weight: 900;
         }
 
+        .avatar-initial {
+            width: 30px;
+            height: 30px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: 7px;
+            color: #174b8f;
+            background: #dbe9ff;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .avatar-initial--cyan {
+            color: #11bec8;
+            background: #ffffff;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 999px;
+            padding: 7px 13px;
+            font-size: 15px;
+            font-weight: 900;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .status-badge::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-badge--success,
+        .status-badge--approved {
+            color: #075f3d;
+            background: #e7f2ee;
+        }
+
+        .status-badge--pending,
+        .status-badge--processing,
+        .status-badge--estimated {
+            color: #0b53a4;
+            background: #e8f0ff;
+        }
+
+        .status-badge--failed,
+        .status-badge--rejected {
+            color: #c52121;
+            background: #ffecec;
+        }
+
+        @keyframes dashboard-loading-shimmer {
+            0% {
+                background-position: 100% 0;
+            }
+
+            100% {
+                background-position: -100% 0;
+            }
+        }
+
+        .dashboard-loading-line,
+        .metric-card.is-loading .metric-card__value,
+        .metric-card.is-loading .metric-card__growth,
+        .summary-highlight-card.is-loading .summary-highlight-card__value,
+        .summary-highlight-card.is-loading .summary-highlight-card__footer strong {
+            color: transparent;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(226, 232, 240, .7), rgba(248, 250, 252, .95), rgba(226, 232, 240, .7));
+            background-size: 200% 100%;
+            animation: dashboard-loading-shimmer 1.2s ease-in-out infinite;
+        }
+
+        .dashboard-loading-line {
+            width: 100%;
+            height: 14px;
+            display: block;
+            background: linear-gradient(90deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .32), rgba(255, 255, 255, .14));
+            background-size: 200% 100%;
+        }
+
+        .dashboard-loading-line--short {
+            width: 64%;
+        }
+
+        .dashboard-loading-line--tiny {
+            width: 54px;
+            height: 16px;
+        }
+
+        .metric-card.is-loading .metric-card__value {
+            width: min(280px, 82%);
+            min-height: 42px;
+        }
+
+        .metric-card.is-loading .metric-card__growth {
+            width: 82px;
+            min-height: 18px;
+        }
+
+        .trend-card.is-loading .trend-card__line {
+            stroke-dasharray: 14 12;
+            animation: dashboard-loading-shimmer 1.2s linear infinite;
+        }
+
+        .trend-card.is-loading .trend-card__area {
+            opacity: .5;
+        }
+
+        .data-table-card.is-loading .data-table__empty {
+            position: relative;
+            min-height: 116px;
+            color: transparent;
+        }
+
+        .data-table-card.is-loading .data-table__empty::before,
+        .data-table-card.is-loading .data-table__empty::after {
+            content: "";
+            position: absolute;
+            left: 28px;
+            right: 28px;
+            height: 18px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+            background-size: 200% 100%;
+            animation: dashboard-loading-shimmer 1.2s ease-in-out infinite;
+        }
+
+        .data-table-card.is-loading .data-table__empty::before {
+            top: 32px;
+        }
+
+        .data-table-card.is-loading .data-table__empty::after {
+            top: 68px;
+            width: 62%;
+        }
+
+        .summary-highlight-card.is-loading .summary-highlight-card__value {
+            width: min(340px, 86%);
+            min-height: 44px;
+        }
+
+        .summary-highlight-card.is-loading .summary-highlight-card__footer strong {
+            display: inline-block;
+            width: 52px;
+            min-height: 20px;
+            vertical-align: middle;
+        }
+
         @media (max-width: 1180px) {
             .dashboard-metrics,
             .dashboard-feature-grid,
@@ -97,6 +251,8 @@
             <div class="dashboard-content">
                 <section class="dashboard-metrics" aria-label="Ringkasan dashboard">
                     <x-dashboard.metric-card
+                        class="is-loading"
+                        aria-busy="true"
                         data-dashboard-metric="revenue"
                         title="Total Pendapatan UMKM"
                         value="-"
@@ -104,6 +260,8 @@
                         growth=""
                     />
                     <x-dashboard.metric-card
+                        class="is-loading"
+                        aria-busy="true"
                         data-dashboard-metric="orders"
                         title="Total Pesanan"
                         value="-"
@@ -111,6 +269,8 @@
                         growth=""
                     />
                     <x-dashboard.metric-card
+                        class="is-loading"
+                        aria-busy="true"
                         data-dashboard-metric="active-umkm"
                         title="Total UMKM Aktif"
                         value="-"
@@ -121,8 +281,10 @@
                 </section>
 
                 <section class="dashboard-feature-grid">
-                    <x-dashboard.trend-chart-card data-dashboard-trend title="Tren Transaksi UMKM" />
+                    <x-dashboard.trend-chart-card class="is-loading" aria-busy="true" data-dashboard-trend title="Tren Transaksi UMKM" />
                     <x-dashboard.spotlight-card
+                        class="is-loading"
+                        aria-busy="true"
                         data-dashboard-spotlight
                         title="UMKM Spotlight"
                         subtitle="UMKM dengan pertumbuhan terbaik"
@@ -131,6 +293,8 @@
                 </section>
 
                 <x-dashboard.data-table
+                    class="is-loading"
+                    aria-busy="true"
                     data-dashboard-table="transactions"
                     title="Transaksi Terbaru Top 3"
                     :columns="[]"
@@ -140,6 +304,8 @@
 
                 <section class="dashboard-bottom-grid">
                     <x-dashboard.data-table
+                        class="is-loading"
+                        aria-busy="true"
                         data-dashboard-table="commissions"
                         title="Top Agent Commissions"
                         :columns="[]"
@@ -147,6 +313,8 @@
                         empty-message="Memuat data komisi."
                     />
                     <x-dashboard.summary-highlight-card
+                        class="is-loading"
+                        aria-busy="true"
                         data-dashboard-summary="commission"
                         label="Agent Fees & Commissions"
                         value="-"
@@ -185,6 +353,10 @@
             };
             const badge = (status, label) => `<span class="status-badge status-badge--${statusClass(status)}">${escapeHtml(label)}</span>`;
             const initials = (value) => escapeHtml(value || '?');
+            const finishLoading = (element) => {
+                element?.classList.remove('is-loading');
+                element?.removeAttribute('aria-busy');
+            };
             const entity = (item) => {
                 const umkm = item?.umkm || {};
                 return `<span class="data-table__entity"><span class="avatar-initial">${initials(umkm.initials)}</span>${escapeHtml(umkm.name || item?.store_name || '-')}</span>`;
@@ -192,23 +364,29 @@
 
             const renderMetric = (key, payload) => {
                 const el = document.querySelector(`[data-dashboard-metric="${key}"]`);
-                if (!el || !payload) return;
+                if (!el) return;
 
                 const value = el.querySelector('.metric-card__value');
                 const growth = el.querySelector('.metric-card__growth');
                 const caption = el.querySelector('.metric-card__caption');
 
-                if (value) value.textContent = payload.formatted ?? payload.value ?? '-';
-                if (growth && payload.growth_percentage !== undefined) {
+                if (value) value.textContent = payload?.formatted ?? payload?.value ?? '-';
+                if (growth && payload?.growth_percentage !== undefined) {
                     const rate = Number(payload.growth_percentage || 0);
                     growth.textContent = `${rate >= 0 ? '↗ +' : '↘ '}${rate}%`;
                 }
-                if (caption && payload.caption) caption.textContent = payload.caption;
+                if (caption && payload?.caption) caption.textContent = payload.caption;
+
+                finishLoading(el);
             };
 
             const renderTrend = (trend) => {
                 const chart = document.querySelector('[data-dashboard-trend]');
-                if (!chart || !trend?.points?.length) return;
+                if (!chart) return;
+                if (!trend?.points?.length) {
+                    finishLoading(chart);
+                    return;
+                }
 
                 const points = trend.points;
                 const max = Math.max(...points.map((point) => Number(point.revenue || point.transaction_count || 0)), 1);
@@ -234,14 +412,18 @@
                     const pointIndex = Math.min(points.length - 1, Math.round(index * (points.length - 1) / Math.max(labels.length - 1, 1)));
                     label.textContent = (points[pointIndex]?.label || '').toUpperCase();
                 });
+
+                finishLoading(chart);
             };
 
             const renderSpotlight = (items) => {
-                const card = document.querySelector('[data-dashboard-spotlight] .spotlight-card__list');
+                const section = document.querySelector('[data-dashboard-spotlight]');
+                const card = section?.querySelector('.spotlight-card__list');
                 if (!card) return;
 
                 if (!items?.length) {
                     card.innerHTML = '<div class="spotlight-card__item">Belum ada data pertumbuhan.</div>';
+                    finishLoading(section);
                     return;
                 }
 
@@ -255,6 +437,8 @@
                         <div class="spotlight-card__growth">+${Number(item.growth_percentage || 0)}%</div>
                     </div>
                 `).join('');
+
+                finishLoading(section);
             };
 
             const renderTable = (key, columns, rows, emptyMessage) => {
@@ -270,6 +454,7 @@
                         table.appendChild(empty);
                     }
                     empty.textContent = emptyMessage;
+                    finishLoading(table);
                     return;
                 }
 
@@ -285,14 +470,16 @@
                         </table>
                     </div>
                 `);
+                finishLoading(table);
             };
 
             const renderSummaryCard = (summary) => {
                 const card = document.querySelector('[data-dashboard-summary="commission"]');
-                if (!card || !summary) return;
+                if (!card) return;
 
-                card.querySelector('.summary-highlight-card__value').textContent = summary.total_agent_commission_formatted ?? money(summary.total_agent_commission);
-                card.querySelector('.summary-highlight-card__footer strong').textContent = summary.total_agents_formatted ?? summary.total_agents ?? '0';
+                card.querySelector('.summary-highlight-card__value').textContent = summary?.total_agent_commission_formatted ?? money(summary?.total_agent_commission);
+                card.querySelector('.summary-highlight-card__footer strong').textContent = summary?.total_agents_formatted ?? summary?.total_agents ?? '0';
+                finishLoading(card);
             };
 
             fetch(apiUrl, {
@@ -344,6 +531,8 @@
                 })
                 .catch(() => {
                     renderTable('transactions', [], [], 'Gagal memuat data dashboard.');
+                    renderTable('commissions', [], [], 'Gagal memuat data komisi.');
+                    document.querySelectorAll('.is-loading').forEach(finishLoading);
                 });
         })();
     </script>

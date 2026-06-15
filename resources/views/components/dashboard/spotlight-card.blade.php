@@ -68,6 +68,12 @@
             font-weight: 900;
         }
 
+        .spotlight-card__loading-copy {
+            width: 100%;
+            display: grid;
+            gap: 8px;
+        }
+
         .spotlight-card__action {
             min-height: 54px;
             display: inline-flex;
@@ -89,16 +95,29 @@
     <p class="spotlight-card__subtitle">{{ $subtitle }}</p>
 
     <div class="spotlight-card__list">
-        @foreach ($items as $item)
-            <div class="spotlight-card__item">
-                <x-dashboard.avatar-initial :initials="$item['initials']" tone="cyan" />
-                <div>
-                    <div class="spotlight-card__name">{{ $item['name'] }}</div>
-                    <div class="spotlight-card__category">{{ $item['category'] }}</div>
+        @if (count($items) > 0)
+            @foreach ($items as $item)
+                <div class="spotlight-card__item">
+                    <x-dashboard.avatar-initial :initials="$item['initials']" tone="cyan" />
+                    <div>
+                        <div class="spotlight-card__name">{{ $item['name'] }}</div>
+                        <div class="spotlight-card__category">{{ $item['category'] }}</div>
+                    </div>
+                    <div class="spotlight-card__growth">+{{ $item['growth'] }}%</div>
                 </div>
-                <div class="spotlight-card__growth">+{{ $item['growth'] }}%</div>
-            </div>
-        @endforeach
+            @endforeach
+        @else
+            @for ($index = 0; $index < 2; $index++)
+                <div class="spotlight-card__item" aria-hidden="true">
+                    <span class="avatar-initial avatar-initial--cyan"></span>
+                    <div class="spotlight-card__loading-copy">
+                        <span class="dashboard-loading-line"></span>
+                        <span class="dashboard-loading-line dashboard-loading-line--short"></span>
+                    </div>
+                    <span class="dashboard-loading-line dashboard-loading-line--tiny"></span>
+                </div>
+            @endfor
+        @endif
     </div>
 
     <a class="spotlight-card__action" href="{{ $actionUrl }}">{{ $actionLabel }}</a>
