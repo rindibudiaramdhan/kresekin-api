@@ -5,7 +5,12 @@
     'growth' => null,
     'caption' => null,
     'tone' => 'cyan',
+    'variant' => 'default',
 ])
+
+@php
+    $isHorizontal = $variant === 'horizontal';
+@endphp
 
 @once
     <style>
@@ -21,11 +26,28 @@
             padding: 28px 30px;
         }
 
+        .metric-card--horizontal {
+            min-height: 168px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 22px;
+        }
+
         .metric-card__top {
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
             gap: 14px;
+        }
+
+        .metric-card--horizontal .metric-card__top {
+            flex: 0 0 auto;
+            order: 2;
+        }
+
+        .metric-card__body {
+            min-width: 0;
         }
 
         .metric-card__growth,
@@ -57,10 +79,17 @@
             line-height: 1.05;
             letter-spacing: 0;
         }
+
+        @media (max-width: 520px) {
+            .metric-card--horizontal {
+                min-height: 150px;
+                padding: 24px;
+            }
+        }
     </style>
 @endonce
 
-<article {{ $attributes->merge(['class' => 'metric-card']) }}>
+<article {{ $attributes->class(['metric-card', 'metric-card--horizontal' => $isHorizontal]) }}>
     <div class="metric-card__top">
         <x-dashboard.icon-tile :icon="$icon" :tone="$tone" />
 
@@ -75,7 +104,7 @@
         @endif
     </div>
 
-    <div>
+    <div class="metric-card__body">
         <p class="metric-card__label">{{ $title }}</p>
         <div class="metric-card__value">{{ $value }}</div>
     </div>

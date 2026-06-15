@@ -34,7 +34,7 @@ Route::view('/finance/dashboard', 'dashboard.index', [
     'role' => 'finance',
     'active' => 'dashboard',
 ])->name('finance.dashboard');
-Route::view('/finance/finance', 'dashboard.empty', [
+Route::view('/finance/finance', 'dashboard.finance', [
     'title' => 'Finance',
     'headerTitle' => 'Finance Views',
     'userName' => 'Finance Administrator',
