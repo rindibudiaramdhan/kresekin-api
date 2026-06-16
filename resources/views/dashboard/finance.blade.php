@@ -998,6 +998,18 @@
                     </a>
                 `;
             };
+            const markCurrentPaginationPage = (page) => {
+                pagination?.querySelectorAll('.dashboard-pagination__page').forEach((pageLink) => {
+                    const isCurrent = Number(pageLink.dataset.financePageLink || 0) === page;
+
+                    pageLink.classList.toggle('is-current', isCurrent);
+                    if (isCurrent) {
+                        pageLink.setAttribute('aria-current', 'page');
+                    } else {
+                        pageLink.removeAttribute('aria-current');
+                    }
+                });
+            };
             const queryParams = () => {
                 const params = new URLSearchParams({
                     page: state.page,
@@ -1222,6 +1234,7 @@
 
                 event.preventDefault();
                 state.page = Number(link.dataset.financePageLink || 1);
+                markCurrentPaginationPage(state.page);
                 loadFinancePage({ showSellerTableLoading: state.tab === 'seller' });
             });
 
