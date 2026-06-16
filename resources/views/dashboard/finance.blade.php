@@ -388,7 +388,7 @@
         .finance-skeleton-line {
             display: inline-block;
             width: 100%;
-            height: 18px;
+            height: 10px;
             border-radius: 999px;
             background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
             background-size: 200% 100%;
@@ -396,15 +396,19 @@
         }
 
         .finance-skeleton-line--sm {
-            width: 72px;
+            width: 48px;
         }
 
         .finance-skeleton-line--md {
-            width: 132px;
+            width: 96px;
         }
 
         .finance-skeleton-line--lg {
-            width: 190px;
+            width: 132px;
+        }
+
+        .finance-table__loading-row td {
+            height: 52px;
         }
 
         .finance-table__empty {
@@ -442,8 +446,8 @@
         }
 
         .metric-card.is-loading .metric-card__value {
-            width: min(280px, 82%);
-            min-height: 42px;
+            width: min(180px, 68%);
+            min-height: 24px;
             color: transparent;
             border-radius: 999px;
             background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
@@ -452,10 +456,17 @@
         }
 
         .metric-card.is-loading .icon-tile {
+            width: 34px;
+            height: 34px;
             color: transparent;
             background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
             background-size: 200% 100%;
             animation: finance-loading-shimmer 1.2s ease-in-out infinite;
+        }
+
+        .metric-card.is-loading .icon-tile__icon {
+            width: 18px;
+            height: 18px;
         }
 
         .filter-bar.is-loading {
