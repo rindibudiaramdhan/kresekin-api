@@ -25,3 +25,4 @@ Thumbs.db
 /coverage
 .codex
 .env.local
+.env.staging

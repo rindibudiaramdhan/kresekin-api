@@ -20,7 +20,6 @@ Elemen utama pada desain:
    - `Nama Lengkap *`
    - `Email *`
    - `No Whatsapp *`
-   - `Password *`
    - `Dokumen Identitas *`
    - Checkbox persetujuan pemrosesan data
 
@@ -77,16 +76,16 @@ Elemen utama pada desain:
 2. Belum ada web controller untuk proses registrasi agent.
    - Saat ini baru ada web auth controller untuk logout seller.
 
-3. API register yang ada belum cocok langsung dengan desain.
+3. API register yang ada belum cocok langsung dengan kebutuhan web register agent.
    - API hanya menerima salah satu kontak berdasarkan `type`: email atau phone.
-   - Desain meminta email dan no WhatsApp sekaligus.
+   - Form web meminta email dan no WhatsApp sekaligus.
    - API belum menerima `name`.
-   - API belum menerima `password`.
    - API belum menerima upload dokumen identitas.
    - API belum menerima consent checkbox.
 
 4. Flow login agent saat ini berbasis OTP dan bearer token di `localStorage`.
-   - Desain meminta password, tetapi sistem belum punya flow login password untuk agent.
+   - Password dikeluarkan dari scope MVP ini.
+   - Sistem belum punya flow login password untuk agent.
    - Belum ada forgot password/reset password untuk agent.
 
 5. Belum ada audit consent.
@@ -100,10 +99,10 @@ Elemen utama pada desain:
 | Nama lengkap | Required | Field DB ada, API register belum isi | Perlu validasi dan simpan |
 | Email | Required | API bisa email jika `type=email` | Perlu email dan phone sekaligus |
 | No WhatsApp | Required | API bisa phone jika `type=phone` | Perlu email dan phone sekaligus |
-| Password | Required | Field DB ada, login agent masih OTP | Perlu keputusan auth |
+| Password | Tidak dipakai pada MVP ini | Field DB ada, login agent masih OTP | Jangan tampilkan field password dan jangan isi password |
 | Dokumen identitas | Required upload | Field DB ada | Perlu upload handling dan storage policy |
 | Consent | Required | Belum ada field audit | Perlu migration jika consent perlu disimpan |
-| Setelah register | Tidak terlihat di desain | Existing API kirim OTP | Perlu tentukan post-register flow |
+| Setelah register | Verifikasi OTP | Existing portal `/` punya OTP step setelah login submit | Perlu halaman verifikasi OTP khusus setelah register |
 
 ## Rekomendasi Arsitektur
 
@@ -112,7 +111,7 @@ Rekomendasi terbaik adalah membuat flow web register agent khusus, bukan memaksa
 Alasannya:
 
 - Endpoint API register existing adalah kontrak umum untuk role `buyer`, `seller`, `agent`, dan `finance`.
-- Mengubah request API existing menjadi wajib `name`, `password`, dan file upload berisiko mematahkan mobile/API client.
+- Mengubah request API existing menjadi wajib `name`, file upload, dan consent berisiko mematahkan mobile/API client.
 - Halaman web register agent memiliki kebutuhan khusus: upload dokumen, consent, dan dua kontak sekaligus.
 
 Route yang direkomendasikan:
@@ -120,6 +119,7 @@ Route yang direkomendasikan:
 ```php
 Route::get('/agent/register', [AgentRegistrationController::class, 'create'])->name('agent.register');
 Route::post('/agent/register', [AgentRegistrationController::class, 'store'])->name('agent.register.store');
+Route::get('/agent/verify-otp', [AgentRegistrationController::class, 'verifyOtp'])->name('agent.register.verify-otp');
 ```
 
 Class yang direkomendasikan:
@@ -127,6 +127,7 @@ Class yang direkomendasikan:
 - `App\Http\Controllers\Web\AgentRegistrationController`
 - `App\Http\Requests\RegisterAgentWebRequest`
 - `resources/views/agent/register.blade.php`
+- `resources/views/agent/verify-otp.blade.php`
 
 Storage yang direkomendasikan:
 
@@ -134,27 +135,46 @@ Storage yang direkomendasikan:
 - Path contoh: `agent-identities/{user_id}/document.ext`.
 - Simpan path ke `users.identity_document_path`.
 
-## Keputusan Produk Yang Harus Dikunci
+## Keputusan Produk Terkunci
 
-Sebelum implementasi final, tim perlu mengunci keputusan berikut:
+Keputusan berikut sudah dikonfirmasi dan menjadi acuan implementasi:
 
-1. Password dipakai untuk apa?
-   - Opsi A: password hanya disimpan untuk kebutuhan masa depan, login tetap OTP.
-   - Opsi B: agent akan login dengan password.
+1. Password dikeluarkan dari scope MVP.
+   - Field password tidak ditampilkan di halaman register.
+   - Password tidak divalidasi dan tidak disimpan saat register agent.
+   - Login agent tetap menggunakan OTP.
 
-2. Rekomendasi:
-   - Untuk scope pertama, tetap gunakan OTP sebagai login utama.
-   - Setelah register berhasil, kirim OTP dan arahkan user ke flow login/verifikasi yang sudah ada.
-   - Jangan membangun password login setengah matang tanpa forgot password, reset password, rate limit, dan session strategy.
-
-3. Channel OTP setelah register:
-   - Karena form meminta email dan WhatsApp, tentukan default channel.
-   - Rekomendasi awal: kirim OTP ke email, karena email required dan existing notification sudah tersedia.
+2. OTP setelah register dikirim ke email.
+   - Email wajib diisi.
    - WhatsApp tetap disimpan sebagai nomor kontak agent.
+   - Notification yang digunakan tetap notification registrasi OTP existing.
 
-4. Status approval agent:
-   - Jika dokumen identitas harus direview manual, perlu field status baru seperti `agent_verification_status`.
-   - Jika belum ada proses review, agent dapat langsung aktif setelah OTP verified.
+3. Setelah registrasi berhasil, user diarahkan ke halaman verifikasi OTP khusus.
+   - Route target: `GET /agent/verify-otp?email=...`.
+   - Halaman langsung menampilkan input OTP.
+   - Submit OTP memakai endpoint existing `POST /api/users/verify-otp`.
+   - Payload OTP menggunakan `role=agent`, `type=email`, dan email dari registrasi.
+   - Setelah OTP berhasil, token disimpan ke `localStorage` seperti portal existing, lalu redirect ke `agent.dashboard`.
+
+4. Consent audit wajib disimpan.
+   - Simpan `terms_accepted_at`.
+   - Simpan `terms_version`.
+   - Simpan `privacy_accepted_at`.
+   - Versi awal terms/privacy: `agent-registration-v1`.
+
+5. Dokumen identitas tetap perlu review manual oleh admin.
+   - Status awal agent setelah register: `pending_review`.
+   - Agent tetap dapat login setelah OTP verified.
+   - Pembatasan fitur/halaman selama status masih `pending_review` akan dilanjutkan pada MVP berikutnya.
+   - Admin review dan perubahan status menjadi `approved` atau `rejected` juga di luar scope implementasi ini.
+
+6. Dokumen identitas disimpan di private disk Laravel `local`.
+   - Path: `agent-identities/{user_id}/document.ext`.
+   - Path disimpan ke `users.identity_document_path`.
+
+7. Endpoint API register existing tidak diubah kontraknya.
+   - Flow web register agent dibuat khusus.
+   - `POST /api/agent/register` dan `POST /api/users/{role}/register` tetap backward compatible.
 
 ## Request Validation
 
@@ -176,7 +196,6 @@ return [
         'regex:/^\+?[0-9]{8,15}$/',
         Rule::unique('users', 'phone')->where('role', User::ROLE_AGENT),
     ],
-    'password' => ['required', 'string', 'min:8'],
     'identity_document' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
     'consent' => ['accepted'],
 ];
@@ -184,7 +203,7 @@ return [
 
 Catatan:
 
-- Jika UI menambahkan konfirmasi password, gunakan `confirmed` dan field `password_confirmation`.
+- Password tidak masuk scope MVP ini. Jangan menambahkan rule password pada `RegisterAgentWebRequest`.
 - Nomor WhatsApp mengikuti pola validasi existing: `+6281234567890` atau `081234567890`.
 - Error validasi harus tampil di halaman, bukan hanya redirect silent.
 
@@ -201,12 +220,15 @@ Flow `POST /agent/register` yang direkomendasikan:
    - `type = email`
    - `role = agent`
    - `agent_code = User::generateAgentCode()`
-   - `password`
    - `identity_document_path`
+   - `terms_accepted_at`
+   - `terms_version = agent-registration-v1`
+   - `privacy_accepted_at`
+   - `agent_verification_status = pending_review`
    - `otp_code`
    - `otp_sent_at`
 4. Kirim OTP registrasi.
-5. Redirect ke `/` atau halaman OTP dengan flash message:
+5. Redirect ke `route('agent.register.verify-otp', ['email' => $user->email])` dengan flash message:
    - `Registrasi berhasil. Kami telah mengirim OTP untuk verifikasi akun agent Anda.`
 
 Contoh payload internal user:
@@ -219,8 +241,11 @@ User::create([
     'type' => User::AUTH_TYPE_EMAIL,
     'role' => User::ROLE_AGENT,
     'agent_code' => User::generateAgentCode(),
-    'password' => $validated['password'],
     'identity_document_path' => $identityDocumentPath,
+    'terms_accepted_at' => now(),
+    'terms_version' => 'agent-registration-v1',
+    'privacy_accepted_at' => now(),
+    'agent_verification_status' => 'pending_review',
     'otp_code' => Hash::make($otp),
     'otp_sent_at' => now(),
 ]);
@@ -228,21 +253,21 @@ User::create([
 
 ## Kebutuhan Database Tambahan
 
-Untuk implementasi minimal, tabel `users` sudah cukup karena `identity_document_path` sudah ada.
-
-Untuk implementasi yang lebih lengkap dan siap audit, tambahkan migration field:
+Tambahkan migration field berikut ke tabel `users`:
 
 - `terms_accepted_at` nullable timestamp
 - `terms_version` nullable string
 - `privacy_accepted_at` nullable timestamp
-- `agent_verification_status` nullable string, jika dokumen perlu direview
-- `agent_verified_at` nullable timestamp, jika ada proses approval
+- `agent_verification_status` nullable string
+- `agent_verified_at` nullable timestamp
 
-Rekomendasi minimal untuk fase pertama:
+Nilai awal saat register:
 
-- Tambahkan `terms_accepted_at`.
-- Tambahkan `privacy_accepted_at`.
-- Tunda `agent_verification_status` jika belum ada proses operasional review dokumen.
+- `terms_accepted_at = now()`
+- `terms_version = agent-registration-v1`
+- `privacy_accepted_at = now()`
+- `agent_verification_status = pending_review`
+- `agent_verified_at = null`
 
 ## Tahapan Pengembangan
 
@@ -251,10 +276,11 @@ Rekomendasi minimal untuk fase pertama:
 - Tetapkan bahwa halaman ini adalah web public page untuk agent.
 - Tetapkan route final: `/agent/register`.
 - Tetapkan post-register flow:
-  - redirect ke `/`
+  - redirect ke `/agent/verify-otp?email=...`
   - tampilkan flash message sukses
-  - user lanjut login/verifikasi OTP dari portal existing
-- Tetapkan bahwa password belum dipakai untuk login sampai flow password login dibuat lengkap.
+  - user verifikasi OTP dari halaman khusus tersebut
+- Tetapkan bahwa password tidak dipakai dan tidak ditampilkan pada MVP ini.
+- Tetapkan bahwa agent dibuat dengan status awal `pending_review`.
 
 Output tahap ini:
 
@@ -266,14 +292,17 @@ Output tahap ini:
 - Tambahkan import controller di `routes/web.php`.
 - Tambahkan route `GET /agent/register`.
 - Tambahkan route `POST /agent/register`.
+- Tambahkan route `GET /agent/verify-otp`.
 - Buat `AgentRegistrationController` dengan method:
   - `create()`
   - `store(RegisterAgentWebRequest $request)`
+  - `verifyOtp()`
 
 Acceptance criteria:
 
 - `GET /agent/register` menampilkan halaman.
 - `POST /agent/register` tidak memakai controller API existing.
+- `GET /agent/verify-otp?email=...` menampilkan halaman input OTP.
 
 ### Tahap 3 - Buat Form Request
 
@@ -311,14 +340,18 @@ Acceptance criteria:
 - Create user role agent.
 - Generate `agent_code`.
 - Kirim OTP registrasi via notification existing.
-- Redirect dengan flash success.
+- Redirect ke halaman verifikasi OTP dengan flash success.
 
 Acceptance criteria:
 
 - User dibuat dengan `role = agent`.
 - `agent_code` terisi.
-- `password` ter-hash.
+- `password` tetap null.
 - `identity_document_path` terisi.
+- `terms_accepted_at` terisi.
+- `terms_version` terisi `agent-registration-v1`.
+- `privacy_accepted_at` terisi.
+- `agent_verification_status` terisi `pending_review`.
 - `otp_code` terisi.
 - `otp_sent_at` terisi.
 
@@ -344,19 +377,39 @@ Acceptance criteria:
 - Submit button disabled/loading jika ditambahkan JavaScript.
 - Upload input tetap accessible.
 
-### Tahap 7 - Hubungkan Dari Halaman Login
+### Tahap 7 - Buat Blade View Verifikasi OTP
+
+- Buat `resources/views/agent/verify-otp.blade.php`.
+- Tampilkan email tujuan OTP dari query parameter.
+- Gunakan hidden value:
+  - `role = agent`
+  - `type = email`
+  - `email = query email`
+- Submit OTP ke `POST /api/users/verify-otp` via fetch.
+- Setelah sukses:
+  - simpan token ke `localStorage`
+  - simpan token type ke `localStorage`
+  - simpan role ke `localStorage`
+  - redirect ke `route('agent.dashboard')`
+
+Acceptance criteria:
+
+- Halaman langsung siap menerima OTP tanpa submit login ulang.
+- Error OTP invalid tampil di halaman.
+- Setelah OTP valid, user diarahkan ke dashboard agent.
+
+### Tahap 8 - Hubungkan Dari Halaman Login
 
 - Ubah CTA di halaman `/`:
   - dari `Hubungi administrator`
-  - menjadi link ke `route('agent.register')`, jika product sudah menyetujui self-registration.
-- Jika self-registration belum boleh dibuka publik, tetap biarkan CTA email admin dan expose `/agent/register` hanya saat siap.
+  - menjadi link ke `route('agent.register')`.
 
 Acceptance criteria:
 
 - User bisa menemukan halaman register dari halaman login.
 - Tidak ada broken route.
 
-### Tahap 8 - Testing
+### Tahap 9 - Testing
 
 Tambahkan feature test:
 
@@ -366,24 +419,26 @@ Tambahkan feature test:
 4. Register generate `agent_code`.
 5. Register menyimpan `identity_document_path`.
 6. Register mengirim OTP notification.
-7. Register menolak data kosong.
-8. Register menolak email duplikat untuk role agent.
-9. Register menolak phone duplikat untuk role agent.
-10. Register menolak file invalid.
-11. Register menolak file lebih dari 5MB.
-12. Register mewajibkan consent.
+7. Register tidak menyimpan password.
+8. Register menyimpan `terms_accepted_at`.
+9. Register menyimpan `terms_version = agent-registration-v1`.
+10. Register menyimpan `privacy_accepted_at`.
+11. Register menyimpan `agent_verification_status = pending_review`.
+12. Register redirect ke halaman verifikasi OTP.
+13. `GET /agent/verify-otp` berhasil render.
+14. Register menolak data kosong.
+15. Register menolak email duplikat untuk role agent.
+16. Register menolak phone duplikat untuk role agent.
+17. Register menolak file invalid.
+18. Register menolak file lebih dari 5MB.
+19. Register mewajibkan consent.
 
-Tambahkan unit/feature test tambahan jika migration consent dibuat:
-
-- `terms_accepted_at` terisi saat consent accepted.
-- `privacy_accepted_at` terisi saat consent accepted.
-
-### Tahap 9 - Security dan Compliance
+### Tahap 10 - Security dan Compliance
 
 - Tambahkan rate limit untuk `POST /agent/register`.
 - Pastikan dokumen identitas tidak bisa diakses tanpa authorization.
 - Jangan expose `identity_document_path` di response publik.
-- Jangan log password atau file upload.
+- Jangan log file upload atau data dokumen identitas.
 - Pertimbangkan malware scan jika upload dokumen akan dipakai production.
 - Pastikan kebijakan privasi dan ketentuan layanan sudah tersedia jika checkbox mengarah ke dokumen legal.
 
@@ -393,14 +448,20 @@ Gunakan checklist ini saat mengerjakan:
 
 - [ ] Buat branch feature.
 - [ ] Tambahkan route web register agent.
+- [ ] Tambahkan route web verifikasi OTP agent.
 - [ ] Buat `AgentRegistrationController`.
 - [ ] Buat `RegisterAgentWebRequest`.
 - [ ] Buat view `resources/views/agent/register.blade.php`.
+- [ ] Buat view `resources/views/agent/verify-otp.blade.php`.
+- [ ] Tambahkan migration field audit consent dan status review agent.
 - [ ] Implement upload dokumen.
 - [ ] Implement create user agent dalam database transaction.
+- [ ] Pastikan password tidak divalidasi dan tidak disimpan.
+- [ ] Simpan consent audit.
+- [ ] Simpan `agent_verification_status = pending_review`.
 - [ ] Kirim OTP setelah user dibuat.
-- [ ] Tambahkan flash success setelah registrasi.
-- [ ] Tambahkan link dari halaman login jika self-registration sudah disetujui.
+- [ ] Redirect ke halaman verifikasi OTP setelah registrasi.
+- [ ] Tambahkan link dari halaman login ke register agent.
 - [ ] Tambahkan feature tests.
 - [ ] Jalankan `php artisan test`.
 - [ ] Jalankan `./vendor/bin/pint` jika ada perubahan PHP.
@@ -408,8 +469,8 @@ Gunakan checklist ini saat mengerjakan:
 
 ## Risiko Implementasi
 
-1. Password membuat ekspektasi login password.
-   - Mitigasi: komunikasikan bahwa login tetap OTP untuk fase pertama, atau bangun login password secara lengkap.
+1. Field password membuat ekspektasi login password.
+   - Mitigasi: password dikeluarkan dari form dan tidak disimpan pada MVP ini. Login tetap OTP.
 
 2. Upload dokumen identitas adalah data sensitif.
    - Mitigasi: gunakan private storage, batasi akses, dan jangan tampilkan URL publik sembarangan.
@@ -423,22 +484,28 @@ Gunakan checklist ini saat mengerjakan:
 5. Self-registration agent bisa membuka spam akun.
    - Mitigasi: rate limit, OTP verification, dan jika perlu approval manual sebelum agent aktif.
 
+6. Agent `pending_review` tetap dapat masuk dashboard.
+   - Mitigasi: status `pending_review` disimpan sejak awal. Pembatasan fitur berdasarkan status masuk scope MVP berikutnya.
+
 ## Rekomendasi Scope Fase Pertama
 
 Scope paling aman untuk fase pertama:
 
 - Buat halaman `/agent/register`.
-- Simpan `name`, `email`, `phone`, `password`, dan `identity_document_path`.
+- Buat halaman `/agent/verify-otp`.
+- Simpan `name`, `email`, `phone`, dan `identity_document_path`.
 - Generate `agent_code`.
 - Kirim OTP email.
-- Redirect ke halaman login dengan flash message.
+- Redirect ke halaman verifikasi OTP dengan flash message.
 - Login tetap memakai OTP existing.
-- Simpan consent timestamp jika migration disetujui.
+- Simpan consent audit.
+- Simpan status review awal `pending_review`.
 
 Scope yang sebaiknya ditunda:
 
 - Login agent dengan password.
 - Forgot password/reset password.
-- Approval dokumen agent.
+- Admin review dokumen agent.
+- Pembatasan fitur/halaman berdasarkan status review.
 - Dashboard review dokumen agent oleh admin.
 - Public URL untuk dokumen identitas.
