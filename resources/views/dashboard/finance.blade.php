@@ -370,6 +370,40 @@
             outline: 0;
         }
 
+        .finance-table__buyer-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .finance-table__buyer-action {
+            min-height: 38px;
+            border: 0;
+            border-radius: 8px;
+            color: #ffffff;
+            cursor: pointer;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0;
+            padding: 0 14px;
+        }
+
+        .finance-table__buyer-action--confirm {
+            background: #11bec8;
+        }
+
+        .finance-table__buyer-action--reject {
+            background: #c52121;
+        }
+
+        .finance-table__buyer-action:hover,
+        .finance-table__buyer-action:focus-visible {
+            filter: brightness(.96);
+            outline: 0;
+        }
+
         .finance-page__error {
             display: none;
             border: 1px solid #fecaca;
@@ -578,7 +612,7 @@
                 </section>
 
                 <x-dashboard.filter-bar class="is-loading" data-finance-filter aria-busy="true">
-                    <x-dashboard.filter-field data-finance-search label="Cari nama atau ID agent" icon="users" placeholder="Cari Nama atau ID Agent..." />
+                    <x-dashboard.filter-field data-finance-search label="Cari nama atau ID buyer" icon="users" placeholder="Cari Nama atau ID Buyer..." />
                     <x-dashboard.filter-field
                         data-finance-status
                         label="Status"
@@ -597,7 +631,7 @@
 
                 <section class="finance-table-card is-loading" data-finance-table-card aria-label="Transaksi pencairan" aria-busy="true">
                     <x-dashboard.table-tabs
-                        active="seller"
+                        active="buyer"
                         :tabs="[
                             ['key' => 'seller', 'label' => 'Transaksi Seller', 'icon' => 'seller'],
                             ['key' => 'agent', 'label' => 'Transaksi Agent', 'icon' => 'agent'],
@@ -610,6 +644,7 @@
                             <thead data-finance-table-head>
                                 <tr>
                                     <th>ID Transaksi</th>
+                                    <th>Nama Buyer</th>
                                     <th>Nama UMKM</th>
                                     <th>Bank Tujuan</th>
                                     <th>Nominal</th>
@@ -621,6 +656,7 @@
                             <tbody data-finance-transactions>
                                 @for ($index = 0; $index < 5; $index++)
                                     <tr class="finance-table__loading-row">
+                                        <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
                                         <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
                                         <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
                                         <td><span class="finance-skeleton-line finance-skeleton-line--lg"></span></td>
@@ -647,6 +683,14 @@
         note="Pastikan dana sudah terkirim ke rekening tujuan sebelum menyelesaikan pencairan dana"
         confirm-label="Ya, Selesai"
     />
+    <x-dashboard.approval-confirmation-modal
+        name="buyer-payment"
+        title="Konfirmasi Pembayaran"
+        description="Apakah pembayaran sudah masuk ke rekening tujuan?"
+        note="Jika dikonfirmasi, status transaksi buyer akan berubah menjadi Diterima Toko."
+        confirm-label="Ya"
+        actor-label="Nama Buyer"
+    />
     <x-dashboard.rejection-confirmation-modal />
     <x-dashboard.rejection-detail-modal />
     <div hidden aria-hidden="true">
@@ -672,6 +716,13 @@
                 </button>
             `;
             const finishAction = () => '<button class="finance-table__finish" type="button" data-finance-complete>Selesai</button>';
+            const buyerPaymentActions = () => `
+                <div class="finance-table__buyer-actions">
+                    <button class="finance-table__buyer-action finance-table__buyer-action--confirm" type="button" data-finance-buyer-payment>Pembayaran Masuk</button>
+                    <button class="finance-table__buyer-action finance-table__buyer-action--reject" type="button" data-finance-buyer-reject>Tolak Pembayaran</button>
+                </div>
+            `;
+            const buyerActionFor = (row) => row.transactionStatusCode === 'pending_payment' ? buyerPaymentActions() : resolvedAction();
             const approvalActions = () => `
                 <div class="approval-actions">
                     <button class="approval-actions__button approval-actions__button--approve" type="button" data-finance-decision="approve" aria-label="Disetujui" title="Disetujui">
@@ -690,13 +741,14 @@
             const modals = {
                 approval: modalByName('approval'),
                 completion: modalByName('completion'),
+                buyerPayment: modalByName('buyer-payment'),
                 rejection: modalByName('rejection'),
                 rejectionDetail: modalByName('rejection-detail'),
             };
             const state = {
                 page: 1,
-                perPage: 5,
-                tab: 'seller',
+                perPage: 10,
+                tab: 'buyer',
             };
             let pendingRow = null;
             let activeModal = null;
@@ -815,8 +867,8 @@
                     return;
                 }
 
-                modal.querySelector('[data-finance-modal-field="id"]').textContent = row.dataset.transactionId || '-';
-                modal.querySelector('[data-finance-modal-field="agent"]').textContent = row.dataset.transactionAgent || '-';
+                modal.querySelector('[data-finance-modal-field="id"]').textContent = row.dataset.transactionDisplayId || row.dataset.transactionId || '-';
+                modal.querySelector('[data-finance-modal-field="agent"]').textContent = row.dataset.transactionBuyer || row.dataset.transactionAgent || '-';
                 modal.querySelector('[data-finance-modal-field="nominal"]').textContent = row.dataset.transactionNominal || '-';
                 modal.querySelector('[data-finance-modal-field="bank"]').textContent = row.dataset.transactionBank || '-';
                 modal.querySelector('[data-finance-modal-field="reason"]')?.replaceChildren(document.createTextNode(row.dataset.rejectionReason || '-'));
@@ -875,6 +927,14 @@
                 buyer_payment_confirmed: 'processing',
                 disbursed_to_seller: 'success',
             }[String(value || '').toLowerCase()] || 'pending');
+            const transactionStatusFromApi = (statusCode) => ({
+                pending_payment: 'pending',
+                accepted_by_store: 'processing',
+                processing: 'processing',
+                on_the_way: 'processing',
+                completed: 'success',
+                canceled: 'rejected',
+            }[String(statusCode || '').toLowerCase()] || 'pending');
             const actionFor = (status) => {
                 if (status === 'pending') {
                     return approvalActions();
@@ -928,20 +988,22 @@
                 };
             };
             const mapBuyerTransaction = (item) => {
-                const status = statusFromApi(item.status);
+                const status = transactionStatusFromApi(item.transaction?.status_code);
                 const bankName = valueFrom(item.bank?.name, '-');
                 const bankAccount = valueFrom(item.bank?.account_number_masked, '');
                 const bankHolder = valueFrom(item.bank?.account_holder, '');
 
                 return {
                     id: valueFrom(item.unique_code, item.transaction?.order_number, item.id, '-'),
+                    actionId: valueFrom(item.transaction?.id, item.id, '-'),
                     buyer: valueFrom(item.buyer?.name, '-'),
                     agent: valueFrom(item.store?.name, '-'),
                     bank: [bankName, bankAccount, bankHolder].filter((part) => part && part !== '-').join(' - ') || '-',
                     nominal: valueFrom(item.amount_label, '-'),
                     date: valueFrom(item.requested_at_label, '-'),
                     status,
-                    statusLabel: valueFrom(item.status_label, 'Pengajuan'),
+                    statusLabel: valueFrom(item.transaction?.status, '-'),
+                    transactionStatusCode: valueFrom(item.transaction?.status_code, ''),
                     rejectionReason: '',
                     rejectedAt: '',
                     rejectedBy: '',
@@ -1015,8 +1077,10 @@
 
                 tableBody.innerHTML = rows.map((row) => `
                     <tr
-                        data-transaction-id="${escapeHtml(row.id)}"
+                        data-transaction-id="${escapeHtml(row.actionId || row.id)}"
+                        data-transaction-display-id="${escapeHtml(row.id)}"
                         data-transaction-agent="${escapeHtml(row.agent)}"
+                        data-transaction-buyer="${escapeHtml(row.buyer)}"
                         data-transaction-bank="${escapeHtml(row.bank)}"
                         data-transaction-nominal="${escapeHtml(row.nominal)}"
                         data-rejection-reason="${escapeHtml(row.rejectionReason)}"
@@ -1030,7 +1094,7 @@
                         <td><span class="finance-table__money">${escapeHtml(row.nominal)}</span></td>
                         <td>${escapeHtml(row.date)}</td>
                         <td class="finance-table__status-cell"><span class="status-badge status-badge--${escapeHtml(row.status)}">${escapeHtml(row.statusLabel)}</span></td>
-                        <td class="finance-table__actions-cell">${state.tab === 'buyer' ? resolvedAction() : actionFor(row.status)}</td>
+                        <td class="finance-table__actions-cell">${state.tab === 'buyer' ? buyerActionFor(row) : actionFor(row.status)}</td>
                     </tr>
                 `).join('');
             };
@@ -1117,15 +1181,7 @@
 
                 if (status && status !== 'all') {
                     if (state.tab === 'buyer') {
-                        const buyerStatus = {
-                            requested: 'pending_buyer_payment',
-                            approved: 'buyer_payment_confirmed',
-                            paid: 'disbursed_to_seller',
-                        }[status];
-
-                        if (buyerStatus) {
-                            params.set('status', buyerStatus);
-                        }
+                        params.set('transaction_status_group', status);
                     } else {
                         params.set('status', status);
                     }
@@ -1175,9 +1231,6 @@
                         : tab === 'agent'
                             ? 'Cari Nama atau ID Agent...'
                             : 'Cari Nama atau ID UMKM...';
-                }
-                if (tab === 'buyer' && statusSelect?.value === 'rejected') {
-                    statusSelect.value = 'all';
                 }
             };
             const loadFinancePage = async ({ showTableLoading = false, showPaginationLoading = false } = {}) => {
@@ -1247,6 +1300,25 @@
                     showError(error.message || 'Gagal memperbarui status pencairan.');
                 }
             };
+            const confirmBuyerPayment = async (row) => {
+                if (!row?.dataset.transactionId) {
+                    return;
+                }
+
+                setControlsDisabled(true);
+                clearError();
+
+                try {
+                    await fetchJson(`/api/finance/transactions/${encodeURIComponent(row.dataset.transactionId)}/confirm-buyer-payment`, {
+                        method: 'PATCH',
+                    });
+                    closeModal();
+                    await loadFinancePage({ showTableLoading: true, showPaginationLoading: true });
+                } catch (error) {
+                    setControlsDisabled(false);
+                    showError(error.message || 'Gagal mengonfirmasi pembayaran buyer.');
+                }
+            };
             const loadRejectionDetail = async (row) => {
                 if (!row?.dataset.transactionId) {
                     return;
@@ -1306,6 +1378,28 @@
                     loadRejectionDetail(row);
                 }
             });
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-finance-buyer-payment]');
+
+                if (!button) {
+                    return;
+                }
+
+                const row = button.closest('tr');
+
+                if (row) {
+                    openModal('buyerPayment', row);
+                }
+            });
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-finance-buyer-reject]');
+
+                if (!button) {
+                    return;
+                }
+
+                window.alert('Fitur tolak pembayaran sedang under maintenance.');
+            });
             Object.entries(modals).forEach(([name, modal]) => {
                 modal?.querySelector('[data-finance-modal-confirm]')?.addEventListener('click', () => {
                     if (name === 'rejection' && !selectedRejectionReason()) {
@@ -1316,6 +1410,11 @@
 
                     if (name === 'rejection') {
                         mutateWithdrawal(pendingRow, 'reject', { reason: selectedRejectionReason().value });
+                        return;
+                    }
+
+                    if (name === 'buyerPayment') {
+                        confirmBuyerPayment(pendingRow);
                         return;
                     }
 

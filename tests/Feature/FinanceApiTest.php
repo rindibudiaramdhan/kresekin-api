@@ -39,7 +39,19 @@ class FinanceApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.unique_code', 'FIN-FIN001-'.str_pad((string) $transaction->items()->first()->tenant_id, 4, '0', STR_PAD_LEFT))
             ->assertJsonPath('data.0.amount', 150000)
-            ->assertJsonPath('data.0.status', FinanceTransactionDisbursement::STATUS_PENDING_BUYER_PAYMENT);
+            ->assertJsonPath('data.0.status', FinanceTransactionDisbursement::STATUS_PENDING_BUYER_PAYMENT)
+            ->assertJsonPath('data.0.transaction.status', Transaction::STATUS_PENDING_PAYMENT)
+            ->assertJsonPath('data.0.transaction.status_code', Transaction::STATUS_CODE_PENDING_PAYMENT);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/finance/transactions?transaction_status_group=requested')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/finance/transactions?transaction_status_group=paid')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 0);
     }
 
     public function test_finance_can_confirm_buyer_payment_and_disburse_to_seller(): void

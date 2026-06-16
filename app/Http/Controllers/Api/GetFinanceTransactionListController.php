@@ -24,6 +24,7 @@ class GetFinanceTransactionListController extends Controller
                 FinanceTransactionDisbursement::STATUS_BUYER_PAYMENT_CONFIRMED,
                 FinanceTransactionDisbursement::STATUS_DISBURSED_TO_SELLER,
             ])],
+            'transaction_status_group' => ['nullable', 'string', Rule::in(['paid', 'requested', 'approved', 'rejected'])],
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'date_format:Y-m-d'],
         ]);
@@ -38,6 +39,15 @@ class GetFinanceTransactionListController extends Controller
         $disbursements = FinanceTransactionDisbursement::query()
             ->with(['transaction.user', 'tenant.owner'])
             ->when($validated['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
+            ->when($validated['transaction_status_group'] ?? null, function ($query, string $statusGroup): void {
+                $statuses = collect($this->transactionStatusCodesForGroup($statusGroup))
+                    ->map(fn (string $statusCode): ?string => Transaction::statusFromCode($statusCode))
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                $query->whereHas('transaction', fn ($query) => $query->whereIn('status', $statuses));
+            })
             ->when($validated['search'] ?? null, function ($query, string $search): void {
                 $query->where(function ($query) use ($search): void {
                     $query
@@ -127,6 +137,23 @@ class GetFinanceTransactionListController extends Controller
             FinanceTransactionDisbursement::STATUS_DISBURSED_TO_SELLER => 'Berhasil',
             FinanceTransactionDisbursement::STATUS_BUYER_PAYMENT_CONFIRMED => 'Diproses',
             default => 'Pengajuan',
+        };
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function transactionStatusCodesForGroup(string $statusGroup): array
+    {
+        return match ($statusGroup) {
+            'paid' => [Transaction::STATUS_CODE_COMPLETED],
+            'approved' => [
+                Transaction::STATUS_CODE_ACCEPTED_BY_STORE,
+                Transaction::STATUS_CODE_PROCESSING,
+                Transaction::STATUS_CODE_ON_THE_WAY,
+            ],
+            'rejected' => [Transaction::STATUS_CODE_CANCELED],
+            default => [Transaction::STATUS_CODE_PENDING_PAYMENT],
         };
     }
 

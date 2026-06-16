@@ -4,6 +4,7 @@
     'note' => 'Dana akan diproses ke rekening tujuan dan status tidak dapat dibatalkan setelah dikonfirmasi',
     'confirmLabel' => 'Ya, Approve',
     'name' => 'approval',
+    'actorLabel' => 'Nama Agent',
 ])
 
 @once
@@ -194,7 +195,7 @@
         <dl class="approval-modal__details">
             <dt class="approval-modal__label">ID Transaksi</dt>
             <dd class="approval-modal__value" data-finance-modal-field="id"></dd>
-            <dt class="approval-modal__label">Nama Agent</dt>
+            <dt class="approval-modal__label">{{ $actorLabel }}</dt>
             <dd class="approval-modal__value" data-finance-modal-field="agent"></dd>
             <dt class="approval-modal__label">Nominal</dt>
             <dd class="approval-modal__value" data-finance-modal-field="nominal"></dd>
