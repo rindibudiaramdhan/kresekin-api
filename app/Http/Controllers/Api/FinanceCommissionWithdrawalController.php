@@ -13,18 +13,44 @@ use Symfony\Component\HttpFoundation\Response;
 
 class FinanceCommissionWithdrawalController extends Controller
 {
-    public function summary(): JsonResponse
+    public function summary(Request $request): JsonResponse
     {
-        $totalDisbursed = (int) AgentCommissionWithdrawal::query()
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', Rule::in([
+                AgentCommissionWithdrawal::STATUS_REQUESTED,
+                AgentCommissionWithdrawal::STATUS_APPROVED,
+                AgentCommissionWithdrawal::STATUS_PAID,
+                AgentCommissionWithdrawal::STATUS_REJECTED,
+            ])],
+            'date_from' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        $baseQuery = fn (): Builder => AgentCommissionWithdrawal::query()
+            ->when($validated['search'] ?? null, function (Builder $query, string $search): void {
+                $query->where(function (Builder $query) use ($search): void {
+                    $query->where('id', 'like', '%'.$search.'%')
+                        ->orWhereHas('agent', function (Builder $query) use ($search): void {
+                            $query->where('name', 'like', '%'.$search.'%')
+                                ->orWhere('agent_code', 'like', '%'.$search.'%');
+                        });
+                });
+            })
+            ->when($validated['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
+            ->when($validated['date_from'] ?? null, fn (Builder $query, string $date) => $query->where('requested_at', '>=', $date.' 00:00:00'))
+            ->when($validated['date_to'] ?? null, fn (Builder $query, string $date) => $query->where('requested_at', '<=', $date.' 23:59:59'));
+
+        $totalDisbursed = (int) $baseQuery()
             ->where('status', AgentCommissionWithdrawal::STATUS_PAID)
             ->sum('amount');
-        $totalPending = (int) AgentCommissionWithdrawal::query()
+        $totalPending = (int) $baseQuery()
             ->whereIn('status', [
                 AgentCommissionWithdrawal::STATUS_REQUESTED,
                 AgentCommissionWithdrawal::STATUS_APPROVED,
             ])
             ->sum('amount');
-        $totalWithdrawals = AgentCommissionWithdrawal::query()->count();
+        $totalWithdrawals = $baseQuery()->count();
 
         return response()->json([
             'data' => [

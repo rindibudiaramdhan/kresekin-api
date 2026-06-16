@@ -57,6 +57,40 @@
             box-shadow: 0 0 0 3px rgba(17, 190, 200, .14);
         }
 
+        .filter-field__date-range {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow: hidden;
+        }
+
+        .filter-field__date-input {
+            min-width: 0;
+            width: 100%;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0;
+            outline: 0;
+            padding: 0;
+        }
+
+        .filter-field__date-input::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0;
+            position: absolute;
+        }
+
+        .filter-field__date-separator {
+            color: #8a94a8;
+            flex: 0 0 auto;
+            font-size: 15px;
+            font-weight: 800;
+        }
+
         .filter-field__icon,
         .filter-field__chevron {
             position: absolute;
@@ -121,6 +155,12 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m7 10 5 5 5-5"/>
             </svg>
+        </span>
+    @elseif ($type === 'date-range')
+        <span class="filter-field__control filter-field__date-range" role="group" aria-label="{{ $label ?? $placeholder }}">
+            <input class="filter-field__date-input" type="date" aria-label="Tanggal mulai" data-date-from>
+            <span class="filter-field__date-separator" aria-hidden="true">-</span>
+            <input class="filter-field__date-input" type="date" aria-label="Tanggal akhir" data-date-to>
         </span>
     @else
         <input class="filter-field__control" type="text" value="{{ $value }}" placeholder="{{ $placeholder }}" aria-label="{{ $label ?? $placeholder }}">

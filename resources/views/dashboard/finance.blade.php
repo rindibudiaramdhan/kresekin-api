@@ -592,7 +592,7 @@
                         ]"
                         icon=""
                     />
-                    <x-dashboard.filter-field data-finance-date-range label="Rentang tanggal" icon="calendar" placeholder="YYYY-MM-DD - YYYY-MM-DD" />
+                    <x-dashboard.filter-field data-finance-date-range label="Rentang tanggal" type="date-range" icon="calendar" placeholder="YYYY-MM-DD - YYYY-MM-DD" />
                 </x-dashboard.filter-bar>
 
                 <section class="finance-table-card is-loading" data-finance-table-card aria-label="Transaksi pencairan" aria-busy="true">
@@ -708,7 +708,8 @@
             const pagination = document.querySelector('[data-finance-pagination]');
             const searchInput = document.querySelector('[data-finance-search] input');
             const statusSelect = document.querySelector('[data-finance-status] select');
-            const dateRangeInput = document.querySelector('[data-finance-date-range] input');
+            const dateFromInput = document.querySelector('[data-finance-date-range] [data-date-from]');
+            const dateToInput = document.querySelector('[data-finance-date-range] [data-date-to]');
             const filterButton = filterBar?.querySelector('.filter-bar__button');
             const token = localStorage.getItem('kresekin_token');
             const tokenType = localStorage.getItem('kresekin_token_type') || 'Bearer';
@@ -724,6 +725,48 @@
                 "'": '&#039;',
             }[char]));
             const valueFrom = (...values) => values.find((value) => value !== undefined && value !== null && value !== '');
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+
+                return `${year}-${month}-${day}`;
+            };
+            const defaultDateRange = () => {
+                const end = new Date();
+                const start = new Date(end);
+
+                start.setMonth(start.getMonth() - 1);
+
+                return {
+                    from: formatDate(start),
+                    to: formatDate(end),
+                };
+            };
+            const setDefaultDateRange = () => {
+                const range = defaultDateRange();
+
+                if (dateFromInput && !dateFromInput.value) {
+                    dateFromInput.value = range.from;
+                }
+
+                if (dateToInput && !dateToInput.value) {
+                    dateToInput.value = range.to;
+                }
+            };
+            const syncDateRangeLimits = () => {
+                if (!dateFromInput || !dateToInput) {
+                    return;
+                }
+
+                dateFromInput.max = dateToInput.value || '';
+                dateToInput.min = dateFromInput.value || '';
+
+                if (dateFromInput.value && dateToInput.value && dateFromInput.value > dateToInput.value) {
+                    dateToInput.value = dateFromInput.value;
+                    dateFromInput.max = dateToInput.value;
+                }
+            };
             const clearLoading = (element) => {
                 element?.classList.remove('is-loading');
                 element?.removeAttribute('aria-busy');
@@ -1029,13 +1072,16 @@
                 });
             };
             const queryParams = () => {
+                syncDateRangeLimits();
+
                 const params = new URLSearchParams({
                     page: state.page,
                     per_page: state.perPage,
                 });
                 const search = searchInput?.value.trim();
                 const status = statusSelect?.value;
-                const dateRange = dateRangeInput?.value.trim();
+                const dateFrom = dateFromInput?.value;
+                const dateTo = dateToInput?.value;
 
                 if (search) {
                     params.set('search', search);
@@ -1045,17 +1091,21 @@
                     params.set('status', status);
                 }
 
-                if (dateRange) {
-                    const [from, to] = dateRange.split(/\s+-\s+/);
-
-                    if (from) {
-                        params.set('date_from', from.trim());
-                    }
-
-                    if (to) {
-                        params.set('date_to', to.trim());
-                    }
+                if (dateFrom) {
+                    params.set('date_from', dateFrom);
                 }
+
+                if (dateTo) {
+                    params.set('date_to', dateTo);
+                }
+
+                return params;
+            };
+            const summaryParams = () => {
+                const params = queryParams();
+
+                params.delete('page');
+                params.delete('per_page');
 
                 return params;
             };
@@ -1087,7 +1137,7 @@
                         ? `/api/finance/seller-transaction-submissions?${queryParams()}`
                         : `/api/finance/commission-withdrawals?${queryParams()}`;
                     const [summaryPayload, listPayload] = await Promise.all([
-                        fetchJson('/api/finance/commission-withdrawals/summary'),
+                        fetchJson(`/api/finance/commission-withdrawals/summary?${summaryParams()}`),
                         fetchJson(listUrl),
                     ]);
                     const rows = (Array.isArray(listPayload?.data) ? listPayload.data : [])
@@ -1233,6 +1283,12 @@
                 state.page = 1;
                 loadFinancePage({ showTableLoading: true, showPaginationLoading: true });
             });
+            dateFromInput?.addEventListener('input', syncDateRangeLimits);
+            dateFromInput?.addEventListener('change', syncDateRangeLimits);
+            dateToInput?.addEventListener('focus', syncDateRangeLimits);
+            dateToInput?.addEventListener('click', syncDateRangeLimits);
+            dateToInput?.addEventListener('input', syncDateRangeLimits);
+            dateToInput?.addEventListener('change', syncDateRangeLimits);
             document.querySelectorAll('[data-table-tab]').forEach((button) => {
                 button.addEventListener('click', () => {
                     const tab = button.dataset.tableTab;
@@ -1260,6 +1316,8 @@
             });
 
             setActiveTab(state.tab);
+            setDefaultDateRange();
+            syncDateRangeLimits();
             loadFinancePage();
         })();
     </script>
