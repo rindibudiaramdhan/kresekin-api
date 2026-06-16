@@ -158,6 +158,32 @@
             grid-column: 1 / -1;
         }
 
+        .form-row.compact-field {
+            gap: 6px;
+        }
+
+        .form-row.compact-field label {
+            color: #3f4656;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: .06em;
+        }
+
+        .form-row.compact-field .field {
+            min-height: 46px;
+            border-radius: 7px;
+            background: #ffffff;
+            padding: 0 14px;
+        }
+
+        .form-row.compact-field .field input {
+            font-size: 15px;
+        }
+
+        .form-row.compact-field .field input::placeholder {
+            color: #a7adba;
+        }
+
         label,
         .field-label {
             color: #42495a;
@@ -393,22 +419,21 @@
                         @enderror
                     </div>
 
-                    <div class="form-row">
-                        <label for="email">Email <span class="required">*</span></label>
+                    <div class="form-row full compact-field">
+                        <label for="email">EMAIL <span class="required">*</span></label>
                         <div class="field">
-                            <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="nama@email.com" autocomplete="email" required>
+                            <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="Masukkan email aktif" autocomplete="email" required>
                         </div>
                         @error('email')
                             <div class="field-error">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <div class="form-row">
-                        <label for="phone">No WhatsApp <span class="required">*</span></label>
+                    <div class="form-row full compact-field">
+                        <label for="phone">NO WHATSAPP <span class="required">*</span></label>
                         <div class="field">
-                            <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" placeholder="+6281234567890" autocomplete="tel" required>
+                            <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" placeholder="Contoh: 08123456789" autocomplete="tel" required>
                         </div>
-                        <p class="field-help">Gunakan format +6281234567890 atau 081234567890.</p>
                         @error('phone')
                             <div class="field-error">{{ $message }}</div>
                         @enderror
