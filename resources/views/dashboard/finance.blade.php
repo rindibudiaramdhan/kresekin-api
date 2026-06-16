@@ -404,6 +404,94 @@
             outline: 0;
         }
 
+        .approval-modal__button:disabled,
+        .approval-modal__close:disabled {
+            cursor: not-allowed;
+            filter: grayscale(.18);
+            opacity: .58;
+        }
+
+        .finance-info-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            display: grid;
+            place-items: center;
+            background: rgba(15, 23, 42, .42);
+            padding: 20px;
+        }
+
+        .finance-info-modal[hidden] {
+            display: none;
+        }
+
+        .finance-info-modal__panel {
+            width: min(520px, 100%);
+            border-radius: 18px;
+            background: #ffffff;
+            color: #151922;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+            padding: 32px;
+            text-align: center;
+        }
+
+        .finance-info-modal__icon {
+            width: 54px;
+            height: 54px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: 50%;
+            margin-bottom: 18px;
+            background: #e7f9fb;
+            color: #11bec8;
+            font-size: 26px;
+            font-weight: 900;
+        }
+
+        .finance-info-modal--error .finance-info-modal__icon {
+            background: #fff1f2;
+            color: #c52121;
+        }
+
+        .finance-info-modal__title {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 900;
+            line-height: 1.12;
+            letter-spacing: 0;
+        }
+
+        .finance-info-modal__message {
+            margin: 14px 0 0;
+            color: #5c667a;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.45;
+            letter-spacing: 0;
+        }
+
+        .finance-info-modal__button {
+            min-width: 132px;
+            min-height: 44px;
+            border: 0;
+            border-radius: 8px;
+            background: #11bec8;
+            color: #ffffff;
+            cursor: pointer;
+            font: inherit;
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: 0;
+            margin-top: 24px;
+            padding: 0 18px;
+        }
+
+        .finance-info-modal__button:hover,
+        .finance-info-modal__button:focus-visible {
+            background: #0aaab3;
+            outline: 0;
+        }
+
         .finance-page__error {
             display: none;
             border: 1px solid #fecaca;
@@ -693,6 +781,14 @@
     />
     <x-dashboard.rejection-confirmation-modal />
     <x-dashboard.rejection-detail-modal />
+    <div class="finance-info-modal" hidden data-finance-info-modal role="dialog" aria-modal="true" aria-labelledby="finance-info-modal-title">
+        <div class="finance-info-modal__panel">
+            <div class="finance-info-modal__icon" data-finance-info-icon aria-hidden="true">i</div>
+            <h2 class="finance-info-modal__title" id="finance-info-modal-title" data-finance-info-title></h2>
+            <p class="finance-info-modal__message" data-finance-info-message></p>
+            <button class="finance-info-modal__button" type="button" data-finance-info-close>Tutup</button>
+        </div>
+    </div>
     <div hidden aria-hidden="true">
         <x-dashboard.approval-actions />
         <x-dashboard.status-badge status="pending" label="Pengajuan" />
@@ -759,6 +855,7 @@
             const errorBox = document.querySelector('[data-finance-error]');
             const filterBar = document.querySelector('[data-finance-filter]');
             const pagination = document.querySelector('[data-finance-pagination]');
+            const infoModal = document.querySelector('[data-finance-info-modal]');
             const searchInput = document.querySelector('[data-finance-search] input');
             const statusSelect = document.querySelector('[data-finance-status] select');
             const dateFromInput = document.querySelector('[data-finance-date-range] [data-date-from]');
@@ -845,6 +942,40 @@
                 errorBox.textContent = '';
                 errorBox.classList.remove('is-visible');
             };
+            const setModalControlsDisabled = (modal, disabled) => {
+                modal?.querySelectorAll('[data-finance-modal-close], [data-finance-modal-confirm]').forEach((control) => {
+                    control.disabled = disabled;
+                });
+            };
+            const showInfoModal = ({ title, message = '', tone = 'info', closable = true }) => {
+                if (!infoModal) {
+                    return;
+                }
+
+                infoModal.classList.toggle('finance-info-modal--error', tone === 'error');
+                infoModal.querySelector('[data-finance-info-icon]').textContent = tone === 'error' ? '!' : 'i';
+                infoModal.querySelector('[data-finance-info-title]').textContent = title;
+                infoModal.querySelector('[data-finance-info-message]').textContent = message;
+
+                const closeButton = infoModal.querySelector('[data-finance-info-close]');
+                if (closeButton) {
+                    closeButton.hidden = !closable;
+                    closeButton.disabled = !closable;
+                }
+
+                infoModal.hidden = false;
+                if (closable) {
+                    closeButton?.focus();
+                }
+            };
+            const hideInfoModal = () => {
+                if (!infoModal) {
+                    return;
+                }
+
+                infoModal.hidden = true;
+                infoModal.classList.remove('finance-info-modal--error');
+            };
             const fetchJson = async (url, options = {}) => {
                 const response = await fetch(url, {
                     ...options,
@@ -892,6 +1023,7 @@
                 pendingRow = row;
                 activeModal = name;
                 setModalDetails(modal, row);
+                setModalControlsDisabled(modal, false);
                 if (name === 'rejection') {
                     resetRejectionReason();
                 }
@@ -1305,18 +1437,36 @@
                     return;
                 }
 
+                const modal = modals.buyerPayment;
                 setControlsDisabled(true);
+                setModalControlsDisabled(modal, true);
                 clearError();
+                showInfoModal({
+                    title: 'Konfirmasi Pembayaran Sedang Diproses',
+                    message: 'Mohon tunggu sampai sistem selesai memproses konfirmasi pembayaran.',
+                    closable: false,
+                });
 
                 try {
-                    await fetchJson(`/api/finance/transactions/${encodeURIComponent(row.dataset.transactionId)}/confirm-buyer-payment`, {
+                    const payload = await fetchJson(`/api/finance/transactions/${encodeURIComponent(row.dataset.transactionId)}/confirm-buyer-payment`, {
                         method: 'PATCH',
                     });
                     closeModal();
+                    hideInfoModal();
+                    showInfoModal({
+                        title: 'Konfirmasi Pembayaran Berhasil',
+                        message: payload.message || 'Pembayaran buyer berhasil dikonfirmasi.',
+                    });
                     await loadFinancePage({ showTableLoading: true, showPaginationLoading: true });
                 } catch (error) {
+                    hideInfoModal();
+                    setModalControlsDisabled(modal, false);
                     setControlsDisabled(false);
-                    showError(error.message || 'Gagal mengonfirmasi pembayaran buyer.');
+                    showInfoModal({
+                        title: 'Konfirmasi Pembayaran Gagal',
+                        message: error.message || 'Gagal mengonfirmasi pembayaran buyer.',
+                        tone: 'error',
+                    });
                 }
             };
             const loadRejectionDetail = async (row) => {
@@ -1399,6 +1549,12 @@
                 }
 
                 window.alert('Fitur tolak pembayaran sedang under maintenance.');
+            });
+            infoModal?.querySelector('[data-finance-info-close]')?.addEventListener('click', hideInfoModal);
+            infoModal?.addEventListener('click', (event) => {
+                if (event.target === infoModal && !infoModal.querySelector('[data-finance-info-close]')?.hidden) {
+                    hideInfoModal();
+                }
             });
             Object.entries(modals).forEach(([name, modal]) => {
                 modal?.querySelector('[data-finance-modal-confirm]')?.addEventListener('click', () => {
