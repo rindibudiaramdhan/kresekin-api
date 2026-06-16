@@ -601,6 +601,7 @@
                         :tabs="[
                             ['key' => 'seller', 'label' => 'Transaksi Seller', 'icon' => 'seller'],
                             ['key' => 'agent', 'label' => 'Transaksi Agent', 'icon' => 'agent'],
+                            ['key' => 'buyer', 'label' => 'Transaksi Buyer', 'icon' => 'buyer'],
                         ]"
                     />
 
@@ -870,6 +871,9 @@
                 approved: 'processing',
                 paid: 'success',
                 rejected: 'rejected',
+                pending_buyer_payment: 'pending',
+                buyer_payment_confirmed: 'processing',
+                disbursed_to_seller: 'success',
             }[String(value || '').toLowerCase()] || 'pending');
             const actionFor = (status) => {
                 if (status === 'pending') {
@@ -923,16 +927,38 @@
                     rejectedBy: '',
                 };
             };
+            const mapBuyerTransaction = (item) => {
+                const status = statusFromApi(item.status);
+                const bankName = valueFrom(item.bank?.name, '-');
+                const bankAccount = valueFrom(item.bank?.account_number_masked, '');
+                const bankHolder = valueFrom(item.bank?.account_holder, '');
+
+                return {
+                    id: valueFrom(item.unique_code, item.transaction?.order_number, item.id, '-'),
+                    buyer: valueFrom(item.buyer?.name, '-'),
+                    agent: valueFrom(item.store?.name, '-'),
+                    bank: [bankName, bankAccount, bankHolder].filter((part) => part && part !== '-').join(' - ') || '-',
+                    nominal: valueFrom(item.amount_label, '-'),
+                    date: valueFrom(item.requested_at_label, '-'),
+                    status,
+                    statusLabel: valueFrom(item.status_label, 'Pengajuan'),
+                    rejectionReason: '',
+                    rejectedAt: '',
+                    rejectedBy: '',
+                };
+            };
             const renderTableHeader = () => {
                 if (!tableHead) {
                     return;
                 }
 
-                const nameColumn = state.tab === 'seller' ? 'Nama UMKM' : 'Nama Agent';
+                const nameColumn = state.tab === 'agent' ? 'Nama Agent' : 'Nama UMKM';
+                const buyerColumn = state.tab === 'buyer' ? '<th>Nama Buyer</th>' : '';
 
                 tableHead.innerHTML = `
                     <tr>
                         <th>ID Transaksi</th>
+                        ${buyerColumn}
                         <th>${nameColumn}</th>
                         <th>Bank Tujuan</th>
                         <th>Nominal</th>
@@ -967,6 +993,7 @@
                 tableBody.innerHTML = Array.from({ length: state.perPage }, () => `
                     <tr class="finance-table__loading-row">
                         <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
+                        ${state.tab === 'buyer' ? '<td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>' : ''}
                         <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
                         <td><span class="finance-skeleton-line finance-skeleton-line--lg"></span></td>
                         <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
@@ -982,7 +1009,7 @@
                 }
 
                 if (!rows.length) {
-                    tableBody.innerHTML = '<tr><td class="finance-table__empty" colspan="7">Belum ada transaksi pencairan.</td></tr>';
+                    tableBody.innerHTML = `<tr><td class="finance-table__empty" colspan="${state.tab === 'buyer' ? 8 : 7}">Belum ada transaksi pencairan.</td></tr>`;
                     return;
                 }
 
@@ -997,12 +1024,13 @@
                         data-rejected-by="${escapeHtml(row.rejectedBy)}"
                     >
                         <td><span class="finance-table__id">${escapeHtml(row.id)}</span></td>
+                        ${state.tab === 'buyer' ? `<td>${escapeHtml(row.buyer)}</td>` : ''}
                         <td>${escapeHtml(row.agent)}</td>
                         <td><span class="finance-table__bank">${escapeHtml(row.bank)}</span></td>
                         <td><span class="finance-table__money">${escapeHtml(row.nominal)}</span></td>
                         <td>${escapeHtml(row.date)}</td>
                         <td class="finance-table__status-cell"><span class="status-badge status-badge--${escapeHtml(row.status)}">${escapeHtml(row.statusLabel)}</span></td>
-                        <td class="finance-table__actions-cell">${actionFor(row.status)}</td>
+                        <td class="finance-table__actions-cell">${state.tab === 'buyer' ? resolvedAction() : actionFor(row.status)}</td>
                     </tr>
                 `).join('');
             };
@@ -1088,7 +1116,19 @@
                 }
 
                 if (status && status !== 'all') {
-                    params.set('status', status);
+                    if (state.tab === 'buyer') {
+                        const buyerStatus = {
+                            requested: 'pending_buyer_payment',
+                            approved: 'buyer_payment_confirmed',
+                            paid: 'disbursed_to_seller',
+                        }[status];
+
+                        if (buyerStatus) {
+                            params.set('status', buyerStatus);
+                        }
+                    } else {
+                        params.set('status', status);
+                    }
                 }
 
                 if (dateFrom) {
@@ -1120,6 +1160,25 @@
                     button.classList.toggle('is-active', isActive);
                     button.setAttribute('aria-selected', isActive ? 'true' : 'false');
                 });
+
+                const searchLabel = document.querySelector('[data-finance-search] .sr-only');
+                if (searchLabel) {
+                    searchLabel.textContent = tab === 'buyer'
+                        ? 'Cari nama atau ID buyer'
+                        : tab === 'agent'
+                            ? 'Cari nama atau ID agent'
+                            : 'Cari nama atau ID UMKM';
+                }
+                if (searchInput) {
+                    searchInput.placeholder = tab === 'buyer'
+                        ? 'Cari Nama atau ID Buyer...'
+                        : tab === 'agent'
+                            ? 'Cari Nama atau ID Agent...'
+                            : 'Cari Nama atau ID UMKM...';
+                }
+                if (tab === 'buyer' && statusSelect?.value === 'rejected') {
+                    statusSelect.value = 'all';
+                }
             };
             const loadFinancePage = async ({ showTableLoading = false, showPaginationLoading = false } = {}) => {
                 clearError();
@@ -1133,15 +1192,22 @@
                 }
 
                 try {
-                    const listUrl = state.tab === 'seller'
-                        ? `/api/finance/seller-transaction-submissions?${queryParams()}`
-                        : `/api/finance/commission-withdrawals?${queryParams()}`;
+                    const listUrl = {
+                        seller: `/api/finance/seller-transaction-submissions?${queryParams()}`,
+                        agent: `/api/finance/commission-withdrawals?${queryParams()}`,
+                        buyer: `/api/finance/transactions?${queryParams()}`,
+                    }[state.tab];
+                    const mapRow = {
+                        seller: mapSellerSubmission,
+                        agent: mapWithdrawal,
+                        buyer: mapBuyerTransaction,
+                    }[state.tab];
                     const [summaryPayload, listPayload] = await Promise.all([
                         fetchJson(`/api/finance/commission-withdrawals/summary?${summaryParams()}`),
                         fetchJson(listUrl),
                     ]);
                     const rows = (Array.isArray(listPayload?.data) ? listPayload.data : [])
-                        .map(state.tab === 'seller' ? mapSellerSubmission : mapWithdrawal);
+                        .map(mapRow);
 
                     renderMetrics(summaryPayload?.data || {});
                     renderRows(rows);

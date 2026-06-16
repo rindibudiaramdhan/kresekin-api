@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FinanceTransactionDisbursement;
 use App\Models\Transaction;
 use App\Support\FinanceDisbursementSyncer;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,12 +16,19 @@ class GetFinanceTransactionListController extends Controller
     public function __invoke(Request $request, FinanceDisbursementSyncer $syncer): JsonResponse
     {
         $validated = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', Rule::in([
                 FinanceTransactionDisbursement::STATUS_PENDING_BUYER_PAYMENT,
                 FinanceTransactionDisbursement::STATUS_BUYER_PAYMENT_CONFIRMED,
                 FinanceTransactionDisbursement::STATUS_DISBURSED_TO_SELLER,
             ])],
+            'date_from' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d'],
         ]);
+
+        $perPage = (int) ($validated['per_page'] ?? 10);
 
         Transaction::query()
             ->with('items.tenant')
@@ -30,8 +38,19 @@ class GetFinanceTransactionListController extends Controller
         $disbursements = FinanceTransactionDisbursement::query()
             ->with(['transaction.user', 'tenant.owner'])
             ->when($validated['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
+            ->when($validated['search'] ?? null, function ($query, string $search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query
+                        ->where('unique_code', 'like', '%'.$search.'%')
+                        ->orWhereHas('transaction', fn ($query) => $query->where('order_number', 'like', '%'.$search.'%'))
+                        ->orWhereHas('transaction.user', fn ($query) => $query->where('name', 'like', '%'.$search.'%'))
+                        ->orWhereHas('tenant', fn ($query) => $query->where('name', 'like', '%'.$search.'%'));
+                });
+            })
+            ->when($validated['date_from'] ?? null, fn ($query, string $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($validated['date_to'] ?? null, fn ($query, string $date) => $query->whereDate('created_at', '<=', $date))
             ->latest()
-            ->paginate(10);
+            ->paginate($perPage);
 
         return response()->json([
             'message' => 'Daftar transaksi finance berhasil diambil.',
@@ -61,8 +80,15 @@ class GetFinanceTransactionListController extends Controller
             'id' => $disbursement->id,
             'unique_code' => $disbursement->unique_code,
             'status' => $disbursement->status,
+            'status_label' => $this->statusLabel($disbursement->status),
             'amount' => $disbursement->amount,
             'amount_label' => $this->moneyLabel($disbursement->amount),
+            'buyer' => [
+                'id' => $disbursement->transaction?->user?->id,
+                'name' => $disbursement->transaction?->user?->name,
+                'email' => $disbursement->transaction?->user?->email,
+                'phone' => $disbursement->transaction?->user?->phone,
+            ],
             'store' => [
                 'id' => $disbursement->tenant?->id,
                 'name' => $disbursement->tenant?->name,
@@ -73,6 +99,11 @@ class GetFinanceTransactionListController extends Controller
                 'email' => $disbursement->seller?->email,
                 'phone' => $disbursement->seller?->phone,
             ],
+            'bank' => [
+                'name' => $disbursement->seller?->bank_name,
+                'account_holder' => $disbursement->seller?->bank_account_name,
+                'account_number_masked' => $this->maskAccountNumber($disbursement->seller?->bank_account_number),
+            ],
             'transaction' => [
                 'id' => $disbursement->transaction?->id,
                 'order_number' => $disbursement->transaction?->order_number,
@@ -81,9 +112,31 @@ class GetFinanceTransactionListController extends Controller
                 'total_amount' => $disbursement->transaction?->total_amount,
                 'total_amount_label' => $this->moneyLabel((int) $disbursement->transaction?->total_amount),
             ],
+            'requested_at' => $disbursement->created_at?->toDateString(),
+            'requested_at_label' => $disbursement->created_at
+                ? CarbonImmutable::instance($disbursement->created_at)->locale('id')->translatedFormat('j M Y')
+                : null,
             'buyer_payment_confirmed_at' => $disbursement->buyer_payment_confirmed_at?->toIso8601String(),
             'disbursed_at' => $disbursement->disbursed_at?->toIso8601String(),
         ];
+    }
+
+    private function statusLabel(string $status): string
+    {
+        return match ($status) {
+            FinanceTransactionDisbursement::STATUS_DISBURSED_TO_SELLER => 'Berhasil',
+            FinanceTransactionDisbursement::STATUS_BUYER_PAYMENT_CONFIRMED => 'Diproses',
+            default => 'Pengajuan',
+        };
+    }
+
+    private function maskAccountNumber(?string $accountNumber): ?string
+    {
+        if (! $accountNumber) {
+            return null;
+        }
+
+        return substr($accountNumber, 0, 7).'xxx';
     }
 
     private function moneyLabel(int $amount): string
