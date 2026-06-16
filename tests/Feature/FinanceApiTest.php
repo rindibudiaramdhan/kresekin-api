@@ -203,6 +203,34 @@ class FinanceApiTest extends TestCase
             ->assertJsonPath('data.rejection.rejected_by.id', $finance->id);
     }
 
+    public function test_finance_can_view_dummy_seller_transaction_submissions_with_pagination_and_filters(): void
+    {
+        [, $token] = $this->createAuthenticatedUser('finance-seller-submissions@example.com', '+6281400000011', 'finance-seller-submissions-token', User::ROLE_FINANCE);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/finance/seller-transaction-submissions?per_page=5&page=1')
+            ->assertOk()
+            ->assertJsonPath('message', 'Daftar transaksi pengajuan seller berhasil diambil.')
+            ->assertJsonPath('data.0.id', 'WD-20230914-0042')
+            ->assertJsonPath('data.0.store.name', 'Budi Sentosa Sembako Jaya')
+            ->assertJsonPath('data.0.bank.name', 'BCA')
+            ->assertJsonPath('data.0.bank.account_number_masked', '8830129xxx')
+            ->assertJsonPath('data.0.amount_label', 'Rp 5.200.456')
+            ->assertJsonPath('data.0.status_label', 'Berhasil')
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.per_page', 5)
+            ->assertJsonPath('meta.total', 24)
+            ->assertJsonPath('meta.last_page', 5)
+            ->assertJsonCount(5, 'data');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/finance/seller-transaction-submissions?search=Santi&status=requested&date_from=2026-02-01&date_to=2026-02-28')
+            ->assertOk()
+            ->assertJsonPath('data.0.store.name', 'Santi Organik Mart')
+            ->assertJsonPath('data.0.status', 'requested')
+            ->assertJsonPath('meta.total', 1);
+    }
+
     public function test_finance_commission_withdrawal_mutations_validate_status_reason_and_role(): void
     {
         [, $financeToken] = $this->createAuthenticatedUser('finance-validation@example.com', '+6281400000009', 'finance-validation-token', User::ROLE_FINANCE);

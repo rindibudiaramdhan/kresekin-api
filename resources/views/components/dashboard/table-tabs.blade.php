@@ -56,7 +56,7 @@
 <div {{ $attributes->class(['table-tabs']) }} role="tablist">
     @foreach ($tabs as $tab)
         @php($isActive = ($active ?? array_key_first($tabs)) === $tab['key'])
-        <button class="table-tabs__item @if ($isActive) is-active @endif" type="button" role="tab" aria-selected="{{ $isActive ? 'true' : 'false' }}">
+        <button class="table-tabs__item @if ($isActive) is-active @endif" type="button" role="tab" aria-selected="{{ $isActive ? 'true' : 'false' }}" data-table-tab="{{ $tab['key'] }}">
             <span class="table-tabs__icon" aria-hidden="true">
                 @if (($tab['icon'] ?? '') === 'agent')
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">

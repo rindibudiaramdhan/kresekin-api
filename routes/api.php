@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\GetCartController;
 use App\Http\Controllers\Api\GetDeliveryMethodsController;
 use App\Http\Controllers\Api\GetFinanceCancellationReasonCategoryListController;
 use App\Http\Controllers\Api\GetFinanceDashboardController;
+use App\Http\Controllers\Api\GetFinanceSellerTransactionSubmissionListController;
 use App\Http\Controllers\Api\GetFinanceTransactionDetailController;
 use App\Http\Controllers\Api\GetFinanceTransactionListController;
 use App\Http\Controllers\Api\GetHousingAreaListController;
@@ -166,6 +167,7 @@ Route::middleware(['session.token', 'role:finance'])->prefix('finance')->group(f
     Route::patch('/commission-withdrawals/{id}/approve', [FinanceCommissionWithdrawalController::class, 'approve']);
     Route::patch('/commission-withdrawals/{id}/reject', [FinanceCommissionWithdrawalController::class, 'reject']);
     Route::patch('/commission-withdrawals/{id}/mark-as-paid', [FinanceCommissionWithdrawalController::class, 'markAsPaid']);
+    Route::get('/seller-transaction-submissions', GetFinanceSellerTransactionSubmissionListController::class);
     Route::get('/transactions', GetFinanceTransactionListController::class);
     Route::get('/transactions/{id}', GetFinanceTransactionDetailController::class);
     Route::patch('/transactions/{id}/confirm-buyer-payment', ConfirmFinanceBuyerPaymentController::class);

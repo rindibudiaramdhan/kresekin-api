@@ -276,7 +276,7 @@
         }
 
         .finance-table td {
-            height: 72px;
+            height: 112px;
             border-top: 1px solid #edf0f5;
             padding: 0 28px;
             color: #151922;
@@ -597,7 +597,7 @@
 
                 <section class="finance-table-card is-loading" data-finance-table-card aria-label="Transaksi pencairan" aria-busy="true">
                     <x-dashboard.table-tabs
-                        active="agent"
+                        active="seller"
                         :tabs="[
                             ['key' => 'seller', 'label' => 'Transaksi Seller', 'icon' => 'seller'],
                             ['key' => 'agent', 'label' => 'Transaksi Agent', 'icon' => 'agent'],
@@ -606,10 +606,10 @@
 
                     <div class="finance-table-card__scroll">
                         <table class="finance-table">
-                            <thead>
+                            <thead data-finance-table-head>
                                 <tr>
                                     <th>ID Transaksi</th>
-                                    <th>Nama Agent</th>
+                                    <th>Nama UMKM</th>
                                     <th>Bank Tujuan</th>
                                     <th>Nominal</th>
                                     <th>Tanggal<br>Pengajuan</th>
@@ -694,12 +694,14 @@
             };
             const state = {
                 page: 1,
-                perPage: 10,
+                perPage: 5,
+                tab: 'seller',
             };
             let pendingRow = null;
             let activeModal = null;
 
             const tableCard = document.querySelector('[data-finance-table-card]');
+            const tableHead = document.querySelector('[data-finance-table-head]');
             const tableBody = document.querySelector('[data-finance-transactions]');
             const errorBox = document.querySelector('[data-finance-error]');
             const filterBar = document.querySelector('[data-finance-filter]');
@@ -860,6 +862,43 @@
                     rejectedBy: valueFrom(item.rejection?.rejected_by?.name, ''),
                 };
             };
+            const mapSellerSubmission = (item) => {
+                const status = statusFromApi(item.status);
+                const bankName = valueFrom(item.bank?.name, '-');
+                const bankAccount = valueFrom(item.bank?.account_number_masked, '');
+
+                return {
+                    id: valueFrom(item.id, '-'),
+                    agent: valueFrom(item.store?.name, '-'),
+                    bank: [bankName, bankAccount].filter((part) => part && part !== '-').join(' - ') || '-',
+                    nominal: valueFrom(item.amount_label, '-'),
+                    date: valueFrom(item.requested_at_label, '-'),
+                    status,
+                    statusLabel: valueFrom(item.status_label, 'Pengajuan'),
+                    rejectionReason: '',
+                    rejectedAt: '',
+                    rejectedBy: '',
+                };
+            };
+            const renderTableHeader = () => {
+                if (!tableHead) {
+                    return;
+                }
+
+                const nameColumn = state.tab === 'seller' ? 'Nama UMKM' : 'Nama Agent';
+
+                tableHead.innerHTML = `
+                    <tr>
+                        <th>ID Transaksi</th>
+                        <th>${nameColumn}</th>
+                        <th>Bank Tujuan</th>
+                        <th>Nominal</th>
+                        <th>Tanggal<br>Pengajuan</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                `;
+            };
             const renderMetric = (key, value) => {
                 const card = document.querySelector(`[data-finance-metric="${key}"]`);
                 const target = card?.querySelector('.metric-card__value');
@@ -874,6 +913,25 @@
                 renderMetric('disbursed', valueFrom(summary?.total_disbursed_label, '-'));
                 renderMetric('pending', valueFrom(summary?.total_pending_label, '-'));
                 renderMetric('withdrawals', valueFrom(summary?.total_withdrawals, 0));
+            };
+            const renderTableLoading = () => {
+                if (!tableBody) {
+                    return;
+                }
+
+                tableCard?.classList.add('is-loading');
+                tableCard?.setAttribute('aria-busy', 'true');
+                tableBody.innerHTML = Array.from({ length: state.perPage }, () => `
+                    <tr class="finance-table__loading-row">
+                        <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
+                        <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
+                        <td><span class="finance-skeleton-line finance-skeleton-line--lg"></span></td>
+                        <td><span class="finance-skeleton-line finance-skeleton-line--md"></span></td>
+                        <td><span class="finance-skeleton-line finance-skeleton-line--sm"></span></td>
+                        <td><span class="finance-skeleton-line finance-skeleton-line--sm"></span></td>
+                        <td><span class="finance-skeleton-line finance-skeleton-line--sm"></span></td>
+                    </tr>
+                `).join('');
             };
             const renderRows = (rows) => {
                 if (!tableBody) {
@@ -901,7 +959,7 @@
                         <td><span class="finance-table__money">${escapeHtml(row.nominal)}</span></td>
                         <td>${escapeHtml(row.date)}</td>
                         <td class="finance-table__status-cell"><span class="status-badge status-badge--${escapeHtml(row.status)}">${escapeHtml(row.statusLabel)}</span></td>
-                        <td class="finance-table__actions-cell">${actionFor(row.status)}</td>
+                        <td class="finance-table__actions-cell">${state.tab === 'agent' ? actionFor(row.status) : ''}</td>
                     </tr>
                 `).join('');
             };
@@ -971,20 +1029,40 @@
 
                 return params;
             };
-            const loadFinancePage = async () => {
+            const setActiveTab = (tab) => {
+                state.tab = tab;
+                state.page = 1;
+                state.perPage = tab === 'seller' ? 5 : 10;
+
+                document.querySelectorAll('[data-table-tab]').forEach((button) => {
+                    const isActive = button.dataset.tableTab === tab;
+
+                    button.classList.toggle('is-active', isActive);
+                    button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                });
+            };
+            const loadFinancePage = async ({ showSellerTableLoading = false } = {}) => {
                 clearError();
                 setControlsDisabled(true);
+                renderTableHeader();
+                if (showSellerTableLoading && state.tab === 'seller') {
+                    renderTableLoading();
+                }
 
                 try {
-                    const [summaryPayload, withdrawalsPayload] = await Promise.all([
+                    const listUrl = state.tab === 'seller'
+                        ? `/api/finance/seller-transaction-submissions?${queryParams()}`
+                        : `/api/finance/commission-withdrawals?${queryParams()}`;
+                    const [summaryPayload, listPayload] = await Promise.all([
                         fetchJson('/api/finance/commission-withdrawals/summary'),
-                        fetchJson(`/api/finance/commission-withdrawals?${queryParams()}`),
+                        fetchJson(listUrl),
                     ]);
-                    const rows = (Array.isArray(withdrawalsPayload?.data) ? withdrawalsPayload.data : []).map(mapWithdrawal);
+                    const rows = (Array.isArray(listPayload?.data) ? listPayload.data : [])
+                        .map(state.tab === 'seller' ? mapSellerSubmission : mapWithdrawal);
 
                     renderMetrics(summaryPayload?.data || {});
                     renderRows(rows);
-                    renderPagination(withdrawalsPayload?.meta || { total: rows.length });
+                    renderPagination(listPayload?.meta || { total: rows.length });
                     clearLoading(tableCard);
                     clearLoading(filterBar);
                     setControlsDisabled(false);
@@ -1122,6 +1200,18 @@
                 state.page = 1;
                 loadFinancePage();
             });
+            document.querySelectorAll('[data-table-tab]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const tab = button.dataset.tableTab;
+
+                    if (!tab || tab === state.tab) {
+                        return;
+                    }
+
+                    setActiveTab(tab);
+                    loadFinancePage();
+                });
+            });
             pagination?.addEventListener('click', (event) => {
                 const link = event.target.closest('[data-finance-page-link]');
 
@@ -1132,9 +1222,10 @@
 
                 event.preventDefault();
                 state.page = Number(link.dataset.financePageLink || 1);
-                loadFinancePage();
+                loadFinancePage({ showSellerTableLoading: state.tab === 'seller' });
             });
 
+            setActiveTab(state.tab);
             loadFinancePage();
         })();
     </script>
