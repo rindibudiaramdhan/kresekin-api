@@ -959,7 +959,7 @@
                         <td><span class="finance-table__money">${escapeHtml(row.nominal)}</span></td>
                         <td>${escapeHtml(row.date)}</td>
                         <td class="finance-table__status-cell"><span class="status-badge status-badge--${escapeHtml(row.status)}">${escapeHtml(row.statusLabel)}</span></td>
-                        <td class="finance-table__actions-cell">${state.tab === 'agent' ? actionFor(row.status) : ''}</td>
+                        <td class="finance-table__actions-cell">${actionFor(row.status)}</td>
                     </tr>
                 `).join('');
             };
