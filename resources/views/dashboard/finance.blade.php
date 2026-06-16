@@ -998,6 +998,24 @@
                     </a>
                 `;
             };
+            const renderPaginationLoading = () => {
+                const summary = pagination?.querySelector('.dashboard-pagination__summary');
+                const controls = pagination?.querySelector('.dashboard-pagination__controls');
+
+                if (summary) {
+                    summary.textContent = 'Memuat Transaksi Pencairan';
+                }
+
+                if (!controls) {
+                    return;
+                }
+
+                controls.innerHTML = Array.from({ length: 5 }, () => `
+                    <span class="dashboard-pagination__page" aria-disabled="true">
+                        <span class="finance-skeleton-line finance-skeleton-line--sm"></span>
+                    </span>
+                `).join('');
+            };
             const markCurrentPaginationPage = (page) => {
                 pagination?.querySelectorAll('.dashboard-pagination__page').forEach((pageLink) => {
                     const isCurrent = Number(pageLink.dataset.financePageLink || 0) === page;
@@ -1053,12 +1071,15 @@
                     button.setAttribute('aria-selected', isActive ? 'true' : 'false');
                 });
             };
-            const loadFinancePage = async ({ showSellerTableLoading = false } = {}) => {
+            const loadFinancePage = async ({ showTableLoading = false, showPaginationLoading = false } = {}) => {
                 clearError();
                 setControlsDisabled(true);
                 renderTableHeader();
-                if (showSellerTableLoading && state.tab === 'seller') {
+                if (showTableLoading) {
                     renderTableLoading();
+                }
+                if (showPaginationLoading) {
+                    renderPaginationLoading();
                 }
 
                 try {
@@ -1205,12 +1226,12 @@
             });
             filterButton?.addEventListener('click', () => {
                 state.page = 1;
-                loadFinancePage();
+                loadFinancePage({ showTableLoading: true, showPaginationLoading: true });
             });
             filterBar?.addEventListener('submit', (event) => {
                 event.preventDefault();
                 state.page = 1;
-                loadFinancePage();
+                loadFinancePage({ showTableLoading: true, showPaginationLoading: true });
             });
             document.querySelectorAll('[data-table-tab]').forEach((button) => {
                 button.addEventListener('click', () => {
@@ -1221,7 +1242,7 @@
                     }
 
                     setActiveTab(tab);
-                    loadFinancePage();
+                    loadFinancePage({ showTableLoading: true, showPaginationLoading: true });
                 });
             });
             pagination?.addEventListener('click', (event) => {
@@ -1235,7 +1256,7 @@
                 event.preventDefault();
                 state.page = Number(link.dataset.financePageLink || 1);
                 markCurrentPaginationPage(state.page);
-                loadFinancePage({ showSellerTableLoading: state.tab === 'seller' });
+                loadFinancePage({ showTableLoading: state.tab === 'seller' });
             });
 
             setActiveTab(state.tab);
