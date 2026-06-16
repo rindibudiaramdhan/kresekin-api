@@ -978,7 +978,7 @@
 
                 <p class="register-copy">
                     Belum punya akun?
-                    <a href="mailto:admin@kresek.in?subject=Bantuan%20Akses%20Kresek.in">Hubungi administrator</a>
+                    <a href="{{ route('agent.register') }}">Daftar sebagai Agent</a>
                 </p>
 
                 <p class="copyright">&copy; {{ now()->year }} Kresek.in. All rights reserved.</p>

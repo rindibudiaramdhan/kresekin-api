@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\AgentRegistrationController;
 use App\Http\Controllers\Web\SellerAuthController;
 use App\Http\Controllers\Web\SellerDashboardController;
 use App\Http\Controllers\Web\SellerProductController;
@@ -12,6 +13,10 @@ Route::get('/', function () {
 Route::get('/login', function () {
     return redirect('/');
 })->name('login');
+
+Route::get('/agent/register', [AgentRegistrationController::class, 'create'])->name('agent.register');
+Route::post('/agent/register', [AgentRegistrationController::class, 'store'])->middleware('throttle:5,1')->name('agent.register.store');
+Route::get('/agent/verify-otp', [AgentRegistrationController::class, 'verifyOtp'])->name('agent.register.verify-otp');
 
 Route::view('/agent/dashboard', 'dashboard.index', [
     'title' => 'Agent Dashboard',

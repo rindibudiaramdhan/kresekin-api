@@ -33,6 +33,11 @@ use Illuminate\Notifications\Notifiable;
     'bank_account_name',
     'bank_account_number',
     'identity_document_path',
+    'terms_accepted_at',
+    'terms_version',
+    'privacy_accepted_at',
+    'agent_verification_status',
+    'agent_verified_at',
 ])]
 #[Hidden(['password', 'remember_token', 'otp_code'])]
 class User extends Authenticatable
@@ -48,6 +53,14 @@ class User extends Authenticatable
     public const ROLE_FINANCE = 'finance';
 
     public const ROLE_AGENT = 'agent';
+
+    public const AGENT_VERIFICATION_PENDING_REVIEW = 'pending_review';
+
+    public const AGENT_VERIFICATION_APPROVED = 'approved';
+
+    public const AGENT_VERIFICATION_REJECTED = 'rejected';
+
+    public const AGENT_REGISTRATION_TERMS_VERSION = 'agent-registration-v1';
 
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasUuids, Notifiable;
@@ -84,6 +97,9 @@ class User extends Authenticatable
             'otp_sent_at' => 'datetime',
             'latitude' => 'float',
             'longitude' => 'float',
+            'terms_accepted_at' => 'datetime',
+            'privacy_accepted_at' => 'datetime',
+            'agent_verified_at' => 'datetime',
         ];
     }
 
