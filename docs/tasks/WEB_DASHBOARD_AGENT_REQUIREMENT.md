@@ -488,7 +488,7 @@ Payload row target:
 ```json
 {
   "id": "uuid",
-  "display_id": "UMKM-1015",
+  "display_id": "uuid",
   "name": "Sembako Tetangga",
   "initials": "ST",
   "category": "Retail",
@@ -500,7 +500,7 @@ Payload row target:
   "agent_commission_label": "Rp 0",
   "status": "pending_activation",
   "status_label": "Menunggu Aktivasi",
-  "detail_url": "/agent/umkm/{id}"
+  "detail_url": null
 }
 ```
 
@@ -565,7 +565,7 @@ Gunakan:
 
 ```http
 GET /api/agent/dashboard?period=monthly
-GET /api/agent/managed-umkm?period=monthly&search=&status=&page=1&per_page=10
+GET /api/agent/managed-umkm?period=monthly&search=&page=1&per_page=10
 ```
 
 Kelebihan:
@@ -596,7 +596,7 @@ Tanggung jawab:
 - Query tenant binaan current agent.
 - Apply period.
 - Apply search.
-- Apply filter status/kategori jika diperlukan.
+- Apply search/filter nama UMKM sesuai keputusan MVP.
 - Return paginator.
 - Map row response table.
 
@@ -666,7 +666,7 @@ Response target:
 ### 2. Managed UMKM Performance Table
 
 ```http
-GET /api/agent/managed-umkm?period=monthly&search=kopi&status=active&page=1&per_page=10
+GET /api/agent/managed-umkm?period=monthly&search=kopi&page=1&per_page=10
 Authorization: Bearer {token}
 ```
 
@@ -678,7 +678,7 @@ Response target:
   "data": [
     {
       "id": "uuid",
-      "display_id": "UMKM-0822",
+      "display_id": "uuid",
       "name": "Kopi Bersaudara",
       "initials": "KB",
       "category": "Minuman",
@@ -750,16 +750,13 @@ Response target:
 
 6. Search:
    - Debounce 300ms or search on Enter.
-   - Search by UMKM name and display ID.
+   - Search by UMKM name.
    - Empty result shows `Data tidak ditemukan`.
 
 7. Filter:
    - Button exists in UI.
-   - Filter options need decision:
-     - status
-     - category
-     - area
-   - Minimum MVP can open no modal yet only if owner accepts. Better: include status/category dropdown.
+   - MVP filter/search berdasarkan nama UMKM.
+   - Status, category, dan area tidak masuk scope filter MVP.
 
 8. Pagination:
    - Uses API `meta` and `links`.
@@ -858,14 +855,14 @@ Need decision:
 
 ### Phase 0 - Confirmation
 
-- [ ] Confirm endpoint strategy: extend dashboard only or add table endpoint.
-- [ ] Confirm period definition: calendar `monthly/weekly` or rolling range.
-- [ ] Confirm chart metric: transaction count or revenue.
-- [ ] Confirm date picker scope: display-only MVP or selectable date range.
-- [ ] Confirm filter options: status, category, area, or none for MVP.
-- [ ] Confirm UMKM status definition.
-- [ ] Confirm whether `View Details` route is in scope.
-- [ ] Confirm whether page route can remain client-side token protected for MVP.
+- [x] Confirm endpoint strategy: add table endpoint `GET /api/agent/managed-umkm`.
+- [x] Confirm period definition: calendar `monthly/weekly` in timezone `Asia/Jakarta`.
+- [x] Confirm chart metric: transaction count.
+- [x] Confirm date picker scope: display-only MVP.
+- [x] Confirm filter options: UMKM name only.
+- [x] Confirm UMKM status definition: derived from product/transaction activity.
+- [x] Confirm whether `View Details` route is in scope: out of scope, show disabled/null first.
+- [x] Confirm whether page route can remain client-side token protected for MVP.
 
 ### Phase 1 - Backend
 
@@ -877,8 +874,7 @@ Need decision:
 - [ ] If Opsi B approved, add endpoint `GET /api/agent/managed-umkm`.
 - [ ] If Opsi B approved, add controller for managed UMKM performance.
 - [ ] If Opsi B approved, add query/service class for table rows.
-- [ ] Add search support for UMKM name and display ID.
-- [ ] Add filter support based on confirmed filter options.
+- [ ] Add search/filter support for UMKM name.
 - [ ] Add pagination metadata.
 
 ### Phase 2 - Frontend
@@ -988,6 +984,28 @@ Jika development sudah diapprove, file yang kemungkinan perlu dibuat/diubah:
 7. Link `View Details` diarahkan ke halaman detail UMKM dalam scope ini, atau cukup nonaktif/null dulu?
 8. Apakah proteksi route web berbasis `localStorage` seperti existing portal sudah diterima untuk MVP, atau perlu migrasi ke session-auth web guard?
 
+## Keputusan Owner
+
+Keputusan ini dicatat berdasarkan konfirmasi owner sebelum development. Semua implementasi harus mengikuti keputusan berikut kecuali ada perubahan keputusan eksplisit.
+
+1. Endpoint table dibuat baru sebagai `GET /api/agent/managed-umkm`.
+2. Period `Monthly` dan `Weekly` memakai calendar period di timezone `Asia/Jakarta`.
+   - `monthly`: bulan berjalan.
+   - `weekly`: minggu berjalan, Senin sampai Minggu.
+3. Bar chart `Pertumbuhan Transaksi` menampilkan jumlah transaksi.
+4. Date range picker untuk MVP cukup display-only, mengikuti range dari period aktif.
+5. Filter/search table berdasarkan nama UMKM.
+   - Filter status, kategori, dan area tidak masuk scope MVP.
+6. Status UMKM memakai derived status dari aktivitas produk/transaksi.
+   - `active`: tenant punya produk aktif atau completed transaction.
+   - `pending_activation`: tenant belum punya produk aktif dan belum punya completed transaction.
+7. Link `View Details` tidak masuk scope sekarang.
+   - Tampilkan disabled/null terlebih dahulu.
+8. Proteksi route web tetap memakai pola existing berbasis token `localStorage` untuk MVP.
+9. ID UMKM pada table menampilkan ID table/database tenant untuk saat ini.
+   - Belum memakai format display ID khusus seperti `UMKM-1015`.
+10. Growth ketika previous period `0` dan current period lebih besar dari `0` memakai nilai API `100.0`, tetapi label UI menampilkan `Baru`.
+
 ## Rekomendasi Scope MVP
 
 Rekomendasi scope paling aman untuk tahap pertama:
@@ -998,7 +1016,9 @@ Rekomendasi scope paling aman untuk tahap pertama:
 - Period memakai `monthly` dan `weekly` berbasis calendar di timezone `Asia/Jakarta`.
 - Chart memakai jumlah transaksi.
 - Date range picker display-only dulu.
-- Filter MVP: status dan kategori.
+- Filter/search MVP: nama UMKM.
 - `View Details` tampil tetapi disabled/null sampai halaman detail UMKM diputuskan.
+- ID UMKM pada table memakai ID table/database tenant untuk saat ini.
+- Growth dari previous period `0` ke current period lebih besar dari `0` ditampilkan sebagai `Baru` di UI.
 
-Semua rekomendasi di atas tetap menunggu persetujuan owner sebelum development.
+Keputusan owner sudah dicatat. Development tetap menunggu approval eksplisit.
