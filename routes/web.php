@@ -18,10 +18,11 @@ Route::get('/agent/register', [AgentRegistrationController::class, 'create'])->n
 Route::post('/agent/register', [AgentRegistrationController::class, 'store'])->middleware('throttle:5,1')->name('agent.register.store');
 Route::get('/agent/verify-otp', [AgentRegistrationController::class, 'verifyOtp'])->name('agent.register.verify-otp');
 
-Route::view('/agent/dashboard', 'dashboard.index', [
-    'title' => 'Agent Dashboard',
-    'headerTitle' => 'Agent Views',
-    'userName' => 'Agent Administrator',
+Route::view('/agent/dashboard', 'dashboard.agent', [
+    'title' => 'Dashboard Agent',
+    'headerTitle' => 'Laporan Performa',
+    'panelLabel' => 'Agent Panel',
+    'userName' => 'Agent',
     'role' => 'agent',
     'active' => 'dashboard',
 ])->name('agent.dashboard');

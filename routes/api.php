@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\DisburseFinanceTransactionController;
 use App\Http\Controllers\Api\FinanceCommissionWithdrawalController;
 use App\Http\Controllers\Api\GetAgentCommissionWithdrawalListController;
 use App\Http\Controllers\Api\GetAgentDashboardController;
+use App\Http\Controllers\Api\GetAgentManagedUmkmPerformanceController;
 use App\Http\Controllers\Api\GetAgentProfileController;
 use App\Http\Controllers\Api\GetAgentSellerDetailController;
 use App\Http\Controllers\Api\GetAgentSellerListController;
@@ -151,6 +152,7 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
 
 Route::middleware(['session.token', 'role:agent'])->prefix('agent')->group(function (): void {
     Route::get('/dashboard', GetAgentDashboardController::class);
+    Route::get('/managed-umkm', GetAgentManagedUmkmPerformanceController::class);
     Route::get('/sellers', GetAgentSellerListController::class);
     Route::get('/sellers/{sellerId}', GetAgentSellerDetailController::class);
     Route::get('/profile', GetAgentProfileController::class);

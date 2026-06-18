@@ -28,6 +28,7 @@ class AgentDashboardAggregator
             ->get();
 
         $transactionCount = $this->transactionCount($agent->id);
+        $transactionTrend = $this->transactionTrend($agent->id, $period);
         $sellerCount = $tenants->pluck('owner_user_id')->filter()->unique()->count();
         $recentTransactions = Transaction::query()
             ->with(['items.tenant', 'user'])
@@ -46,7 +47,8 @@ class AgentDashboardAggregator
                 'phone' => $agent->phone,
             ],
             'summary' => $this->summary($agent->id, $summary, $period),
-            'transaction_trend' => $this->transactionTrend($agent->id, $period),
+            'transaction_trend' => $transactionTrend,
+            'transaction_growth' => $transactionTrend,
             'umkm_spotlight' => $this->umkmSpotlight($tenants, $period),
             'top_agent_commissions' => [],
             'top_umkm_commissions' => $this->topUmkmCommissions($tenants),
@@ -77,6 +79,12 @@ class AgentDashboardAggregator
         $previousRevenue = $this->completedRevenueForAgent($agentId, $period->previousStart, $period->previousEnd);
         $currentOrders = $this->transactionCount($agentId, $period->start, $period->end);
         $previousOrders = $this->transactionCount($agentId, $period->previousStart, $period->previousEnd);
+        $currentCommission = $this->calculator->commissionFromRevenue($currentRevenue);
+        $previousCommission = $this->calculator->commissionFromRevenue($previousRevenue);
+        $managedUmkm = Tenant::query()
+            ->where('agent_user_id', $agentId)
+            ->count();
+        $managedAreas = $this->managedAreaCount($agentId);
         $activeUmkm = Tenant::query()
             ->where('agent_user_id', $agentId)
             ->whereHas('products')
@@ -84,10 +92,27 @@ class AgentDashboardAggregator
 
         return [
             ...$this->withMoneyLabels($commissionSummary),
+            'total_commission' => [
+                'value' => (int) $commissionSummary['total_commission'],
+                'formatted' => $this->formatter->money((int) $commissionSummary['total_commission']),
+                'growth_percentage' => $this->formatter->growthPercentage($currentCommission, $previousCommission),
+            ],
             'total_umkm_revenue' => [
                 'value' => $currentRevenue,
                 'formatted' => $this->formatter->money($currentRevenue),
                 'growth_percentage' => $this->formatter->growthPercentage($currentRevenue, $previousRevenue),
+            ],
+            'total_managed_umkm_transaction_amount' => [
+                'value' => $currentRevenue,
+                'formatted' => $this->formatter->money($currentRevenue),
+            ],
+            'total_managed_umkm' => [
+                'value' => $managedUmkm,
+                'formatted' => $this->formatter->number($managedUmkm).' Toko',
+            ],
+            'total_managed_areas' => [
+                'value' => $managedAreas,
+                'formatted' => $this->formatter->number($managedAreas).' Area',
             ],
             'total_orders' => [
                 'value' => $currentOrders,
@@ -107,6 +132,7 @@ class AgentDashboardAggregator
         $points = $period->emptyTrendPoints();
         $transactions = Transaction::query()
             ->with('items.tenant')
+            ->where('status', Transaction::STATUS_COMPLETED)
             ->whereBetween('transaction_at', [$period->start, $period->end])
             ->whereHas('items.tenant', fn ($query) => $query->where('agent_user_id', $agentId))
             ->orderBy('transaction_at')
@@ -138,12 +164,22 @@ class AgentDashboardAggregator
     {
         return [
             'active_period' => $period->value,
+            'date_range_label' => $period->dateRangeLabel(),
             'available_periods' => [
-                ['label' => '30 Days', 'value' => '30_days'],
-                ['label' => '90 Days', 'value' => '90_days'],
+                ['label' => 'Monthly', 'value' => 'monthly'],
+                ['label' => 'Weekly', 'value' => 'weekly'],
             ],
             'points' => array_values($points),
         ];
+    }
+
+    private function managedAreaCount(string $agentId): int
+    {
+        return Tenant::query()
+            ->where('agent_user_id', $agentId)
+            ->join('housing_area_tenant', 'tenants.id', '=', 'housing_area_tenant.tenant_id')
+            ->distinct('housing_area_tenant.housing_area_id')
+            ->count('housing_area_tenant.housing_area_id');
     }
 
     private function umkmSpotlight(Collection $tenants, DashboardPeriod $period): array
@@ -307,6 +343,10 @@ class AgentDashboardAggregator
     private function withMoneyLabels(array $summary): array
     {
         foreach (['total_revenue', 'total_commission', 'withdrawn_commission', 'available_commission'] as $key) {
+            if (is_array($summary[$key] ?? null)) {
+                continue;
+            }
+
             $summary[$key.'_label'] = $this->formatter->money((int) $summary[$key]);
         }
 

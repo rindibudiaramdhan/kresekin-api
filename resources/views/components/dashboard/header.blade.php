@@ -1,5 +1,6 @@
 @props([
     'title' => 'Admin Views',
+    'panelLabel' => null,
     'userName' => 'System Administrator',
 ])
 
@@ -40,6 +41,13 @@
             width: 2px;
             height: 32px;
             background: #d5dbe7;
+        }
+
+        .dashboard-header__panel-label {
+            color: #5c667a;
+            font-size: 16px;
+            font-weight: 900;
+            white-space: nowrap;
         }
 
         .dashboard-header__right {
@@ -133,6 +141,9 @@
     <div class="dashboard-header__left">
         <h1 class="dashboard-header__title">{{ $title }}</h1>
         <span class="dashboard-header__divider" aria-hidden="true"></span>
+        @if ($panelLabel)
+            <span class="dashboard-header__panel-label">{{ $panelLabel }}</span>
+        @endif
     </div>
 
     <div class="dashboard-header__right">

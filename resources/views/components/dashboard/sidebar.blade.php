@@ -5,7 +5,6 @@
 
 @php
     $dashboardRoute = $role === 'finance' ? route('finance.dashboard') : route('agent.dashboard');
-    $financeRoute = $role === 'finance' ? route('finance.finance') : route('agent.finance');
     $items = [
         [
             'key' => 'dashboard',
@@ -13,31 +12,38 @@
             'href' => $dashboardRoute,
             'icon' => 'dashboard',
         ],
-        [
+    ];
+
+    if ($role === 'finance') {
+        $items[] = [
             'key' => 'finance',
             'label' => 'Finance',
-            'href' => $financeRoute,
+            'href' => route('finance.finance'),
             'icon' => 'finance',
-        ],
-        [
-            'key' => 'umkm',
-            'label' => 'UMKM Binaan',
-            'href' => '#',
-            'icon' => 'umkm',
-        ],
-        [
-            'key' => 'withdrawals',
-            'label' => 'Pencairan Dana',
-            'href' => '#',
-            'icon' => 'finance',
-        ],
-        [
-            'key' => 'settings',
-            'label' => 'Pengaturan',
-            'href' => '#',
-            'icon' => 'settings',
-        ],
-    ];
+        ];
+    } else {
+        $items = [
+            ...$items,
+            [
+                'key' => 'umkm',
+                'label' => 'UMKM Binaan',
+                'href' => '#',
+                'icon' => 'umkm',
+            ],
+            [
+                'key' => 'withdrawals',
+                'label' => 'Pencairan Dana',
+                'href' => route('agent.finance'),
+                'icon' => 'finance',
+            ],
+            [
+                'key' => 'settings',
+                'label' => 'Pengaturan',
+                'href' => '#',
+                'icon' => 'settings',
+            ],
+        ];
+    }
 @endphp
 
 @once

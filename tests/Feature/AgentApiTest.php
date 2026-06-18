@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AgentCommissionWithdrawal;
+use App\Models\HousingArea;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\Transaction;
@@ -31,8 +32,9 @@ class AgentApiTest extends TestCase
 
         $dashboardResponse
             ->assertOk()
-            ->assertJsonPath('data.summary.total_revenue', 100000)
-            ->assertJsonPath('data.summary.total_commission', 5000)
+            ->assertJsonPath('data.summary.total_commission.value', 5000)
+            ->assertJsonPath('data.summary.total_managed_umkm_transaction_amount.value', 100000)
+            ->assertJsonPath('data.summary.total_managed_umkm.value', 1)
             ->assertJsonPath('data.seller_count', 1)
             ->assertJsonPath('data.stores.0.id', $tenant->id)
             ->assertJsonPath('data.stores.0.name', 'Tenant AGENT001')
@@ -47,6 +49,71 @@ class AgentApiTest extends TestCase
             ->assertJsonPath('data.0.id', $seller->id)
             ->assertJsonPath('data.0.total_revenue', 100000)
             ->assertJsonPath('meta.total', 1);
+    }
+
+    public function test_agent_dashboard_returns_distinct_managed_area_count(): void
+    {
+        [$agent, $token] = $this->createAuthenticatedUser('area-agent@example.com', '+6281300000011', 'area-agent-token', User::ROLE_AGENT);
+        [$seller] = $this->createAuthenticatedUser('area-seller@example.com', '+6281300000012', 'area-seller-token', User::ROLE_SELLER);
+
+        $tenant = $this->createTenantWithCompletedOrder($agent, $seller, 'AREA001', 100000);
+        $areaOne = HousingArea::query()->create([
+            'name' => 'Area Satu',
+            'code' => 'A1',
+            'city' => 'Bandung',
+            'district' => 'Antapani',
+            'subdistrict' => 'Antapani Wetan',
+            'village_code' => '3273010001',
+        ]);
+        $areaTwo = HousingArea::query()->create([
+            'name' => 'Area Dua',
+            'code' => 'A2',
+            'city' => 'Bandung',
+            'district' => 'Antapani',
+            'subdistrict' => 'Antapani Wetan',
+            'village_code' => '3273010001',
+        ]);
+        $tenant->housingAreas()->attach([$areaOne->id, $areaTwo->id]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/agent/dashboard?period=monthly')
+            ->assertOk()
+            ->assertJsonPath('data.summary.total_managed_areas.value', 2)
+            ->assertJsonPath('data.summary.total_managed_areas.formatted', '2 Area');
+    }
+
+    public function test_agent_can_search_and_paginate_managed_umkm_performance(): void
+    {
+        [$agent, $token] = $this->createAuthenticatedUser('managed-agent@example.com', '+6281300000013', 'managed-agent-token', User::ROLE_AGENT);
+        [$otherAgent] = $this->createAuthenticatedUser('managed-other-agent@example.com', '+6281300000014', 'managed-other-token', User::ROLE_AGENT);
+        [$seller] = $this->createAuthenticatedUser('managed-seller@example.com', '+6281300000015', 'managed-seller-token', User::ROLE_SELLER);
+        [$otherSeller] = $this->createAuthenticatedUser('managed-other-seller@example.com', '+6281300000016', 'managed-other-seller-token', User::ROLE_SELLER);
+
+        $alpha = $this->createTenantWithCompletedOrder($agent, $seller, 'ALPHA001', 200000);
+        $this->createTenantWithCompletedOrder($agent, $seller, 'BETA001', 100000);
+        $this->createTenantWithCompletedOrder($otherAgent, $otherSeller, 'ALPHA999', 999000);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/agent/managed-umkm?period=monthly&search=ALPHA&page=1&per_page=1')
+            ->assertOk()
+            ->assertJsonPath('message', 'Performa UMKM binaan berhasil diambil.')
+            ->assertJsonPath('data.0.id', $alpha->id)
+            ->assertJsonPath('data.0.total_transaction_amount', 200000)
+            ->assertJsonPath('data.0.agent_commission', 10000)
+            ->assertJsonPath('data.0.growth_label', 'Baru')
+            ->assertJsonPath('data.0.status', 'active')
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('meta.per_page', 1);
+    }
+
+    public function test_non_agent_cannot_access_managed_umkm_performance(): void
+    {
+        [, $token] = $this->createAuthenticatedUser('buyer-managed@example.com', '+6281300000017', 'buyer-managed-token', User::ROLE_BUYER);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/agent/managed-umkm')
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh pengguna dengan role agent.');
     }
 
     public function test_agent_cannot_view_seller_outside_scope(): void
@@ -144,7 +211,7 @@ class AgentApiTest extends TestCase
         $buyer = User::query()->create([
             'name' => 'Buyer '.$orderNumber,
             'email' => 'buyer-'.strtolower($orderNumber).'@example.com',
-            'phone' => '+628139'.substr(preg_replace('/\D/', '', $orderNumber), -4),
+            'phone' => '+628139'.substr((string) abs(crc32($orderNumber)), 0, 8),
             'type' => User::AUTH_TYPE_PHONE,
             'role' => User::ROLE_BUYER,
             'password' => null,
