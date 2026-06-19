@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kresek.in - Palette Options</title>
+<style>
+  :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  body { margin: 0; background: #EEF4F4; color: #102A2E; padding: 28px; }
+  h1 { font-size: 22px; margin: 0 0 2px; }
+  p.lead { color: #537177; margin: 0 0 24px; font-size: 14px; max-width: 880px; line-height: 1.55; }
+  .opt { margin-bottom: 30px; }
+  .opt > h2 { font-size: 15px; margin: 0 0 2px; }
+  .meta { font-size: 12px; color: #6D858A; margin: 0 0 10px; }
+  .swatches { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .sw { width: 30px; height: 30px; border-radius: 7px; border: 1px solid rgba(0,0,0,.1); }
+  .panes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .app { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px; position: relative; overflow: hidden; }
+  .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .brand { font-size: 15px; font-weight: 800; color: var(--text); }
+  .brand small { font-weight: 800; color: var(--accent); }
+  .btn { margin-left: auto; background: var(--primary); color: var(--on-primary); border: 0; font: 700 12px Inter, sans-serif; padding: 7px 12px; border-radius: 8px; }
+  .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 9px; min-width: 0; }
+  .metric b { display: block; color: var(--text); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .metric span { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; margin-bottom: 7px; min-width: 0; }
+  .title { color: var(--text); font-size: 13px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .num { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pill { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: var(--primary); background: color-mix(in srgb, var(--primary) 15%, transparent); white-space: nowrap; }
+  .badge { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 6px; white-space: nowrap; }
+  .badge.ok { background: #DCFCE7; color: #15803D; }
+  .badge.warn { background: #FEF3C7; color: #B45309; }
+  .badge.danger { background: #FEE2E2; color: #B91C1C; }
+  .dark .badge.ok { background: rgba(74,222,128,.18); color: #86EFAC; }
+  .dark .badge.warn { background: rgba(251,191,36,.18); color: #FDE68A; }
+  .dark .badge.danger { background: rgba(248,113,113,.18); color: #FCA5A5; }
+  .tag { position: absolute; top: 10px; right: 12px; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  svg { flex: 0 0 auto; }
+</style>
+</head>
+<body>
+  <h1>Kresek.in - Palette Options</h1>
+  <p class="lead"><strong>Default: Fresh Market Cyan.</strong> Palette disiapkan untuk dashboard seller, agent, finance, dan form agent registration. Status badge tetap konsisten lintas palette agar makna operasional tidak berubah.</p>
+
+  <div class="opt">
+    <h2>1 - Fresh Market Cyan <em>(default)</em></h2>
+    <div class="meta">Cyan brand utama, lime sebagai aksen sehat/segar, amber untuk "in" dan warning.</div>
+    <div class="swatches"><div class="sw" style="background:#11BEC8"></div><div class="sw" style="background:#C7EF4F"></div><div class="sw" style="background:#FFB000"></div><div class="sw" style="background:#102A2E"></div><div class="sw" style="background:#D9E7E7"></div><div class="sw" style="background:#F4F8F8"></div></div>
+    <div class="panes">
+      <div class="app" style="--bg:#F4F8F8;--surface:#FFFFFF;--text:#102A2E;--muted:#607D82;--border:#D9E7E7;--primary:#11BEC8;--accent:#FFB000;--on-primary:#FFFFFF"><span class="tag">light</span>
+        <div class="topbar"><svg width="28" height="28" viewBox="0 0 64 64"><rect x="10" y="15" width="44" height="42" rx="10" fill="#11BEC8"/><path d="M22 24c0-8 4-13 10-13s10 5 10 13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M21 36c5 7 17 7 22 0" fill="none" stroke="#C7EF4F" stroke-width="5" stroke-linecap="round"/></svg><span class="brand">kresek.<small>in</small></span><button class="btn">Approve</button></div>
+        <div class="metrics"><div class="metric"><b>Rp 18,4 jt</b><span>Revenue UMKM</span></div><div class="metric"><b>142</b><span>Pesanan</span></div><div class="metric"><b>36</b><span>UMKM aktif</span></div></div>
+        <div class="row"><span class="badge ok">Paid</span><span class="title">Komisi Agent - KA-12003</span><span class="num">Rp 540.000</span><span class="pill">Done</span></div>
+        <div class="row"><span class="badge warn">Pending</span><span class="title">Withdrawal menunggu review</span><span class="num">2 hari</span><span class="pill">Review</span></div>
+        <div class="row"><span class="badge danger">Rejected</span><span class="title">Rekening tidak valid</span><span class="num">AGT-009</span><span class="pill">Fix</span></div>
+      </div>
+      <div class="app dark" style="--bg:#0B2F36;--surface:#123F47;--text:#EAFBFC;--muted:#A8D9DE;--border:#19515B;--primary:#25D5DE;--accent:#FFD166;--on-primary:#083038"><span class="tag">dark</span>
+        <div class="topbar"><svg width="28" height="28" viewBox="0 0 64 64"><rect x="10" y="15" width="44" height="42" rx="10" fill="#25D5DE"/><path d="M22 24c0-8 4-13 10-13s10 5 10 13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M21 36c5 7 17 7 22 0" fill="none" stroke="#D8F75A" stroke-width="5" stroke-linecap="round"/></svg><span class="brand">kresek.<small>in</small></span><button class="btn">Approve</button></div>
+        <div class="metrics"><div class="metric"><b>Rp 18,4 jt</b><span>Revenue UMKM</span></div><div class="metric"><b>142</b><span>Pesanan</span></div><div class="metric"><b>36</b><span>UMKM aktif</span></div></div>
+        <div class="row"><span class="badge ok">Paid</span><span class="title">Komisi Agent - KA-12003</span><span class="num">Rp 540.000</span><span class="pill">Done</span></div>
+        <div class="row"><span class="badge warn">Pending</span><span class="title">Withdrawal menunggu review</span><span class="num">2 hari</span><span class="pill">Review</span></div>
+        <div class="row"><span class="badge danger">Rejected</span><span class="title">Rekening tidak valid</span><span class="num">AGT-009</span><span class="pill">Fix</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <h2>2 - Citrus Grocery</h2>
+    <div class="meta">Lebih hangat untuk buyer/seller commerce, tetap memakai cyan sebagai brand anchor.</div>
+    <div class="swatches"><div class="sw" style="background:#0EA5A8"></div><div class="sw" style="background:#84CC16"></div><div class="sw" style="background:#F59E0B"></div><div class="sw" style="background:#1F2933"></div><div class="sw" style="background:#E7F3E8"></div><div class="sw" style="background:#FFFDF5"></div></div>
+    <div class="panes">
+      <div class="app" style="--bg:#FFFDF5;--surface:#FFFFFF;--text:#1F2933;--muted:#667085;--border:#E6E2D8;--primary:#0EA5A8;--accent:#F59E0B;--on-primary:#FFFFFF"><span class="tag">light</span>
+        <div class="topbar"><svg width="28" height="28" viewBox="0 0 64 64"><rect x="10" y="15" width="44" height="42" rx="10" fill="#0EA5A8"/><path d="M22 24c0-8 4-13 10-13s10 5 10 13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M21 36c5 7 17 7 22 0" fill="none" stroke="#84CC16" stroke-width="5" stroke-linecap="round"/></svg><span class="brand">kresek.<small>in</small></span><button class="btn">Kirim</button></div>
+        <div class="metrics"><div class="metric"><b>Rp 9,8 jt</b><span>Penjualan</span></div><div class="metric"><b>78</b><span>Order</span></div><div class="metric"><b>12</b><span>Produk top</span></div></div>
+        <div class="row"><span class="badge ok">Selesai</span><span class="title">Pesanan sayur pagi</span><span class="num">#KS-1042</span><span class="pill">Detail</span></div>
+        <div class="row"><span class="badge warn">Proses</span><span class="title">Menunggu konfirmasi toko</span><span class="num">#KS-1043</span><span class="pill">Cek</span></div>
+      </div>
+      <div class="app dark" style="--bg:#17211B;--surface:#223127;--text:#F5FBEF;--muted:#B7C8B7;--border:#334638;--primary:#48C9C9;--accent:#FDBA3B;--on-primary:#102A2E"><span class="tag">dark</span>
+        <div class="topbar"><svg width="28" height="28" viewBox="0 0 64 64"><rect x="10" y="15" width="44" height="42" rx="10" fill="#48C9C9"/><path d="M22 24c0-8 4-13 10-13s10 5 10 13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M21 36c5 7 17 7 22 0" fill="none" stroke="#A3E635" stroke-width="5" stroke-linecap="round"/></svg><span class="brand">kresek.<small>in</small></span><button class="btn">Kirim</button></div>
+        <div class="metrics"><div class="metric"><b>Rp 9,8 jt</b><span>Penjualan</span></div><div class="metric"><b>78</b><span>Order</span></div><div class="metric"><b>12</b><span>Produk top</span></div></div>
+        <div class="row"><span class="badge ok">Selesai</span><span class="title">Pesanan sayur pagi</span><span class="num">#KS-1042</span><span class="pill">Detail</span></div>
+        <div class="row"><span class="badge warn">Proses</span><span class="title">Menunggu konfirmasi toko</span><span class="num">#KS-1043</span><span class="pill">Cek</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <h2>3 - Finance Console</h2>
+    <div class="meta">Lebih tenang untuk halaman finance, menjaga fokus pada tabel, status pembayaran, dan nominal.</div>
+    <div class="swatches"><div class="sw" style="background:#087F8C"></div><div class="sw" style="background:#2563EB"></div><div class="sw" style="background:#F59E0B"></div><div class="sw" style="background:#111827"></div><div class="sw" style="background:#D8E3E7"></div><div class="sw" style="background:#F8FAFC"></div></div>
+    <div class="panes">
+      <div class="app" style="--bg:#F8FAFC;--surface:#FFFFFF;--text:#111827;--muted:#64748B;--border:#D8E3E7;--primary:#087F8C;--accent:#2563EB;--on-primary:#FFFFFF"><span class="tag">light</span>
+        <div class="topbar"><svg width="28" height="28" viewBox="0 0 64 64"><rect x="10" y="15" width="44" height="42" rx="10" fill="#087F8C"/><path d="M22 24c0-8 4-13 10-13s10 5 10 13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M21 36c5 7 17 7 22 0" fill="none" stroke="#FBBF24" stroke-width="5" stroke-linecap="round"/></svg><span class="brand">kresek.<small>in</small></span><button class="btn">Disburse</button></div>
+        <div class="metrics"><div class="metric"><b>Rp 42,1 jt</b><span>Gross value</span></div><div class="metric"><b>18</b><span>Pending pay</span></div><div class="metric"><b>7</b><span>Disburse</span></div></div>
+        <div class="row"><span class="badge warn">Pending</span><span class="title">Buyer payment confirmation</span><span class="num">Rp 240.000</span><span class="pill">Review</span></div>
+        <div class="row"><span class="badge ok">Confirmed</span><span class="title">Disbursement to seller</span><span class="num">Rp 1.420.000</span><span class="pill">Pay</span></div>
+      </div>
+      <div class="app dark" style="--bg:#101923;--surface:#172535;--text:#E5EEF6;--muted:#9FB1C1;--border:#26394B;--primary:#22B8C7;--accent:#60A5FA;--on-primary:#082F37"><span class="tag">dark</span>
+        <div class="topbar"><svg width="28" height="28" viewBox="0 0 64 64"><rect x="10" y="15" width="44" height="42" rx="10" fill="#22B8C7"/><path d="M22 24c0-8 4-13 10-13s10 5 10 13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M21 36c5 7 17 7 22 0" fill="none" stroke="#FBBF24" stroke-width="5" stroke-linecap="round"/></svg><span class="brand">kresek.<small>in</small></span><button class="btn">Disburse</button></div>
+        <div class="metrics"><div class="metric"><b>Rp 42,1 jt</b><span>Gross value</span></div><div class="metric"><b>18</b><span>Pending pay</span></div><div class="metric"><b>7</b><span>Disburse</span></div></div>
+        <div class="row"><span class="badge warn">Pending</span><span class="title">Buyer payment confirmation</span><span class="num">Rp 240.000</span><span class="pill">Review</span></div>
+        <div class="row"><span class="badge ok">Confirmed</span><span class="title">Disbursement to seller</span><span class="num">Rp 1.420.000</span><span class="pill">Pay</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Concept 2 - Cart basket</title>
+  <rect x="8" y="10" width="48" height="48" rx="14" fill="#F4FBFA"/>
+  <path d="M17 22h5l5 21h20l5-15H29" fill="none" stroke="#11BEC8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M29 20c2-5 7-8 13-8" fill="none" stroke="#77B255" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="31" cy="50" r="3.5" fill="#FFB000"/>
+  <circle cx="45" cy="50" r="3.5" fill="#FFB000"/>
+</svg>

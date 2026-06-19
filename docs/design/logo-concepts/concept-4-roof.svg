@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Concept 4 - Neighborhood roof</title>
+  <rect x="8" y="10" width="48" height="44" rx="12" fill="#11BEC8"/>
+  <path d="M17 31 32 18l15 13" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22 30v15h20V30" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M25 45c4 4 10 4 14 0" fill="none" stroke="#C7EF4F" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="47" cy="17" r="4" fill="#FFB000"/>
+</svg>
