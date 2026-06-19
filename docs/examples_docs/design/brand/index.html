@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Infokes ITSM — Brand</title>
+<style>
+  :root { font-family: Inter, system-ui, sans-serif; }
+  body { margin: 0; background: #F7F3EC; color: #1C1917; padding: 28px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.lead { color: #78716C; margin: 0 0 24px; font-size: 14px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); }
+  .card { border: 1px solid #E7E0D5; border-radius: 14px; background: #FFFDF9; overflow: hidden; }
+  .card h2 { font-size: 13px; margin: 0; padding: 12px 14px 0; }
+  .card .body { padding: 18px 14px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .dark { background: #1C1917; color: #EDE7DD; }
+  .dark.card { border-color: #44403C; }
+  .row { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .lbl { font-size: 11px; color: #A8A29E; }
+  .mark { width:40px;height:40px } .m32{width:32px;height:32px} .m16{width:16px;height:16px}
+  ul { font-size: 13px; color: #44403C; line-height: 1.7; }
+  .dark ul { color: #D6CEC2; }
+  svg { display:block; }
+</style>
+</head>
+<body>
+  <h1>Infokes ITSM — Brand</h1>
+  <p class="lead">Concept 2 (pulse) in pine-teal, matching the default Warm Sand + Pine palette. Source SVGs in this folder; built to <code>apps/web/public</code>.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Lockup — light</h2>
+      <div class="body">
+        <svg viewBox="0 0 248 52" width="220" fill="none"><g transform="translate(6,6)"><rect width="40" height="40" rx="10" fill="#0F766E"/><path d="M6 20 H13.5 L18 10 L23.5 30 L27.5 20 H34" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g><text x="60" y="33" font-family="Inter,sans-serif" font-size="23" font-weight="700" fill="#1C1917">Infokes<tspan font-weight="600" fill="#0F766E"> ITSM</tspan></text></svg>
+      </div>
+    </div>
+    <div class="card dark">
+      <h2>Lockup — dark</h2>
+      <div class="body">
+        <svg viewBox="0 0 248 52" width="220" fill="none"><g transform="translate(6,6)"><rect width="40" height="40" rx="10" fill="#2DD4BF"/><path d="M6 20 H13.5 L18 10 L23.5 30 L27.5 20 H34" stroke="#134E4A" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g><text x="60" y="33" font-family="Inter,sans-serif" font-size="23" font-weight="700" fill="#EDE7DD">Infokes<tspan font-weight="600" fill="#2DD4BF"> ITSM</tspan></text></svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Mark + favicon sizes — light</h2>
+      <div class="body">
+        <svg class="mark" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#0F766E"/><path d="M6 20 H13.5 L18 10 L23.5 30 L27.5 20 H34" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="m32" viewBox="0 0 40 40"><rect width="40" height="40" rx="9" fill="#0F766E"/><path d="M5 20 H13 L17.5 11 L23 29 L27 20 H35" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="m16" viewBox="0 0 40 40"><rect width="40" height="40" rx="9" fill="#0F766E"/><path d="M5 20 H13 L17.5 11 L23 29 L27 20 H35" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="lbl">40 · 32 · 16px</span>
+      </div>
+    </div>
+    <div class="card dark">
+      <h2>Mark — dark surface</h2>
+      <div class="body">
+        <svg class="mark" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#2DD4BF"/><path d="M6 20 H13.5 L18 10 L23.5 30 L27.5 20 H34" stroke="#134E4A" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="m32" viewBox="0 0 40 40"><rect width="40" height="40" rx="9" fill="#2DD4BF"/><path d="M5 20 H13 L17.5 11 L23 29 L27 20 H35" stroke="#134E4A" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="m16" viewBox="0 0 40 40"><rect width="40" height="40" rx="9" fill="#2DD4BF"/><path d="M5 20 H13 L17.5 11 L23 29 L27 20 H35" stroke="#134E4A" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="lbl">40 · 32 · 16px</span>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column:1/-1">
+      <h2>Usage</h2>
+      <div class="body" style="display:block">
+        <ul>
+          <li><b>Clear space:</b> keep padding ≥ the tile's corner radius around the lockup.</li>
+          <li><b>Min size:</b> mark 16px; lockup 120px wide.</li>
+          <li><b>Color:</b> pine <code>#0F766E</code> on light, teal <code>#2DD4BF</code> on dark. Don't recolor per palette in the chrome — the brand mark stays pine/teal even when a user picks another UI palette.</li>
+          <li><b>Don't:</b> stretch, add shadows/gradients, rotate, or place the pine mark on a busy/low-contrast background.</li>
+          <li><b>Favicon:</b> <code>favicon.svg</code> (thicker pulse for legibility); export 32 & 16px PNG + ICO at build.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

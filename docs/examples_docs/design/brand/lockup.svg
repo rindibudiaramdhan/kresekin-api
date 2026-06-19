@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 248 52" width="248" height="52" fill="none">
+  <g transform="translate(6,6)">
+    <rect width="40" height="40" rx="10" fill="#0F766E"/>
+    <path d="M6 20 H13.5 L18 10 L23.5 30 L27.5 20 H34" stroke="#FFFFFF" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="60" y="33" font-family="Inter, system-ui, sans-serif" font-size="23" font-weight="700" fill="#1C1917">Infokes<tspan font-weight="600" fill="#0F766E"> ITSM</tspan></text>
+</svg>
