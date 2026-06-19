@@ -61,7 +61,7 @@ Platform ini harus mendukung:
 
 ### In Scope
 
-1. Backend REST API menggunakan Laravel 13 dan PostgreSQL.
+1. Backend REST API menggunakan Laravel 13++ dan PostgreSQL++.
 2. Role utama: buyer, seller, agent, finance.
 3. OTP-based authentication dan session token.
 4. Agent registration web flow dengan upload dokumen identitas, consent, dan status awal review.
