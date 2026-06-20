@@ -9,7 +9,7 @@ Dokumen ini mengusulkan urutan delivery berdasarkan fitur yang sudah ada di code
 | R1 | Stabilization & Contract Baseline | Rapikan kontrak API aktif, auth/session, role guard, docs, dan test regression |
 | R2 | Agent/Seller Operational Completion | Lengkapi agent registration review, seller operation, dashboard agent/seller |
 | R3 | Finance Workflow Hardening | Perkuat withdrawal, buyer payment confirmation, seller disbursement, audit, aging report |
-| R4 | Integration & Production Readiness | Provider OTP/payment/payout, storage production, observability, backup/DR |
+| R4 | Integration & Laravel Cloud Production Readiness | Provider OTP/payment/payout, Laravel Cloud setup, storage production, observability, backup/DR |
 
 ## R1 — Stabilization & Contract Baseline
 
@@ -72,12 +72,16 @@ Scope:
 4. Queue worker dan failed job monitoring.
 5. Backup/restore drill dan runbook.
 6. Observability untuk latency, error, queue, upload, dan provider failure.
+7. Laravel Cloud environment, build/deploy command, database resource, queue, scheduler, object storage, domain/TLS, dan log access.
 
 Exit criteria:
 
 1. Secret hanya berasal dari environment/secret manager.
 2. Provider integration idempotent dan teruji.
 3. Healthcheck, backup, rollback, dan runbook siap untuk production.
+4. Upload production memakai durable object storage, bukan local application disk.
+5. Queue worker dan scheduled task berjalan melalui mekanisme yang kompatibel dengan Laravel Cloud.
+6. Deployment Laravel Cloud memiliki rollback/mitigation path dan migration strategy yang terdokumentasi.
 
 ## Cross-Release Dependencies
 
@@ -85,9 +89,13 @@ Exit criteria:
 2. Formula komisi harus final sebelum reporting finance dianggap stabil.
 3. Payment/payout provider harus dipilih sebelum otomasi paid/disbursed.
 4. Audit trail formal sebaiknya disiapkan sebelum finance workflow production penuh.
+5. Object storage production harus siap sebelum membuka upload dokumen atau bukti pembayaran di production.
+6. Laravel Cloud plan/resource production harus dipilih sebelum menetapkan target availability, log retention, dan scaling final.
 
 ## Open Questions
 
 1. Release mana yang menjadi target production pertama?
 2. Apakah web dashboard termasuk deliverable production atau hanya prototype internal?
 3. Apakah audit table formal masuk R1 atau R3?
+4. Laravel Cloud plan mana yang menjadi target production pertama?
+5. Apakah staging memakai Laravel Cloud juga atau environment non-production lain?

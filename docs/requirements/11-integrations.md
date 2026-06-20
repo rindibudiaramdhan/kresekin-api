@@ -56,7 +56,21 @@ Requirement:
 3. Upload harus validasi mime, ukuran, dan ownership.
 4. Path file tidak boleh berasal dari input absolut client.
 5. Penghapusan/replacement file harus mempertimbangkan referensi data existing.
-6. S3/Flysystem config harus berasal dari environment.
+6. S3/object storage/Flysystem config harus berasal dari environment atau resource Laravel Cloud.
+7. Production upload tidak boleh bergantung pada local application disk karena filesystem Laravel Cloud bersifat ephemeral.
+8. File private harus diakses melalui endpoint terotorisasi atau signed URL berdurasi pendek.
+
+## Laravel Cloud Platform Integration
+
+Production deployment wajib berjalan di Laravel Cloud.
+
+Requirement:
+
+1. Database, queue, scheduler, object storage, log, dan environment variable harus dikonfigurasi dengan resource atau mekanisme yang kompatibel dengan Laravel Cloud.
+2. Integrasi provider eksternal tidak boleh membutuhkan long-running non-Laravel runtime tanpa architecture review.
+3. Build/deploy command harus deterministic, tidak membutuhkan input manual, dan tidak bergantung pada state lokal yang tidak tersedia di Laravel Cloud.
+4. Perubahan credential atau environment variable production harus tercatat di proses operasional dan diikuti redeploy bila diperlukan.
+5. Resource platform yang memiliki quota, retention, atau scaling limit harus dicatat sebelum production launch.
 
 ## Payment and Payout Provider
 
@@ -97,3 +111,5 @@ Jika ditambahkan:
 2. Apakah WhatsApp OTP tetap wajib atau email cukup untuk beberapa role?
 3. Payment gateway dan payout provider apa yang dipilih?
 4. Apakah region BPS perlu cache database lokal?
+5. Object storage production akan memakai resource Laravel Cloud atau provider S3 eksternal?
+6. Apakah log retention Laravel Cloud cukup untuk kebutuhan audit dan incident investigation?

@@ -19,6 +19,7 @@ Dokumen ini adalah versi canonical bernama hyphenated untuk mengikuti seri requi
 5. Laravel Pint untuk style PHP.
 6. PHPUnit 12 untuk test.
 7. Vite/Tailwind untuk asset Blade bila dibutuhkan.
+8. Laravel Cloud sebagai platform production wajib.
 
 ## Struktur Codebase
 
@@ -80,6 +81,8 @@ Jika perubahan menyentuh asset frontend:
 npm run build
 ```
 
+Jika perubahan menyentuh deployment, queue, scheduler, storage, atau environment production, pastikan kompatibel dengan Laravel Cloud dan dokumentasikan resource/env var yang dibutuhkan.
+
 Test harus mencakup happy path, input invalid, unauthorized, forbidden, not found, dan edge case bisnis yang relevan.
 
 ## Definition of Done
@@ -90,3 +93,4 @@ Test harus mencakup happy path, input invalid, unauthorized, forbidden, not foun
 4. Test relevan lulus.
 5. Dokumentasi diperbarui bila kontrak API atau flow bisnis berubah.
 6. Tidak ada perubahan unrelated.
+7. Kebutuhan Laravel Cloud terdokumentasi bila perubahan menyentuh runtime production.

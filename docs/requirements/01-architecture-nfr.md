@@ -23,6 +23,8 @@ Kresekin API menggunakan arsitektur modular monolith berbasis Laravel. Semua dom
 7. Dependency eksternal harus dibungkus service boundary agar mudah diganti, diuji, dan diberi fallback.
 8. Sistem harus menghindari coupling langsung antara client dan struktur database internal.
 9. Perubahan besar pada domain boundary harus dicatat sebagai requirement atau architecture decision baru sebelum implementasi.
+10. Production deployment wajib kompatibel dengan Laravel Cloud sebagai platform deployment utama.
+11. Runtime yang membutuhkan long-running non-Laravel process, custom server process, atau platform tambahan harus melalui architecture review sebelum implementasi.
 
 ### Target Shape
 
@@ -194,6 +196,8 @@ Background jobs digunakan untuk pekerjaan retryable, lambat, atau tidak wajib se
 6. Queue worker production harus dimonitor.
 7. Failed job harus dapat diinspeksi dan di-retry secara aman.
 8. Job tidak boleh menerima payload secret mentah bila bisa mengambil data dari database saat eksekusi.
+9. Production queue worker harus memakai mekanisme queue yang kompatibel dengan Laravel Cloud.
+10. Job tidak boleh bergantung pada file lokal yang perlu persisten antar worker, replica, atau deployment.
 
 ### Candidate Jobs
 
@@ -204,6 +208,18 @@ Background jobs digunakan untuk pekerjaan retryable, lambat, atau tidak wajib se
 | Sync finance disbursement | Finance/payment workflow | Guard status dan audit event. |
 | Generate report/export | Dashboard/report besar | Async bila query berat. |
 | Media cleanup | Upload diganti/dihapus | Jangan hapus file yang masih direferensikan. |
+
+## Scheduled Tasks
+
+Scheduled tasks digunakan untuk pekerjaan periodik seperti cleanup, retry, expiry, report, dan maintenance data.
+
+### Requirements
+
+1. Scheduled task production harus dikonfigurasi melalui mekanisme scheduler yang kompatibel dengan Laravel Cloud.
+2. Task yang dapat berjalan pada lebih dari satu replica harus memakai guard seperti `onOneServer()` atau locking setara.
+3. Task harus idempotent atau aman bila dijalankan ulang.
+4. Task yang menyentuh uang, status, payout, storage, atau data sensitif harus mencatat audit/log operasional yang aman.
+5. Schedule baru harus didokumentasikan dengan frekuensi, tujuan, failure mode, dan owner.
 
 ## Performance
 
@@ -249,6 +265,7 @@ Kresekin API harus bisa dipulihkan dari kegagalan aplikasi, database, deployment
 7. Storage attachment penting harus memiliki backup atau durability sesuai kebutuhan bisnis.
 8. Sistem harus memiliki runbook dasar untuk incident: API down, database down, queue stuck, upload/storage failure, dan provider eksternal gagal.
 9. RTO dan RPO final harus disepakati sebelum launch production penuh.
+10. Backup, restore, rollback, dan resource scaling harus divalidasi terhadap kemampuan Laravel Cloud dan resource yang dipakai.
 
 ### Initial Targets
 
@@ -280,6 +297,7 @@ Security requirement berlaku untuk source code, runtime, database, file storage,
 13. Authorization dan ownership check harus ada di server walaupun client menyembunyikan UI.
 14. Backup dan export data harus dilindungi setara data production.
 15. Admin/internal tools harus memakai role paling terbatas yang cukup untuk tugasnya.
+16. Production environment variable harus dikelola melalui Laravel Cloud dan perubahan config yang memengaruhi runtime harus melalui redeploy yang tercatat.
 
 ### Sensitive Data
 
@@ -309,6 +327,8 @@ Attachments dan media mencakup gambar produk, dokumen identitas agent, bukti pem
 9. Akses file private harus melalui endpoint terotorisasi atau signed URL berdurasi pendek.
 10. Upload, replace, delete, dan akses file private harus masuk audit trail.
 11. Metadata file minimal menyimpan owner, disk, path, MIME, size, checksum bila tersedia, dan timestamp.
+12. File production yang perlu persisten harus disimpan pada durable object storage melalui Laravel filesystem/Flysystem.
+13. Local application disk hanya boleh dipakai untuk file sementara yang aman hilang antar request, worker, replica, atau deployment.
 
 ## Observability
 
@@ -325,6 +345,7 @@ Observability harus membantu tim mendeteksi masalah, menyelidiki insiden, dan me
 7. Dashboard observability harus memisahkan environment production dan staging.
 8. Log tidak boleh memuat OTP, token, password, dokumen, credential bank, atau payload sensitif penuh.
 9. Integrasi eksternal harus mencatat status, latency, dan failure category yang aman.
+10. Observability awal harus memanfaatkan log dan metrik yang tersedia di Laravel Cloud, lalu ditambah tool eksternal bila retention, alerting, atau tracing tidak cukup.
 
 ### Minimum Signals
 
@@ -363,6 +384,10 @@ Environment harus dipisahkan agar testing, staging, dan production tidak saling 
 8. Feature yang belum siap production harus dilindungi feature flag, role, atau tidak dirilis.
 9. Build artifact dan dependency lockfile harus konsisten.
 10. Deployment harus mencatat commit/version yang sedang aktif.
+11. Production deployment harus berjalan melalui Laravel Cloud dengan build/deploy command yang deterministic dan bounded.
+12. Migration production harus dijalankan sebagai bagian dari proses deployment yang tercatat atau runbook manual yang disetujui.
+13. Deployment command tidak boleh bergantung pada file lokal yang harus bertahan setelah deployment selesai.
+14. Build/deploy timeout dan batas resource Laravel Cloud harus dipertimbangkan saat menambah dependency, asset build, migration, atau job bootstrap.
 
 ## Data Conventions
 
@@ -445,3 +470,5 @@ Tambahkan command lain sesuai area perubahan, misalnya `npm run build` bila meny
 18. Apakah semua aksi finance harus require alasan/catatan wajib untuk audit?
 19. Apakah log observability akan memakai platform bawaan Laravel Cloud atau tool eksternal?
 20. Apakah audit export dan report finance harus async sejak MVP?
+21. Plan Laravel Cloud mana yang dipakai untuk staging dan production, terutama terkait resource, log retention, scaling, dan backup?
+22. Object storage provider/resource apa yang akan dipakai untuk dokumen identitas, bukti pembayaran, dan asset katalog production?

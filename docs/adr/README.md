@@ -17,6 +17,7 @@ ADR atau Architecture Decision Record mencatat keputusan arsitektur/produk-tekni
 | [011](011-bps-region-as-external-boundary.md) | Keep Indonesia region lookup behind a service boundary |
 | [012](012-configuration-driven-domain-values.md) | Use constants and configuration for domain values |
 | [013](013-dashboard-aggregation-in-support-classes.md) | Keep dashboard aggregation in support classes |
+| [014](014-mandatory-laravel-cloud-production-deployment.md) | Use Laravel Cloud as the mandatory production deployment platform |
 
 ## Kapan Membuat ADR Baru
 

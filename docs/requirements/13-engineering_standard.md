@@ -15,6 +15,7 @@ Dokumen ini adalah standar kerja engineering untuk seluruh engineer yang melakuk
 
 - Backend menggunakan Laravel 13 dan PHP 8.3.
 - Database utama adalah PostgreSQL. Test suite menggunakan SQLite in-memory melalui `phpunit.xml`.
+- Production deployment wajib kompatibel dengan Laravel Cloud.
 - Style PHP mengikuti Laravel Pint. Jalankan `./vendor/bin/pint` sebelum merge untuk perubahan PHP.
 - Test dijalankan dengan `php artisan test` atau `composer test`.
 - Indentasi mengikuti `.editorconfig`: 4 spasi untuk source code, 2 spasi untuk YAML.
@@ -141,6 +142,7 @@ Flow yang menyentuh pembayaran, checkout, komisi, disbursement, stok, promo, dan
 - Jangan menerima path file dari client sebagai path absolut.
 - Semua authorization ownership harus dicek di server, misalnya seller hanya boleh mengubah tenant/product/order miliknya.
 - Gunakan konfigurasi dari `config/*` dan environment variable. Jangan hardcode credential atau endpoint eksternal di source code.
+- Jangan mengandalkan local application disk untuk file production yang perlu persisten; gunakan Laravel filesystem/Flysystem dengan object storage.
 
 ## Testing Standard
 
@@ -168,6 +170,12 @@ Jika perubahan menyentuh frontend asset atau Blade yang bergantung Vite:
 npm run build
 ```
 
+Jika perubahan menyentuh deployment, queue, scheduler, storage, atau environment production:
+
+- Pastikan behavior kompatibel dengan Laravel Cloud.
+- Dokumentasikan build/deploy command, env var baru, queue worker, scheduled task, atau storage resource yang dibutuhkan.
+- Jangan menambah long-running non-Laravel runtime tanpa ADR atau architecture review.
+
 ## Error Handling dan Observability
 
 - Error yang diketahui harus dikembalikan sebagai JSON terstruktur, bukan exception mentah.
@@ -180,6 +188,7 @@ npm run build
 
 - Perubahan endpoint public harus memperbarui `API_DOCUMENTATION.md` atau dokumen API terkait di `docs/api`.
 - Perubahan requirement atau keputusan teknis yang penting harus ditulis di `docs/tasks` atau SOP yang relevan.
+- Perubahan deployment, storage production, queue, scheduler, observability, atau platform dependency harus memperbarui ADR/requirement yang relevan.
 - Dokumentasi harus memuat request, response sukses, response error penting, auth/role requirement, dan catatan business rule.
 - Jangan dokumentasikan secret asli, token asli, nomor rekening asli, atau data pribadi nyata.
 
@@ -195,6 +204,7 @@ Reviewer wajib memeriksa:
 - Apakah state transition dan perhitungan uang/stok/promo aman.
 - Apakah test menutup behavior penting dan edge case.
 - Apakah dokumentasi diperbarui saat kontrak API berubah.
+- Apakah perubahan runtime kompatibel dengan Laravel Cloud production.
 - Apakah tidak ada credential, debug code, dump, atau log sensitif yang tertinggal.
 
 ## Definition of Done
@@ -209,6 +219,7 @@ Sebuah task dianggap selesai bila:
 6. `php artisan test` lulus, atau ada alasan teknis jelas bila belum bisa dijalankan.
 7. Dokumentasi diperbarui jika API, flow bisnis, atau operational behavior berubah.
 8. Tidak ada perubahan unrelated yang ikut terbawa.
+9. Jika menyentuh deployment/storage/queue/scheduler, kebutuhan Laravel Cloud sudah terdokumentasi.
 
 ## Anti-Pattern yang Harus Dihindari
 
@@ -220,5 +231,7 @@ Sebuah task dianggap selesai bila:
 - Update stok, promo, komisi, atau disbursement tanpa transaksi database.
 - Membuat endpoint bypass auth untuk kebutuhan sementara.
 - Menambah dependency baru tanpa alasan teknis yang kuat.
+- Menambah runtime atau proses non-Laravel yang tidak cocok dengan Laravel Cloud tanpa architecture review.
 - Menyimpan file upload atau asset dengan nama/path yang bisa ditebak dan tidak divalidasi.
+- Menyimpan file production penting hanya di local application disk.
 - Menghapus test yang gagal tanpa memahami regression yang sedang ditangkap.
