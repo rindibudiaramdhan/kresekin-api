@@ -395,6 +395,31 @@ class AuthApiTest extends TestCase
         $this->assertDatabaseCount('user_session_tokens', 0);
     }
 
+    public function test_verify_otp_returns_error_when_code_is_expired(): void
+    {
+        User::query()->create([
+            'name' => null,
+            'email' => 'expired@example.com',
+            'phone' => null,
+            'type' => 'email',
+            'password' => null,
+            'otp_code' => Hash::make('123456'),
+            'otp_sent_at' => now()->subMinutes(User::OTP_EXPIRES_IN_MINUTES)->subSecond(),
+        ]);
+
+        $response = $this->postJson('/api/users/verify-otp', [
+            'type' => 'email',
+            'email' => 'expired@example.com',
+            'otp' => '123456',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Kode OTP sudah kedaluwarsa.');
+
+        $this->assertDatabaseCount('user_session_tokens', 0);
+    }
+
     public function test_resending_login_otp_invalidates_previous_code(): void
     {
         $user = User::query()->create([

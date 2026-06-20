@@ -13,6 +13,7 @@ Requirement:
 3. OTP harus dimasking di log.
 4. Failure provider harus menghasilkan response yang aman dan dapat diinvestigasi.
 5. Retry OTP harus dibatasi agar tidak memicu abuse atau biaya tidak terkendali.
+6. OTP register/login/resend harus berlaku 5 menit sejak dikirim, dan notifikasi OTP harus menyampaikan masa berlaku tersebut.
 
 ## Events and Recipients
 

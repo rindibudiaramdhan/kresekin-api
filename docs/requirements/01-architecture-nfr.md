@@ -83,7 +83,7 @@ Authentication menggunakan OTP dan bearer session token. Session token harus dia
 5. Token harus bisa di-refresh melalui endpoint resmi, bukan dibuat manual oleh client.
 6. Logout harus mencabut session aktif.
 7. OTP, plain token, password, credential bank, dan dokumen identitas tidak boleh masuk log atau response.
-8. OTP harus memiliki expiry, batas resend, dan batas percobaan verifikasi.
+8. OTP harus kedaluwarsa 5 menit setelah dikirim, serta memiliki batas resend dan batas percobaan verifikasi.
 9. Session harus punya expiry dan mekanisme revocation.
 10. Device token untuk notifikasi harus terikat ke user dan dapat diperbarui tanpa membuat duplikasi tidak terkendali.
 11. Sistem harus mendukung invalidasi session bila user dinonaktifkan atau role berubah.
@@ -93,7 +93,7 @@ Authentication menggunakan OTP dan bearer session token. Session token harus dia
 | Risiko | Kontrol |
 | --- | --- |
 | Token bocor dari client | Token hash di server, expiry, logout, dan revocation. |
-| OTP brute force | Expiry, attempt limit, resend limit, dan rate limiting. |
+| OTP brute force | Expiry 5 menit, attempt limit, resend limit, dan rate limiting. |
 | Session lama tetap aktif setelah perubahan role | Revocation saat role/status sensitif berubah. |
 | Data auth bocor di log | Masking dan larangan log secret. |
 
@@ -307,7 +307,7 @@ Security requirement berlaku untuk source code, runtime, database, file storage,
 
 | Data | Perlakuan |
 | --- | --- |
-| OTP | Hash atau simpan dengan expiry, tidak masuk log/response. |
+| OTP | Hash atau simpan dengan expiry 5 menit, tidak masuk log/response. |
 | Session token | Simpan hash SHA-256, plain token hanya muncul saat diterbitkan ke client. |
 | Password/credential | Hash atau secret manager, tidak pernah plaintext. |
 | Dokumen identitas | Private storage, akses terotorisasi, audit access. |

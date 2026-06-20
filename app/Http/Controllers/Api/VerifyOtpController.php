@@ -39,7 +39,14 @@ class VerifyOtpController extends Controller
                     'hash_check' => $user ? Hash::check($validated['otp'], $user->otp_code) : null,
                 ];
             }
+
             return response()->json($response, Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        if (! $user->otp_sent_at || $user->otp_sent_at->lte(now()->subMinutes(User::OTP_EXPIRES_IN_MINUTES))) {
+            return response()->json([
+                'message' => 'Kode OTP sudah kedaluwarsa.',
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $plainTextToken = Str::random(64);

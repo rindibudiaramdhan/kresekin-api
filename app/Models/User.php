@@ -62,6 +62,8 @@ class User extends Authenticatable
 
     public const AGENT_REGISTRATION_TERMS_VERSION = 'agent-registration-v1';
 
+    public const OTP_EXPIRES_IN_MINUTES = 5;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasUuids, Notifiable;
 

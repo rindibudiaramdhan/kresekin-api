@@ -72,7 +72,7 @@ Web route yang mengubah data tetap harus memakai validasi, CSRF protection, dan 
 
 1. User dibuat melalui register role-specific atau web agent registration.
 2. OTP dikirim untuk verifikasi login/register.
-3. Setelah OTP valid, session token dibuat.
+3. Setelah OTP valid dan belum melewati 5 menit sejak dikirim, session token dibuat.
 4. Agent web registration mengisi data tambahan: nama, email/phone, area, alamat, data bank, dokumen identitas, consent, dan status `pending_review`.
 5. Agent dapat memiliki status review: `pending_review`, `approved`, atau `rejected`.
 6. Perubahan role atau status agent harus diaudit dan dapat mempengaruhi akses fitur sensitif.

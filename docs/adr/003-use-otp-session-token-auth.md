@@ -16,7 +16,7 @@ Use OTP-based authentication and bearer session tokens for API users. Session to
 
 ## Consequences
 
-- OTP expiry, resend limit, attempt limit, and sensitive logging controls are security-critical.
+- OTP expiry is 5 minutes from send time; resend limit, attempt limit, and sensitive logging controls are security-critical.
 - Token revocation is possible because sessions are stored server-side.
 - Client applications must treat bearer tokens as credentials and store them carefully.
 - Any future password or SSO flow must integrate with the same session boundary or define a new ADR.
