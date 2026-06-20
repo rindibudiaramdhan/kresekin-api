@@ -276,6 +276,77 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.0.name', 'Bayam Hijau');
     }
 
+    public function test_seller_product_list_includes_created_at_and_sold_quantity(): void
+    {
+        Carbon::setTestNow('2026-04-15 09:30:00');
+
+        [$seller, $token] = $this->createAuthenticatedUser('seller-product-sold@example.com', '+6281200000244', 'seller-product-sold-token', User::ROLE_SELLER);
+        [$buyer] = $this->createAuthenticatedUser('buyer-product-sold@example.com', '+6281200000245', 'buyer-product-sold-token', User::ROLE_BUYER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Product Sold',
+            'profile_picture_url' => null,
+            'rating' => 0,
+            'category' => Tenant::CATEGORY_VEGETABLES,
+        ]);
+
+        $product = Product::query()->create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Kangkung',
+            'category' => Tenant::CATEGORY_VEGETABLES,
+            'price' => 6000,
+            'stock' => 40,
+        ]);
+
+        $completedTransaction = Transaction::query()->create([
+            'user_id' => $buyer->id,
+            'order_number' => 'SOLD001',
+            'status' => Transaction::STATUS_COMPLETED,
+            'subtotal_amount' => 18000,
+            'delivery_fee' => 0,
+            'total_amount' => 18000,
+            'transaction_at' => now(),
+        ]);
+
+        $canceledTransaction = Transaction::query()->create([
+            'user_id' => $buyer->id,
+            'order_number' => 'SOLD002',
+            'status' => Transaction::STATUS_CANCELED,
+            'subtotal_amount' => 12000,
+            'delivery_fee' => 0,
+            'total_amount' => 12000,
+            'transaction_at' => now(),
+        ]);
+
+        TransactionItem::query()->create([
+            'transaction_id' => $completedTransaction->id,
+            'product_id' => $product->id,
+            'tenant_id' => $tenant->id,
+            'product_name' => $product->name,
+            'quantity' => 3,
+            'unit_price' => 6000,
+            'line_total' => 18000,
+        ]);
+
+        TransactionItem::query()->create([
+            'transaction_id' => $canceledTransaction->id,
+            'product_id' => $product->id,
+            'tenant_id' => $tenant->id,
+            'product_name' => $product->name,
+            'quantity' => 2,
+            'unit_price' => 6000,
+            'line_total' => 12000,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/products')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $product->id)
+            ->assertJsonPath('data.0.created_at', '2026-04-15T09:30:00+00:00')
+            ->assertJsonPath('data.0.sold', 3);
+    }
+
     public function test_seller_cannot_create_product_with_unregistered_unit(): void
     {
         [$seller, $token] = $this->createAuthenticatedUser('seller-invalid-unit@example.com', '+6281200000045', 'seller-invalid-unit-token', User::ROLE_SELLER);

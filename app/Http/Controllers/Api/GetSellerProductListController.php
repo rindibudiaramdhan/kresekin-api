@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\Transaction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -30,6 +31,11 @@ class GetSellerProductListController extends Controller
 
         $products = Product::query()
             ->with(['tenant', 'productUnit'])
+            ->withSum([
+                'transactionItems as sold' => fn ($query) => $query
+                    ->whereHas('transaction', fn ($transactionQuery) => $transactionQuery
+                        ->where('status', Transaction::STATUS_COMPLETED)),
+            ], 'quantity')
             ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
             ->when(
                 $search,
@@ -41,6 +47,7 @@ class GetSellerProductListController extends Controller
                 'id' => $product->id,
                 'tenant_id' => $product->tenant_id,
                 'tenant_name' => $product->tenant?->name,
+                'created_at' => $product->created_at?->toIso8601String(),
                 'name' => $product->name,
                 'category' => $product->category,
                 'image_url' => $product->publicImageUrl(),
@@ -60,6 +67,7 @@ class GetSellerProductListController extends Controller
                 'weight_label' => $product->weight_label,
                 'description' => $product->description,
                 'delivery_estimate' => $product->delivery_estimate,
+                'sold' => (int) ($product->sold ?? 0),
             ])
             ->values();
 
