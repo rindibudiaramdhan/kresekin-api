@@ -115,4 +115,9 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    'otp' => [
+        'support_email' => env('MAIL_SUPPORT_EMAIL', 'cs-support@kresek.in'),
+        'playstore_url' => env('KRESEKIN_PLAYSTORE_URL'),
+    ],
+
 ];

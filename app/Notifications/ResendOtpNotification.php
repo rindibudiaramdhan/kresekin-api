@@ -2,13 +2,14 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\BuildsOtpMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ResendOtpNotification extends Notification
 {
-    use Queueable;
+    use BuildsOtpMail, Queueable;
 
     public function __construct(
         protected string $otp,
@@ -21,9 +22,12 @@ class ResendOtpNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->subject('Your OTP')
-            ->line('Use this OTP to continue.')
-            ->line("OTP: {$this->otp}");
+        return $this->buildOtpMail(
+            'Kode OTP Kresek.in',
+            'Verifikasi Kresek.in',
+            'Gunakan kode verifikasi berikut untuk melanjutkan proses Anda:',
+            'Jika Anda tidak merasa meminta kode ini, abaikan email ini',
+            $this->otp,
+        );
     }
 }
