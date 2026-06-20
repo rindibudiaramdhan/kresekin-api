@@ -12,14 +12,14 @@ Dokumen ini adalah versi canonical bernama hyphenated untuk mengikuti seri requi
 
 ## Stack
 
-1. Laravel 13.
-2. PHP 8.3.
+1. Laravel 13 ke atas, mengikuti constraint `composer.json`.
+2. PHP 8.3 minimum dan mengikuti supported PHP range Laravel major aktif.
 3. PostgreSQL untuk production.
-4. SQLite in-memory untuk test sesuai konfigurasi project.
+4. SQLite in-memory untuk test sesuai konfigurasi project; tidak boleh dipakai untuk production.
 5. Laravel Pint untuk style PHP.
 6. PHPUnit 12 untuk test.
 7. Vite/Tailwind untuk asset Blade bila dibutuhkan.
-8. Laravel Cloud sebagai platform production wajib.
+8. Laravel Cloud sebagai platform production wajib, termasuk web compute, queue/worker, scheduled task, database managed resource, cache/KV bila dibutuhkan, object storage, domain/TLS, dan log/metric.
 
 ## Struktur Codebase
 
@@ -81,7 +81,7 @@ Jika perubahan menyentuh asset frontend:
 npm run build
 ```
 
-Jika perubahan menyentuh deployment, queue, scheduler, storage, atau environment production, pastikan kompatibel dengan Laravel Cloud dan dokumentasikan resource/env var yang dibutuhkan.
+Jika perubahan menyentuh deployment, queue, scheduler, cache/KV, storage, WebSocket, domain/TLS, atau environment production, pastikan kompatibel dengan Laravel Cloud dan dokumentasikan resource/env var yang dibutuhkan.
 
 Test harus mencakup happy path, input invalid, unauthorized, forbidden, not found, dan edge case bisnis yang relevan.
 

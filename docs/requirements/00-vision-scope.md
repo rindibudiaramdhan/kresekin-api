@@ -61,7 +61,7 @@ Platform ini harus mendukung:
 
 ### In Scope
 
-1. Backend REST API menggunakan Laravel 13++ dan PostgreSQL++.
+1. Backend REST API menggunakan Laravel 13 ke atas dan PostgreSQL sebagai database production utama.
 2. Role utama: buyer, seller, agent, finance.
 3. OTP-based authentication dan session token.
 4. Agent registration web flow dengan upload dokumen identitas, consent, dan status awal review.
@@ -87,7 +87,7 @@ Platform ini harus mendukung:
 
 ### Constraints
 
-1. Stack backend menggunakan Laravel 13, PHP 8.3, PostgreSQL, dan Laravel Cloud sebagai platform production wajib.
+1. Stack backend menggunakan Laravel 13 ke atas, PHP 8.3 minimum, PostgreSQL, dan Laravel Cloud sebagai platform production wajib.
 2. Endpoint authenticated harus menggunakan `session.token`.
 3. Endpoint role-specific harus menggunakan middleware role yang sesuai.
 4. Response API harus menjaga struktur yang sudah ada dan tidak mematahkan client.
@@ -95,8 +95,9 @@ Platform ini harus mendukung:
 6. OTP, token, password, credential, dan data sensitif tidak boleh muncul di log, response, atau dokumentasi contoh.
 7. Perubahan schema harus dibuat melalui migration baru dan menjaga kompatibilitas data production.
 8. Test suite menggunakan SQLite in-memory sesuai konfigurasi project.
-9. Production runtime harus kompatibel dengan Laravel Cloud, termasuk environment variable, deployment command, queue, scheduler, log, dan storage.
+9. Production runtime harus kompatibel dengan Laravel Cloud, termasuk environment variable, deployment command, web compute, queue/worker, scheduler, cache/KV, log/metric, domain/TLS, dan storage.
 10. File runtime yang perlu persisten tidak boleh bergantung pada local application disk karena production storage harus memakai durable object storage.
+11. SQLite hanya boleh dipakai untuk automated test, bukan database production.
 
 ### Assumptions
 
@@ -108,6 +109,7 @@ Platform ini harus mendukung:
 6. Data dashboard dapat menggunakan agregasi server-side dari tabel transaksi dan relasi tenant.
 7. Laravel Cloud akan menyediakan environment variable production untuk koneksi database dan resource platform lain yang terhubung.
 8. Client web menyimpan bearer token di `localStorage` sesuai flow yang sudah berjalan.
+9. Jika kebutuhan cache, lock, queue, WebSocket, object storage, atau preview environment muncul, implementasi pertama harus mengevaluasi resource yang tersedia di Laravel Cloud sebelum memilih provider eksternal.
 
 ## Risks
 

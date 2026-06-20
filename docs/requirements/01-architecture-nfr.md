@@ -14,7 +14,7 @@ Kresekin API menggunakan arsitektur modular monolith berbasis Laravel. Semua dom
 
 ### Requirements
 
-1. Backend utama adalah Laravel API dengan PostgreSQL sebagai database production.
+1. Backend utama adalah Laravel 13 ke atas API dengan PostgreSQL sebagai database production.
 2. Sistem harus mempertahankan modular monolith sampai ada alasan operasional kuat untuk memecah service.
 3. Boundary domain minimal meliputi auth/session, buyer, seller/UMKM, agent, finance, transaction/order, catalog/product, commission/withdrawal, attachment/media, dan master data.
 4. Controller harus menjadi orchestration layer, bukan tempat utama business logic panjang.
@@ -198,6 +198,7 @@ Background jobs digunakan untuk pekerjaan retryable, lambat, atau tidak wajib se
 8. Job tidak boleh menerima payload secret mentah bila bisa mengambil data dari database saat eksekusi.
 9. Production queue worker harus memakai mekanisme queue yang kompatibel dengan Laravel Cloud.
 10. Job tidak boleh bergantung pada file lokal yang perlu persisten antar worker, replica, atau deployment.
+11. Queue connection, worker count, scaling, failed-job handling, retry, dan default queue harus terdokumentasi sesuai konfigurasi Laravel Cloud yang dipakai.
 
 ### Candidate Jobs
 
@@ -220,6 +221,7 @@ Scheduled tasks digunakan untuk pekerjaan periodik seperti cleanup, retry, expir
 3. Task harus idempotent atau aman bila dijalankan ulang.
 4. Task yang menyentuh uang, status, payout, storage, atau data sensitif harus mencatat audit/log operasional yang aman.
 5. Schedule baru harus didokumentasikan dengan frekuensi, tujuan, failure mode, dan owner.
+6. Schedule production tidak boleh bergantung pada cron host manual di luar Laravel Cloud tanpa ADR.
 
 ## Performance
 
@@ -236,6 +238,7 @@ Sistem harus cukup cepat untuk dashboard operasional, checkout, dan API mobile/w
 7. Response API tidak boleh mengirim field besar yang tidak diperlukan client.
 8. Cache boleh dipakai untuk master data atau agregasi non-kritikal, tetapi tidak boleh membuat data uang/status menjadi salah.
 9. Rate limiting harus diterapkan untuk endpoint auth, OTP, upload, dan endpoint mahal.
+10. Cache, lock, rate limiter, dan session store production harus memakai driver yang kompatibel dengan Laravel Cloud Redis-compatible cache/KV resource bila membutuhkan state lintas replica.
 
 ### Initial Targets
 
@@ -298,6 +301,7 @@ Security requirement berlaku untuk source code, runtime, database, file storage,
 14. Backup dan export data harus dilindungi setara data production.
 15. Admin/internal tools harus memakai role paling terbatas yang cukup untuk tugasnya.
 16. Production environment variable harus dikelola melalui Laravel Cloud dan perubahan config yang memengaruhi runtime harus melalui redeploy yang tercatat.
+17. Runtime production harus memakai PHP version yang didukung oleh Laravel major aktif; Laravel 13 membutuhkan PHP 8.3 minimum.
 
 ### Sensitive Data
 
@@ -329,6 +333,7 @@ Attachments dan media mencakup gambar produk, dokumen identitas agent, bukti pem
 11. Metadata file minimal menyimpan owner, disk, path, MIME, size, checksum bila tersedia, dan timestamp.
 12. File production yang perlu persisten harus disimpan pada durable object storage melalui Laravel filesystem/Flysystem.
 13. Local application disk hanya boleh dipakai untuk file sementara yang aman hilang antar request, worker, replica, atau deployment.
+14. Object storage production harus S3-compatible atau resource Laravel Cloud yang didukung Flysystem, dengan credential dari environment variable Laravel Cloud.
 
 ## Observability
 
@@ -346,6 +351,7 @@ Observability harus membantu tim mendeteksi masalah, menyelidiki insiden, dan me
 8. Log tidak boleh memuat OTP, token, password, dokumen, credential bank, atau payload sensitif penuh.
 9. Integrasi eksternal harus mencatat status, latency, dan failure category yang aman.
 10. Observability awal harus memanfaatkan log dan metrik yang tersedia di Laravel Cloud, lalu ditambah tool eksternal bila retention, alerting, atau tracing tidak cukup.
+11. Bila memakai Laravel Nightwatch, Pulse, Pail, atau tool observability Laravel lain, pastikan mode production-nya tidak menambah proses long-running yang tidak cocok dengan Laravel Cloud tanpa review.
 
 ### Minimum Signals
 
@@ -388,6 +394,8 @@ Environment harus dipisahkan agar testing, staging, dan production tidak saling 
 12. Migration production harus dijalankan sebagai bagian dari proses deployment yang tercatat atau runbook manual yang disetujui.
 13. Deployment command tidak boleh bergantung pada file lokal yang harus bertahan setelah deployment selesai.
 14. Build/deploy timeout dan batas resource Laravel Cloud harus dipertimbangkan saat menambah dependency, asset build, migration, atau job bootstrap.
+15. Production tidak boleh memakai SQLite; gunakan database managed Laravel Cloud yang disetujui, saat ini PostgreSQL.
+16. Domain, TLS, preview environment, scale-to-zero, dan resource scaling harus dikonfigurasi sesuai kemampuan Laravel Cloud dan kebutuhan availability release.
 
 ## Data Conventions
 

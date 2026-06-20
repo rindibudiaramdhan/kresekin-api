@@ -55,6 +55,14 @@
 | N+1 query | Pola query tidak efisien karena mengambil relation berulang dalam loop. |
 | Snapshot | Salinan data saat transaksi dibuat agar histori tidak berubah saat master berubah. |
 | Soft delete | Data ditandai terhapus tanpa dihapus fisik dari database. |
+| Laravel Cloud | Platform production wajib untuk deploy, scaling, environment variable, managed database, queue/worker, scheduled task, logs/metrics, domain/TLS, object storage, dan resource Laravel lain yang didukung. |
+| Managed database | Database production yang disediakan/dikelola platform, saat ini PostgreSQL untuk Kresekin API. |
+| Cache/KV | Penyimpanan key-value atau cache lintas replica, misalnya resource Redis-compatible di Laravel Cloud. |
+| Managed queue | Mekanisme queue/worker platform untuk memproses job Laravel secara async. |
+| Scheduled task | Konfigurasi Laravel scheduler yang dijalankan oleh platform production, bukan cron manual host. |
+| Object storage | Storage durable S3-compatible/Flysystem untuk file production yang perlu persisten. |
+| WebSockets | Channel komunikasi real-time bila dibutuhkan; harus memakai resource Laravel Cloud atau provider yang disetujui. |
+| Ephemeral filesystem | Filesystem aplikasi yang dapat hilang antar deploy, replica, atau restart sehingga tidak boleh menyimpan file production penting. |
 
 ## Metrics
 

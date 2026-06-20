@@ -9,7 +9,7 @@ Dokumen ini mengusulkan urutan delivery berdasarkan fitur yang sudah ada di code
 | R1 | Stabilization & Contract Baseline | Rapikan kontrak API aktif, auth/session, role guard, docs, dan test regression |
 | R2 | Agent/Seller Operational Completion | Lengkapi agent registration review, seller operation, dashboard agent/seller |
 | R3 | Finance Workflow Hardening | Perkuat withdrawal, buyer payment confirmation, seller disbursement, audit, aging report |
-| R4 | Integration & Laravel Cloud Production Readiness | Provider OTP/payment/payout, Laravel Cloud setup, storage production, observability, backup/DR |
+| R4 | Integration & Laravel Cloud Production Readiness | Provider OTP/payment/payout, Laravel Cloud setup, storage production, cache/KV, queue/scheduler, observability, backup/DR |
 
 ## R1 — Stabilization & Contract Baseline
 
@@ -68,11 +68,11 @@ Scope:
 
 1. Provider OTP production.
 2. Payment/payout provider bila sudah dipilih.
-3. S3/private storage production.
-4. Queue worker dan failed job monitoring.
+3. S3-compatible/private object storage production.
+4. Queue worker, managed queue configuration, dan failed job monitoring.
 5. Backup/restore drill dan runbook.
-6. Observability untuk latency, error, queue, upload, dan provider failure.
-7. Laravel Cloud environment, build/deploy command, database resource, queue, scheduler, object storage, domain/TLS, dan log access.
+6. Observability untuk latency, error, queue, upload, database/cache, dan provider failure.
+7. Laravel Cloud environment, build/deploy command, database resource, Redis-compatible cache/KV bila dibutuhkan, queue, scheduler, object storage, domain/TLS, preview environment, scale-to-zero policy, dan log access.
 
 Exit criteria:
 
@@ -82,6 +82,7 @@ Exit criteria:
 4. Upload production memakai durable object storage, bukan local application disk.
 5. Queue worker dan scheduled task berjalan melalui mekanisme yang kompatibel dengan Laravel Cloud.
 6. Deployment Laravel Cloud memiliki rollback/mitigation path dan migration strategy yang terdokumentasi.
+7. Production database memakai PostgreSQL managed resource, bukan SQLite.
 
 ## Cross-Release Dependencies
 
@@ -91,6 +92,7 @@ Exit criteria:
 4. Audit trail formal sebaiknya disiapkan sebelum finance workflow production penuh.
 5. Object storage production harus siap sebelum membuka upload dokumen atau bukti pembayaran di production.
 6. Laravel Cloud plan/resource production harus dipilih sebelum menetapkan target availability, log retention, dan scaling final.
+7. Kebutuhan cache/KV, WebSockets, dan preview environment harus diputuskan sebelum production hardening selesai.
 
 ## Open Questions
 

@@ -13,9 +13,12 @@ Dokumen ini adalah standar kerja engineering untuk seluruh engineer yang melakuk
 
 ## Stack dan Konvensi Dasar
 
-- Backend menggunakan Laravel 13 dan PHP 8.3.
-- Database utama adalah PostgreSQL. Test suite menggunakan SQLite in-memory melalui `phpunit.xml`.
+- Backend menggunakan Laravel 13 ke atas sesuai constraint `composer.json`.
+- PHP runtime minimum adalah PHP 8.3; ikuti supported PHP range dari Laravel major yang sedang aktif.
+- Database utama production adalah PostgreSQL. Test suite menggunakan SQLite in-memory melalui `phpunit.xml`.
+- SQLite tidak boleh dipakai sebagai database production.
 - Production deployment wajib kompatibel dengan Laravel Cloud.
+- Resource production harus memprioritaskan ekosistem Laravel Cloud: web compute, queue/worker, scheduled task, managed database, Redis-compatible cache/KV bila dibutuhkan, object storage, domain/TLS, log/metric, preview environment, scale-to-zero policy, dan WebSockets bila dibutuhkan.
 - Style PHP mengikuti Laravel Pint. Jalankan `./vendor/bin/pint` sebelum merge untuk perubahan PHP.
 - Test dijalankan dengan `php artisan test` atau `composer test`.
 - Indentasi mengikuti `.editorconfig`: 4 spasi untuk source code, 2 spasi untuk YAML.
@@ -170,11 +173,12 @@ Jika perubahan menyentuh frontend asset atau Blade yang bergantung Vite:
 npm run build
 ```
 
-Jika perubahan menyentuh deployment, queue, scheduler, storage, atau environment production:
+Jika perubahan menyentuh deployment, queue, scheduler, cache/KV, storage, WebSocket, domain/TLS, atau environment production:
 
 - Pastikan behavior kompatibel dengan Laravel Cloud.
-- Dokumentasikan build/deploy command, env var baru, queue worker, scheduled task, atau storage resource yang dibutuhkan.
+- Dokumentasikan build/deploy command, env var baru, database/cache resource, queue worker, scheduled task, object storage resource, domain/TLS, WebSocket, atau observability resource yang dibutuhkan.
 - Jangan menambah long-running non-Laravel runtime tanpa ADR atau architecture review.
+- Jangan memakai SQLite untuk production; gunakan PostgreSQL managed resource yang disetujui.
 
 ## Error Handling dan Observability
 
@@ -188,7 +192,7 @@ Jika perubahan menyentuh deployment, queue, scheduler, storage, atau environment
 
 - Perubahan endpoint public harus memperbarui `API_DOCUMENTATION.md` atau dokumen API terkait di `docs/api`.
 - Perubahan requirement atau keputusan teknis yang penting harus ditulis di `docs/tasks` atau SOP yang relevan.
-- Perubahan deployment, storage production, queue, scheduler, observability, atau platform dependency harus memperbarui ADR/requirement yang relevan.
+- Perubahan deployment, storage production, queue, scheduler, cache/KV, WebSocket, observability, atau platform dependency harus memperbarui ADR/requirement yang relevan.
 - Dokumentasi harus memuat request, response sukses, response error penting, auth/role requirement, dan catatan business rule.
 - Jangan dokumentasikan secret asli, token asli, nomor rekening asli, atau data pribadi nyata.
 
@@ -205,6 +209,7 @@ Reviewer wajib memeriksa:
 - Apakah test menutup behavior penting dan edge case.
 - Apakah dokumentasi diperbarui saat kontrak API berubah.
 - Apakah perubahan runtime kompatibel dengan Laravel Cloud production.
+- Apakah perubahan masih kompatibel dengan Laravel 13 ke atas dan PHP runtime yang didukung.
 - Apakah tidak ada credential, debug code, dump, atau log sensitif yang tertinggal.
 
 ## Definition of Done
@@ -219,7 +224,7 @@ Sebuah task dianggap selesai bila:
 6. `php artisan test` lulus, atau ada alasan teknis jelas bila belum bisa dijalankan.
 7. Dokumentasi diperbarui jika API, flow bisnis, atau operational behavior berubah.
 8. Tidak ada perubahan unrelated yang ikut terbawa.
-9. Jika menyentuh deployment/storage/queue/scheduler, kebutuhan Laravel Cloud sudah terdokumentasi.
+9. Jika menyentuh deployment/storage/queue/scheduler/cache/WebSocket/domain, kebutuhan Laravel Cloud sudah terdokumentasi.
 
 ## Anti-Pattern yang Harus Dihindari
 
