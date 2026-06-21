@@ -33,8 +33,22 @@
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%; max-width:980px; border-collapse:collapse;">
                     <tr>
                         <td style="padding:0 0 52px;">
-                            <img src="{{ $brandMarkUrl }}" width="88" height="88" alt="" style="display:block; width:88px; height:88px; border:0;">
-                            <img src="{{ $wordmarkUrl }}" width="150" alt="Kresek.in" style="display:block; width:150px; max-width:150px; height:auto; border:0; margin-top:8px;">
+                            @if ($isSeller)
+                                <table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                                    <tr>
+                                        <td style="vertical-align:middle; padding:0 24px 0 0;">
+                                            <img src="{{ $brandMarkUrl }}" width="88" height="88" alt="" style="display:block; width:88px; height:88px; border:0;">
+                                        </td>
+                                        <td style="vertical-align:middle;">
+                                            <img src="{{ $wordmarkUrl }}" width="150" alt="Kresek.in" style="display:block; width:150px; max-width:150px; height:auto; border:0;">
+                                            <p style="margin:4px 0 0; color:#8a8a8a; font-size:24px; line-height:1.1;">{{ $brandLabel }}</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            @else
+                                <img src="{{ $brandMarkUrl }}" width="88" height="88" alt="" style="display:block; width:88px; height:88px; border:0;">
+                                <img src="{{ $wordmarkUrl }}" width="150" alt="Kresek.in" style="display:block; width:150px; max-width:150px; height:auto; border:0; margin-top:8px;">
+                            @endif
                         </td>
                     </tr>
 
@@ -72,7 +86,7 @@
                                 <tr>
                                     <td style="padding:22px 26px;">
                                         <p style="margin:0 0 10px; color:#5f646d; font-size:18px; line-height:1.5; font-weight:700;">Catatan:</p>
-                                        <p style="margin:0; color:#5f646d; font-size:18px; line-height:1.6;">Kode di atas hanya berlaku <strong style="font-weight:800;">selama {{ $expiresInMinutes }} menit.</strong></p>
+                                        <p style="margin:0; color:#5f646d; font-size:18px; line-height:1.6;">Kode di atas hanya berlaku <strong style="font-weight:800;">selama {{ $expiresInMinutes }} menit.</strong>@if ($noteSuffix) {{ $noteSuffix }}@endif</p>
                                         <p style="margin:38px 0 0; color:#5f646d; font-size:18px; line-height:1.8;">Jangan bagikan kode ini kepada siapa pun demi menjaga keamanan akun. Hati-hati untuk tidak memberikan data penting Anda kepada pihak yang mengatasnamakan <strong style="font-weight:800;">Kresek.in</strong> atau yang tidak dapat dijamin keamanannya.</p>
                                     </td>
                                 </tr>
@@ -85,10 +99,10 @@
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%; border-collapse:collapse;">
                                 <tr>
                                     <td style="vertical-align:top; padding:0 24px 0 0;">
-                                        <p style="margin:0; color:#5f646d; font-size:18px; line-height:1.6;">{{ $ignoreMessage }}</p>
+                                        <p style="margin:0; color:#5f646d; font-size:18px; line-height:1.6;">{{ $closingMessage }}</p>
                                     </td>
                                     <td class="download-block" align="right" style="vertical-align:top; width:240px;">
-                                        <p style="margin:0 0 18px; color:#5f646d; font-size:18px; line-height:1.4;">Download aplikasi <span style="color:#00bdc8;">kresek.in</span></p>
+                                        <p style="margin:0 0 18px; color:#5f646d; font-size:18px; line-height:1.4;">Download aplikasi <span style="color:#00bdc8;">{{ $downloadLabel }}</span></p>
                                         @if ($playstoreUrl)
                                             <a href="{{ $playstoreUrl }}" style="display:inline-block; text-decoration:none;">
                                                 <img src="{{ $playstoreBadgeUrl }}" width="166" height="48" alt="Get it on Google Play" style="display:block; width:166px; height:48px; border:0;">

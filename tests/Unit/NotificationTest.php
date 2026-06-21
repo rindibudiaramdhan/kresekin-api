@@ -20,10 +20,26 @@ class NotificationTest extends TestCase
         $this->assertSame(['html' => 'emails.otp', 'text' => 'emails.otp-text'], $mail->view);
         $this->assertSame('Masuk ke Kresek.in', $mail->viewData['heading']);
         $this->assertSame('Gunakan kode verifikasi berikut untuk masuk ke akun Anda:', $mail->viewData['intro']);
-        $this->assertSame('Jika Anda tidak merasa melakukan login, abaikan email ini', $mail->viewData['ignoreMessage']);
+        $this->assertSame('Jika Anda tidak merasa melakukan login, abaikan email ini', $mail->viewData['closingMessage']);
+        $this->assertFalse($mail->viewData['isSeller']);
+        $this->assertSame('kresek.in', $mail->viewData['downloadLabel']);
         $this->assertSame('123456', $mail->viewData['otp']);
         $this->assertSame(5, $mail->viewData['expiresInMinutes']);
         $this->assertSame('cs-support@kresek.in', $mail->viewData['supportEmail']);
+    }
+
+    public function test_seller_login_otp_notification_uses_seller_design_copy(): void
+    {
+        $notification = new LoginOtpNotification('123456');
+        $mail = $notification->toMail(new User(['role' => User::ROLE_SELLER]));
+
+        $this->assertSame('Kode OTP Masuk Kresek.in Seller', $mail->subject);
+        $this->assertSame('Masuk ke Kresek.in Seller', $mail->viewData['heading']);
+        $this->assertSame('Gunakan kode verifikasi berikut untuk masuk ke akun Anda:', $mail->viewData['intro']);
+        $this->assertSame('Jika Anda tidak merasa melakukan login, abaikan email ini', $mail->viewData['closingMessage']);
+        $this->assertTrue($mail->viewData['isSeller']);
+        $this->assertSame('Seller', $mail->viewData['brandLabel']);
+        $this->assertSame('kresek.in seller', $mail->viewData['downloadLabel']);
     }
 
     public function test_registration_otp_notification_builds_expected_mail_message(): void
@@ -34,12 +50,30 @@ class NotificationTest extends TestCase
         $this->assertSame(['mail'], $notification->via(new User));
         $this->assertSame('Kode OTP Registrasi Kresek.in', $mail->subject);
         $this->assertSame(['html' => 'emails.otp', 'text' => 'emails.otp-text'], $mail->view);
-        $this->assertSame('Verifikasi Akun Kresek.in', $mail->viewData['heading']);
-        $this->assertSame('Gunakan kode verifikasi berikut untuk menyelesaikan pendaftaran akun Anda:', $mail->viewData['intro']);
-        $this->assertSame('Jika Anda tidak merasa melakukan pendaftaran, abaikan email ini', $mail->viewData['ignoreMessage']);
+        $this->assertSame('Verifikasi Akun Anda', $mail->viewData['heading']);
+        $this->assertSame('Masukkan kode berikut untuk menyelesaikan pendaftaran:', $mail->viewData['intro']);
+        $this->assertSame('Selamat datang di kresek.in', $mail->viewData['closingMessage']);
+        $this->assertSame('Gunakan kode ini untuk mengaktifkan akun Anda.', $mail->viewData['noteSuffix']);
+        $this->assertFalse($mail->viewData['isSeller']);
+        $this->assertSame('kresek.in', $mail->viewData['downloadLabel']);
         $this->assertSame('654321', $mail->viewData['otp']);
         $this->assertSame(5, $mail->viewData['expiresInMinutes']);
         $this->assertSame('cs-support@kresek.in', $mail->viewData['supportEmail']);
+    }
+
+    public function test_seller_registration_otp_notification_uses_seller_verification_copy(): void
+    {
+        $notification = new RegistrationOtpNotification('654321');
+        $mail = $notification->toMail(new User(['role' => User::ROLE_SELLER]));
+
+        $this->assertSame('Kode OTP Registrasi Kresek.in Seller', $mail->subject);
+        $this->assertSame('Verifikasi Akun Kresek.in Seller', $mail->viewData['heading']);
+        $this->assertSame('Masukkan kode berikut untuk menyelesaikan pendaftaran:', $mail->viewData['intro']);
+        $this->assertSame('Selamat datang di kresek.in seller', $mail->viewData['closingMessage']);
+        $this->assertSame('Gunakan kode ini untuk mengaktifkan akun Anda.', $mail->viewData['noteSuffix']);
+        $this->assertTrue($mail->viewData['isSeller']);
+        $this->assertSame('Seller', $mail->viewData['brandLabel']);
+        $this->assertSame('kresek.in seller', $mail->viewData['downloadLabel']);
     }
 
     public function test_resend_otp_notification_builds_expected_mail_message(): void
@@ -52,9 +86,25 @@ class NotificationTest extends TestCase
         $this->assertSame(['html' => 'emails.otp', 'text' => 'emails.otp-text'], $mail->view);
         $this->assertSame('Verifikasi Kresek.in', $mail->viewData['heading']);
         $this->assertSame('Gunakan kode verifikasi berikut untuk melanjutkan proses Anda:', $mail->viewData['intro']);
-        $this->assertSame('Jika Anda tidak merasa meminta kode ini, abaikan email ini', $mail->viewData['ignoreMessage']);
+        $this->assertSame('Jika Anda tidak merasa meminta kode ini, abaikan email ini', $mail->viewData['closingMessage']);
+        $this->assertFalse($mail->viewData['isSeller']);
+        $this->assertSame('kresek.in', $mail->viewData['downloadLabel']);
         $this->assertSame('987654', $mail->viewData['otp']);
         $this->assertSame(5, $mail->viewData['expiresInMinutes']);
         $this->assertSame('cs-support@kresek.in', $mail->viewData['supportEmail']);
+    }
+
+    public function test_seller_resend_otp_notification_uses_seller_design_copy(): void
+    {
+        $notification = new ResendOtpNotification('987654');
+        $mail = $notification->toMail(new User(['role' => User::ROLE_SELLER]));
+
+        $this->assertSame('Kode OTP Kresek.in Seller', $mail->subject);
+        $this->assertSame('Verifikasi Kresek.in Seller', $mail->viewData['heading']);
+        $this->assertSame('Gunakan kode verifikasi berikut untuk melanjutkan proses Anda:', $mail->viewData['intro']);
+        $this->assertSame('Jika Anda tidak merasa meminta kode ini, abaikan email ini', $mail->viewData['closingMessage']);
+        $this->assertTrue($mail->viewData['isSeller']);
+        $this->assertSame('Seller', $mail->viewData['brandLabel']);
+        $this->assertSame('kresek.in seller', $mail->viewData['downloadLabel']);
     }
 }
