@@ -22,7 +22,7 @@ class WhatsappOtpSenderTest extends TestCase
         ]);
         Log::spy();
 
-        (new LogWhatsappOtpSender())->send('+6281234567890', '123456');
+        (new LogWhatsappOtpSender)->send('+6281234567890', '123456');
 
         Http::assertSent(function ($request): bool {
             return $request->url() === 'https://api.saga-gateway.id/whatsapp/send'
@@ -47,7 +47,7 @@ class WhatsappOtpSenderTest extends TestCase
         $this->expectException(RequestException::class);
 
         try {
-            (new LogWhatsappOtpSender())->send('+6281234567890', '123456');
+            (new LogWhatsappOtpSender)->send('+6281234567890', '123456');
         } finally {
             Log::shouldHaveReceived('error')->once();
         }

@@ -7,6 +7,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Mockery;
 use Tests\TestCase;
 
 class LogWhatsappOtpSenderTest extends TestCase
@@ -28,7 +29,7 @@ class LogWhatsappOtpSenderTest extends TestCase
         ]);
         Log::spy();
 
-        (new LogWhatsappOtpSender())->send('+6285134532129', '123455');
+        (new LogWhatsappOtpSender)->send('+6285134532129', '123455');
 
         Http::assertSent(function (Request $request): bool {
             return $request->url() === 'https://api.saga-gateway.id/whatsapp/send'
@@ -38,7 +39,14 @@ class LogWhatsappOtpSenderTest extends TestCase
                 && $request['text'] === 'Kresekin.id - Kode OTP Anda adalah 123455';
         });
 
-        Log::shouldHaveReceived('info')->once();
+        Log::shouldHaveReceived('info')
+            ->once()
+            ->with('WhatsApp OTP dispatched.', Mockery::on(fn (array $context): bool => $context === [
+                'driver' => 'saga',
+                'phone' => '*********2129',
+                'provider_phone' => '********2129',
+                'status' => 200,
+            ]));
     }
 
     public function test_send_logs_and_rethrows_when_provider_returns_error(): void
@@ -51,9 +59,19 @@ class LogWhatsappOtpSenderTest extends TestCase
         $this->expectException(RequestException::class);
 
         try {
-            (new LogWhatsappOtpSender())->send('085134532129', '123455');
+            (new LogWhatsappOtpSender)->send('085134532129', '123455');
         } finally {
-            Log::shouldHaveReceived('error')->once();
+            Log::shouldHaveReceived('error')
+                ->once()
+                ->with('WhatsApp OTP dispatch failed.', Mockery::on(fn (array $context): bool => $context === [
+                    'driver' => 'saga',
+                    'integration' => 'whatsapp_otp',
+                    'phone' => '********2129',
+                    'provider_phone' => '********2129',
+                    'endpoint_host' => 'api.saga-gateway.id',
+                    'status' => 500,
+                    'failure_category' => 'provider_5xx',
+                ]));
         }
     }
 }

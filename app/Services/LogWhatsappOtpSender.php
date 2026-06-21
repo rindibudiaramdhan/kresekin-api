@@ -27,18 +27,21 @@ class LogWhatsappOtpSender implements WhatsappOtpSender
 
             Log::info('WhatsApp OTP dispatched.', [
                 'driver' => config('services.whatsapp_otp.driver'),
-                'phone' => $phone,
-                'provider_phone' => $payload['to'],
+                'phone' => $this->maskPhoneNumber($phone),
+                'provider_phone' => $this->maskPhoneNumber($payload['to']),
                 'status' => $response->status(),
             ]);
         } catch (RequestException $exception) {
+            $status = $exception->response?->status();
+
             Log::error('WhatsApp OTP dispatch failed.', [
                 'driver' => config('services.whatsapp_otp.driver'),
-                'phone' => $phone,
-                'provider_phone' => $payload['to'],
-                'endpoint' => $endpoint,
-                'status' => $exception->response?->status(),
-                'response' => $exception->response?->json(),
+                'integration' => 'whatsapp_otp',
+                'phone' => $this->maskPhoneNumber($phone),
+                'provider_phone' => $this->maskPhoneNumber($payload['to']),
+                'endpoint_host' => parse_url($endpoint, PHP_URL_HOST),
+                'status' => $status,
+                'failure_category' => $this->failureCategory($status),
             ]);
 
             throw $exception;
@@ -58,5 +61,26 @@ class LogWhatsappOtpSender implements WhatsappOtpSender
         }
 
         return $normalized;
+    }
+
+    private function maskPhoneNumber(string $phone): string
+    {
+        $normalized = preg_replace('/\D+/', '', $phone) ?? '';
+
+        if ($normalized === '') {
+            return '';
+        }
+
+        return str_repeat('*', max(strlen($normalized) - 4, 0)).substr($normalized, -4);
+    }
+
+    private function failureCategory(?int $status): string
+    {
+        return match (true) {
+            $status === null => 'network_or_timeout',
+            $status >= 500 => 'provider_5xx',
+            $status >= 400 => 'provider_4xx',
+            default => 'provider_error',
+        };
     }
 }
