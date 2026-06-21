@@ -60,6 +60,18 @@ Jika traffic atau query count tinggi, turunkan request sample rate sebelum produ
 
 ## Scope Implementasi
 
+### Phase 0 - Laravel Cloud Email Notification
+
+Konfigurasi ini dilakukan melalui dashboard Laravel Cloud dan tidak memerlukan perubahan codebase.
+
+1. Buka Laravel Cloud dashboard.
+2. Masuk ke profile/account user yang bertanggung jawab terhadap deployment.
+3. Buka menu `Notifications`.
+4. Pastikan email notification untuk `Deployments` aktif, minimal untuk failed deployments.
+5. Pastikan email akun Laravel Cloud adalah email operasional yang dipantau.
+6. Gunakan email notification terlebih dahulu karena Slack workspace belum tersedia.
+7. Saat Slack workspace sudah tersedia, evaluasi ulang apakah alert production perlu dikirim ke Slack juga.
+
 ### Phase 1 - Request ID dan Log Hygiene
 
 1. Buat middleware baru, misalnya `App\Http\Middleware\AssignRequestId`.
@@ -171,6 +183,13 @@ Log::warning('External integration failed.', [
 
 ## Verifikasi
 
+Verifikasi manual setelah Phase 0:
+
+1. Cek Laravel Cloud account notification settings.
+2. Pastikan kategori deployment email aktif untuk failed deployments.
+3. Pastikan email tujuan dapat menerima email dari Laravel Cloud.
+4. Pada failed deployment berikutnya, pastikan email alert diterima.
+
 Test yang perlu dijalankan setelah Phase 1:
 
 ```bash
@@ -218,11 +237,12 @@ Verifikasi manual di Laravel Cloud setelah Phase 3:
 
 ## Urutan Prioritas
 
-1. Tambah request id middleware.
-2. Mask logging WhatsApp OTP.
-3. Tambah test regression.
-4. Install Nightwatch package.
-5. Configure Nightwatch Free plan di staging.
-6. Set spending cap.
-7. Rollout production dengan sample rate rendah.
-8. Evaluasi event usage dan noise.
+1. Aktifkan Laravel Cloud email notification untuk failed deployments.
+2. Tambah request id middleware.
+3. Mask logging WhatsApp OTP.
+4. Tambah test regression.
+5. Install Nightwatch package.
+6. Configure Nightwatch Free plan di staging.
+7. Set spending cap.
+8. Rollout production dengan sample rate rendah.
+9. Evaluasi event usage dan noise.
