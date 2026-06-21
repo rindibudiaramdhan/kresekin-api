@@ -4,7 +4,7 @@ Tanggal: 2026-06-21
 
 ## Ringkasan
 
-Peningkatan observability dilakukan bertahap dengan fokus awal pada traceability request dan integrasi Laravel Nightwatch Free plan. Tujuannya adalah membuat error, issue integrasi eksternal, request API, dan job background lebih mudah ditelusuri tanpa membocorkan data sensitif dan tanpa langsung menambah biaya operasional.
+Peningkatan observability berikutnya difokuskan pada traceability request, log hygiene, dan alert deployment dasar. Laravel Nightwatch sudah terkoneksi di production Laravel Cloud, sehingga dokumen ini tidak lagi memuat tahapan pemasangan Nightwatch.
 
 ## Latar Belakang
 
@@ -19,7 +19,7 @@ Hasil pengecekan codebase saat ini:
 
 ## Keputusan Teknis
 
-1. Tambahkan request id sebagai fondasi tracing sebelum Nightwatch production rollout.
+1. Tambahkan request id sebagai fondasi tracing lintas response, Laravel log, Laravel Cloud Logs, dan Nightwatch.
 2. Request id harus tersedia di:
    - response header `X-Request-Id`
    - log context Laravel
@@ -32,23 +32,21 @@ Hasil pengecekan codebase saat ini:
    - `path`
    - `environment`
 6. Jangan memasukkan bearer token, OTP, password, credential bank, identity document path, payload mentah, atau PII penuh ke log context.
-7. Nightwatch dipasang dengan Free plan terlebih dahulu.
-8. Nightwatch harus memakai sample rate rendah dan spending cap untuk mencegah biaya tidak disengaja.
-9. Audit trail formal untuk aksi finance dan aksi sensitif tetap diperlakukan sebagai pekerjaan terpisah dari observability runtime.
+7. Laravel Nightwatch production sudah terkoneksi dan diperlakukan sebagai channel tracing aktif.
+8. Audit trail formal untuk aksi finance dan aksi sensitif tetap diperlakukan sebagai pekerjaan terpisah dari observability runtime.
 
 ## Keputusan Biaya
 
-Laravel Nightwatch memiliki Free plan, tetapi event dihitung dari banyak jenis telemetry, bukan hanya request. Event dapat mencakup request, exception, query, log, job, mail, command, cache, dan scheduled task.
+Laravel Nightwatch sudah terkoneksi di production dengan Free plan. Event dihitung dari banyak jenis telemetry, bukan hanya request. Event dapat mencakup request, exception, query, log, job, mail, command, cache, dan scheduled task.
 
 Untuk menjaga biaya tetap aman:
 
-1. Gunakan Free plan terlebih dahulu.
-2. Pasang spending cap di Nightwatch.
-3. Gunakan sample rate rendah pada awal rollout.
+1. Pastikan spending cap aktif di Nightwatch.
+2. Pertahankan sample rate rendah pada production.
+3. Monitor event usage setelah production traffic berjalan.
 4. Jangan mengirim debug log noise ke Nightwatch.
-5. Monitor event usage setelah deploy staging dan production.
 
-Konfigurasi awal yang direkomendasikan:
+Konfigurasi production yang perlu dipertahankan:
 
 ```env
 NIGHTWATCH_REQUEST_SAMPLE_RATE=0.1
@@ -56,7 +54,7 @@ NIGHTWATCH_COMMAND_SAMPLE_RATE=1.0
 NIGHTWATCH_EXCEPTION_SAMPLE_RATE=1.0
 ```
 
-Jika traffic atau query count tinggi, turunkan request sample rate sebelum production full rollout.
+Jika traffic atau query count tinggi, turunkan request sample rate di production.
 
 ## Scope Implementasi
 
@@ -88,61 +86,17 @@ Konfigurasi ini dilakukan melalui dashboard Laravel Cloud dan tidak memerlukan p
    - jangan log OTP
    - jangan log response provider penuh bila response bisa berisi payload sensitif
 
-### Phase 2 - Laravel Nightwatch Package
+### Phase 2 - Production Monitoring Follow Up
 
-1. Install package:
-
-```bash
-composer require laravel/nightwatch
-```
-
-2. Commit perubahan `composer.json` dan `composer.lock`.
-3. Tambahkan environment variable lokal/test untuk mematikan Nightwatch:
-
-```env
-NIGHTWATCH_ENABLED=false
-```
-
-4. Pastikan `phpunit.xml` mematikan Nightwatch saat test:
-
-```xml
-<env name="NIGHTWATCH_ENABLED" value="false"/>
-```
-
-5. Jalankan test regression logging/request middleware.
-
-### Phase 3 - Konfigurasi Laravel Cloud
-
-1. Buat application/environment di dashboard Nightwatch.
-2. Ambil `NIGHTWATCH_TOKEN` dari Nightwatch.
-3. Di Laravel Cloud environment dashboard:
-   - klik `Connect Nightwatch`
-   - enable monitoring
-   - masukkan token Nightwatch
-4. Pastikan Laravel Cloud menginject atau environment memiliki:
-
-```env
-NIGHTWATCH_TOKEN=...
-NIGHTWATCH_REQUEST_SAMPLE_RATE=0.1
-LOG_CHANNEL=stack
-LOG_STACK=laravel-cloud-socket,nightwatch
-```
-
-5. Set spending cap di Nightwatch sebelum production traffic dikirim.
-6. Deploy staging terlebih dahulu.
-7. Verifikasi data masuk ke dashboard Nightwatch.
-
-### Phase 4 - Production Rollout
-
-1. Deploy ke production setelah staging stabil.
-2. Pantau selama 24-72 jam:
+1. Pantau Nightwatch selama 24-72 jam setelah production terkoneksi:
    - event usage
    - exception volume
    - slow request
    - query volume
    - job failure
    - log noise
-3. Turunkan sample rate bila event usage mendekati batas Free plan.
+2. Turunkan sample rate bila event usage mendekati batas Free plan.
+3. Pastikan spending cap aktif.
 4. Tambahkan alert internal untuk issue penting setelah pola event jelas.
 
 ## Log Event Yang Direkomendasikan
@@ -197,14 +151,7 @@ Test yang perlu dijalankan setelah Phase 1:
 php artisan test tests/Feature
 ```
 
-Test yang perlu dijalankan setelah Phase 2:
-
-```bash
-composer install
-php artisan test
-```
-
-Verifikasi manual di Laravel Cloud setelah Phase 3:
+Verifikasi manual di Laravel Cloud dan Nightwatch setelah Phase 1:
 
 1. Hit endpoint `/up`.
 2. Hit satu endpoint API authenticated dan satu endpoint unauthenticated.
@@ -223,7 +170,7 @@ Verifikasi manual di Laravel Cloud setelah Phase 3:
 3. Request id dari client tidak valid atau terlalu panjang.
    - Mitigasi: validasi format dan panjang; generate UUID bila tidak valid.
 4. Nightwatch agent menambah overhead.
-   - Mitigasi: rollout staging dahulu dan monitor latency.
+   - Mitigasi: monitor latency production dan turunkan sample rate bila diperlukan.
 5. Log Cloud retention tidak cukup untuk investigasi jangka panjang.
    - Mitigasi: gunakan audit trail database untuk aksi sensitif dan pertimbangkan plan/tool tambahan bila dibutuhkan.
 
@@ -241,8 +188,6 @@ Verifikasi manual di Laravel Cloud setelah Phase 3:
 2. Tambah request id middleware.
 3. Mask logging WhatsApp OTP.
 4. Tambah test regression.
-5. Install Nightwatch package.
-6. Configure Nightwatch Free plan di staging.
-7. Set spending cap.
-8. Rollout production dengan sample rate rendah.
-9. Evaluasi event usage dan noise.
+5. Pastikan spending cap Nightwatch aktif.
+6. Pertahankan production sample rate rendah.
+7. Evaluasi event usage dan noise Nightwatch.
