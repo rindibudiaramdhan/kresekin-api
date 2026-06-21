@@ -31,6 +31,7 @@
 | `accepted_by_store` | Order diterima toko. |
 | `processing` | Order sedang diproses seller. |
 | `on_the_way` | Order dalam pengiriman/perjalanan. |
+| `ready_for_pickup` | Order pickup sudah siap diambil buyer di toko. |
 | `completed` | Order selesai dan dapat dihitung sebagai revenue completed. |
 | `canceled` | Order dibatalkan. |
 | `pending_review` | Agent menunggu review data registrasi. |

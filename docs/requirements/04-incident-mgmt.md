@@ -25,8 +25,9 @@ Status transaksi yang tersedia:
 2. `accepted_by_store`
 3. `processing`
 4. `on_the_way`
-5. `completed`
-6. `canceled`
+5. `ready_for_pickup`
+6. `completed`
+7. `canceled`
 
 ## Cart
 
@@ -63,8 +64,10 @@ Baseline transisi:
 | --- | --- | --- |
 | `pending_payment` | `accepted_by_store` | Seller atau finance setelah pembayaran valid |
 | `accepted_by_store` | `processing` | Seller |
-| `processing` | `on_the_way` | Seller |
+| `processing` | `on_the_way` | Seller untuk pengiriman kurir |
+| `processing` | `ready_for_pickup` | Seller untuk ambil di toko |
 | `on_the_way` | `completed` | Seller/system sesuai keputusan produk |
+| `ready_for_pickup` | `completed` | Seller/system sesuai keputusan produk |
 | Status aktif | `canceled` | Seller/buyer/finance sesuai policy |
 
 Requirement:

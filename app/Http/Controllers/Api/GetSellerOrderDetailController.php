@@ -114,6 +114,7 @@ class GetSellerOrderDetailController extends Controller
             Transaction::STATUS_ACCEPTED_BY_STORE => 'Diterima Toko',
             Transaction::STATUS_PROCESSING => 'Sedang Diproses',
             Transaction::STATUS_ON_THE_WAY => 'Dalam Perjalanan',
+            Transaction::STATUS_READY_FOR_PICKUP => 'Siap Diambil',
             Transaction::STATUS_COMPLETED => 'Pesanan Selesai',
             Transaction::STATUS_CANCELED => 'Pesanan Dibatalkan',
             default => ucfirst($status),

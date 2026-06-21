@@ -45,6 +45,8 @@ class Transaction extends Model
 
     public const STATUS_CODE_ON_THE_WAY = 'on_the_way';
 
+    public const STATUS_CODE_READY_FOR_PICKUP = 'ready_for_pickup';
+
     public const STATUS_CODE_COMPLETED = 'completed';
 
     public const STATUS_CODE_CANCELED = 'canceled';
@@ -56,6 +58,8 @@ class Transaction extends Model
     public const STATUS_PROCESSING = 'sedang diproses';
 
     public const STATUS_ON_THE_WAY = 'dalam perjalanan';
+
+    public const STATUS_READY_FOR_PICKUP = 'siap diambil';
 
     public const STATUS_COMPLETED = 'pesanan selesai';
 
@@ -74,6 +78,7 @@ class Transaction extends Model
             self::STATUS_CODE_ACCEPTED_BY_STORE => self::STATUS_ACCEPTED_BY_STORE,
             self::STATUS_CODE_PROCESSING => self::STATUS_PROCESSING,
             self::STATUS_CODE_ON_THE_WAY => self::STATUS_ON_THE_WAY,
+            self::STATUS_CODE_READY_FOR_PICKUP => self::STATUS_READY_FOR_PICKUP,
             self::STATUS_CODE_COMPLETED => self::STATUS_COMPLETED,
             self::STATUS_CODE_CANCELED => self::STATUS_CANCELED,
         ];

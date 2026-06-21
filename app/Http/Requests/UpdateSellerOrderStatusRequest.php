@@ -25,6 +25,7 @@ class UpdateSellerOrderStatusRequest extends FormRequest
                     Transaction::STATUS_CODE_ACCEPTED_BY_STORE,
                     Transaction::STATUS_CODE_PROCESSING,
                     Transaction::STATUS_CODE_ON_THE_WAY,
+                    Transaction::STATUS_CODE_READY_FOR_PICKUP,
                     Transaction::STATUS_CODE_COMPLETED,
                     Transaction::STATUS_CODE_CANCELED,
                 ]),

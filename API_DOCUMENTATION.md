@@ -750,7 +750,7 @@ Mengambil daftar order yang berisi item tenant seller aktif.
 
 Query opsional:
 
-- `status_code`: `pending_payment`, `accepted_by_store`, `processing`, `on_the_way`, `completed`, `canceled`
+- `status_code`: `pending_payment`, `accepted_by_store`, `processing`, `on_the_way`, `ready_for_pickup`, `completed`, `canceled`
 
 ```bash
 curl "http://127.0.0.1:8000/api/seller/orders?status_code=processing" \
@@ -781,7 +781,9 @@ Mengubah status order seller.
 
 Body:
 
-- `status_code` wajib: `accepted_by_store`, `processing`, `on_the_way`, `completed`, atau `canceled`
+- `status_code` wajib: `accepted_by_store`, `processing`, `on_the_way`, `ready_for_pickup`, `completed`, atau `canceled`
+- Transisi pickup memakai `processing` -> `ready_for_pickup` -> `completed`.
+- Transisi kurir memakai `processing` -> `on_the_way` -> `completed`.
 - `description` opsional, max 255
 - `cancellation_reason_category_id` wajib UUID jika status `canceled`
 - `cancellation_reason_text` wajib jika kategori alasan pembatalan mengizinkan free text
@@ -1150,6 +1152,7 @@ curl -X DELETE http://127.0.0.1:8000/api/finance/cancellation-reason-categories/
 | `accepted_by_store` | `diterima toko` |
 | `processing` | `sedang diproses` |
 | `on_the_way` | `dalam perjalanan` |
+| `ready_for_pickup` | `siap diambil` |
 | `completed` | `pesanan selesai` |
 | `canceled` | `pesanan dibatalkan` |
 
@@ -1961,16 +1964,49 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Dashboard seller berhasil diambil.",
   "data": {
-    "profile": {
-      "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-      "tenant_name": "Toko Asep"
+    "seller": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "name": "Budi"
     },
-    "revenue_today": 150000,
-    "transactions_today": 6,
-    "orders_today_counts": {
-      "pending_payment": 1,
-      "processing": 2,
-      "completed": 3
+    "store": {
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "name": "Toko Asep",
+      "is_verified": true,
+      "verification_label": "Terverifikasi"
+    },
+    "summary": {
+      "today_revenue": 150000,
+      "today_transaction_count": 6
+    },
+    "orders_today": {
+      "status_counts": {
+        "new": {
+          "status_code": "accepted_by_store",
+          "label": "Baru",
+          "count": 1
+        },
+        "processing": {
+          "status_code": "processing",
+          "label": "Diproses",
+          "count": 2
+        },
+        "on_the_way": {
+          "status_code": "on_the_way",
+          "label": "Dikirim",
+          "count": 0
+        },
+        "ready_for_pickup": {
+          "status_code": "ready_for_pickup",
+          "label": "Siap Diambil",
+          "count": 0
+        },
+        "completed": {
+          "status_code": "completed",
+          "label": "Selesai",
+          "count": 3
+        }
+      },
+      "preview": []
     }
   }
 }
@@ -2034,12 +2070,31 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Jumlah order hari ini berhasil diambil.",
   "data": {
-    "pending_payment": 1,
-    "accepted_by_store": 1,
-    "processing": 2,
-    "on_the_way": 0,
-    "completed": 3,
-    "canceled": 0
+    "new": {
+      "status_code": "accepted_by_store",
+      "label": "Baru",
+      "count": 1
+    },
+    "processing": {
+      "status_code": "processing",
+      "label": "Diproses",
+      "count": 2
+    },
+    "on_the_way": {
+      "status_code": "on_the_way",
+      "label": "Dikirim",
+      "count": 0
+    },
+    "ready_for_pickup": {
+      "status_code": "ready_for_pickup",
+      "label": "Siap Diambil",
+      "count": 0
+    },
+    "completed": {
+      "status_code": "completed",
+      "label": "Selesai",
+      "count": 3
+    }
   }
 }
 ```
@@ -2228,12 +2283,13 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 
 ```json
 {
-  "message": "Status order berhasil diperbarui.",
+  "message": "Status order seller berhasil diperbarui.",
   "data": {
     "id": "11111111-1111-4111-8111-111111111111",
     "order_number": "INV-20260527-0001",
-    "status": "diterima toko",
-    "status_code": "accepted_by_store"
+    "status": "siap diambil",
+    "status_code": "ready_for_pickup",
+    "status_label": "Siap Diambil"
   }
 }
 ```

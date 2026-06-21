@@ -219,6 +219,11 @@ class GetSellerDashboardController extends Controller
                 'label' => 'Dikirim',
                 'count' => $orders->where('status', Transaction::STATUS_ON_THE_WAY)->count(),
             ],
+            'ready_for_pickup' => [
+                'status_code' => Transaction::STATUS_CODE_READY_FOR_PICKUP,
+                'label' => 'Siap Diambil',
+                'count' => $orders->where('status', Transaction::STATUS_READY_FOR_PICKUP)->count(),
+            ],
             'completed' => [
                 'status_code' => Transaction::STATUS_CODE_COMPLETED,
                 'label' => 'Selesai',

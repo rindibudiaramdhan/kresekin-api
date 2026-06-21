@@ -42,6 +42,8 @@ class UpdateSellerOrderStatusController extends Controller
         $validated = $request->validated();
         $status = Transaction::statusFromCode($validated['status_code']);
 
+        $this->ensureAllowedTransition($order, $validated['status_code']);
+
         $cancellationReasonCategory = $status === Transaction::STATUS_CANCELED
             ? CancellationReasonCategory::query()->find($validated['cancellation_reason_category_id'])
             : null;
@@ -89,6 +91,7 @@ class UpdateSellerOrderStatusController extends Controller
             Transaction::STATUS_ACCEPTED_BY_STORE => 'Pesanan diterima',
             Transaction::STATUS_PROCESSING => 'Pesanan sedang diproses',
             Transaction::STATUS_ON_THE_WAY => 'Pesanan dalam perjalanan',
+            Transaction::STATUS_READY_FOR_PICKUP => 'Pesanan siap diambil',
             Transaction::STATUS_COMPLETED => 'Pesanan selesai',
             Transaction::STATUS_CANCELED => 'Pesanan dibatalkan',
             default => ucfirst($status),
@@ -109,6 +112,7 @@ class UpdateSellerOrderStatusController extends Controller
             Transaction::STATUS_ACCEPTED_BY_STORE => 'Pesanan telah diterima oleh toko',
             Transaction::STATUS_PROCESSING => 'Pesanan sedang diproses oleh toko',
             Transaction::STATUS_ON_THE_WAY => 'Pesanan sedang dalam perjalanan',
+            Transaction::STATUS_READY_FOR_PICKUP => 'Pesanan siap diambil di toko',
             Transaction::STATUS_COMPLETED => 'Pesanan telah selesai',
             Transaction::STATUS_CANCELED => 'Pesanan dibatalkan',
             default => ucfirst($status),
@@ -122,9 +126,35 @@ class UpdateSellerOrderStatusController extends Controller
             Transaction::STATUS_ACCEPTED_BY_STORE => 'Diterima Toko',
             Transaction::STATUS_PROCESSING => 'Sedang Diproses',
             Transaction::STATUS_ON_THE_WAY => 'Dalam Perjalanan',
+            Transaction::STATUS_READY_FOR_PICKUP => 'Siap Diambil',
             Transaction::STATUS_COMPLETED => 'Pesanan Selesai',
             Transaction::STATUS_CANCELED => 'Pesanan Dibatalkan',
             default => ucfirst($status),
         };
+    }
+
+    private function ensureAllowedTransition(Transaction $order, string $targetStatusCode): void
+    {
+        if ($targetStatusCode === Transaction::STATUS_CODE_CANCELED) {
+            return;
+        }
+
+        $currentStatusCode = $order->statusCode();
+        $allowedTargets = match ($currentStatusCode) {
+            Transaction::STATUS_CODE_PENDING_PAYMENT => [Transaction::STATUS_CODE_ACCEPTED_BY_STORE],
+            Transaction::STATUS_CODE_ACCEPTED_BY_STORE => [Transaction::STATUS_CODE_PROCESSING],
+            Transaction::STATUS_CODE_PROCESSING => $order->delivery_method_code === 'pickup'
+                ? [Transaction::STATUS_CODE_READY_FOR_PICKUP]
+                : [Transaction::STATUS_CODE_ON_THE_WAY],
+            Transaction::STATUS_CODE_ON_THE_WAY,
+            Transaction::STATUS_CODE_READY_FOR_PICKUP => [Transaction::STATUS_CODE_COMPLETED],
+            default => [],
+        };
+
+        if (! in_array($targetStatusCode, $allowedTargets, true)) {
+            throw ValidationException::withMessages([
+                'status_code' => ['Transisi status order tidak valid.'],
+            ]);
+        }
     }
 }

@@ -725,6 +725,7 @@ class SellerApiTest extends TestCase
             ->getJson('/api/seller/dashboard/orders-today/counts')
             ->assertOk()
             ->assertJsonPath('data.new.count', 1)
+            ->assertJsonPath('data.ready_for_pickup.count', 0)
             ->assertJsonPath('data.completed.count', 1);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
@@ -778,6 +779,63 @@ class SellerApiTest extends TestCase
             'status' => Transaction::STATUS_PROCESSING,
             'description' => 'Pesanan sedang disiapkan.',
         ]);
+    }
+
+    public function test_seller_can_mark_pickup_order_as_ready_for_pickup_until_completed(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-pickup-status@example.com', '+6281200000048', 'seller-pickup-status-token', User::ROLE_SELLER);
+
+        $order = $this->createOrderForSeller($seller, 'ORDER007', Transaction::STATUS_ACCEPTED_BY_STORE, 'pickup');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/orders/'.$order->id.'/status', [
+                'status_code' => Transaction::STATUS_CODE_PROCESSING,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status_code', Transaction::STATUS_CODE_PROCESSING);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/orders/'.$order->id.'/status', [
+                'status_code' => Transaction::STATUS_CODE_READY_FOR_PICKUP,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status_code', Transaction::STATUS_CODE_READY_FOR_PICKUP)
+            ->assertJsonPath('data.status_label', 'Siap Diambil');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/orders/'.$order->id.'/status', [
+                'status_code' => Transaction::STATUS_CODE_COMPLETED,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status_code', Transaction::STATUS_CODE_COMPLETED);
+
+        $this->assertDatabaseHas('transaction_status_histories', [
+            'transaction_id' => $order->id,
+            'status' => Transaction::STATUS_READY_FOR_PICKUP,
+            'description' => 'Pesanan siap diambil di toko',
+        ]);
+    }
+
+    public function test_seller_status_update_rejects_invalid_delivery_flow_transition(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-invalid-flow@example.com', '+6281200000049', 'seller-invalid-flow-token', User::ROLE_SELLER);
+
+        $courierOrder = $this->createOrderForSeller($seller, 'ORDER008', Transaction::STATUS_PROCESSING, 'store_courier');
+        $pickupOrder = $this->createOrderForSeller($seller, 'ORDER009', Transaction::STATUS_PROCESSING, 'pickup');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/orders/'.$courierOrder->id.'/status', [
+                'status_code' => Transaction::STATUS_CODE_READY_FOR_PICKUP,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['status_code']);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/seller/orders/'.$pickupOrder->id.'/status', [
+                'status_code' => Transaction::STATUS_CODE_ON_THE_WAY,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['status_code']);
     }
 
     public function test_seller_can_cancel_order_with_cancellation_reason_category(): void
@@ -1022,7 +1080,7 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh pengguna dengan role buyer.');
     }
 
-    private function createOrderForSeller(User $seller, string $orderNumber, string $status): Transaction
+    private function createOrderForSeller(User $seller, string $orderNumber, string $status, string $deliveryMethodCode = 'store_courier'): Transaction
     {
         $buyer = User::query()->create([
             'name' => 'Buyer '.$orderNumber,
@@ -1057,8 +1115,10 @@ class SellerApiTest extends TestCase
             'subtotal_amount' => 24000,
             'delivery_fee' => 5000,
             'total_amount' => 29000,
-            'delivery_method' => 'Diantar',
+            'delivery_method' => $deliveryMethodCode === 'pickup' ? 'Ambil ke Toko' : 'Diantar',
+            'delivery_method_code' => $deliveryMethodCode,
             'payment_method' => Transaction::PAYMENT_METHOD_QRIS,
+            'payment_method_code' => 'qr_payment',
             'transaction_at' => now(),
         ]);
 

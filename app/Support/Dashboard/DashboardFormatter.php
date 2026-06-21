@@ -36,7 +36,8 @@ class DashboardFormatter
             Transaction::STATUS_CODE_PENDING_PAYMENT,
             Transaction::STATUS_CODE_ACCEPTED_BY_STORE,
             Transaction::STATUS_CODE_PROCESSING,
-            Transaction::STATUS_CODE_ON_THE_WAY => 'Pending',
+            Transaction::STATUS_CODE_ON_THE_WAY,
+            Transaction::STATUS_CODE_READY_FOR_PICKUP => 'Pending',
             Transaction::STATUS_CODE_CANCELED => 'Failed',
             default => 'Pending',
         };
