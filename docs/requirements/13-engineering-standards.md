@@ -7,7 +7,7 @@ Dokumen ini adalah versi canonical bernama hyphenated untuk mengikuti seri requi
 1. Jaga kontrak API lebih ketat daripada preferensi implementasi.
 2. Tempatkan logic pada boundary yang tepat: route, middleware, FormRequest, controller, model, service, support class, atau database.
 3. Setiap perubahan behavior harus memiliki regression test.
-4. Jangan menyimpan credential, token, OTP, dokumen sensitif, atau data pribadi nyata di repository, log, response, atau dokumentasi contoh.
+4. Jangan menyimpan credential, token, OTP, dokumen sensitif, atau secret di repository, log, response, atau dokumentasi contoh. Data pribadi operasional hanya boleh dikirim melalui allowlist field response yang diperlukan use case serta dilindungi role dan ownership scoping.
 5. Operasi uang, stok, promo, status transaksi, komisi, dan disbursement harus mengutamakan integritas data.
 
 ## Stack

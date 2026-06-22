@@ -8,7 +8,7 @@ Dokumen ini adalah standar kerja engineering untuk seluruh engineer yang melakuk
 2. Selesaikan masalah bisnis di boundary yang tepat: route, middleware, FormRequest, controller, model, service, atau support class.
 3. Setiap perubahan perilaku harus punya regression test.
 4. Jangan menambah kompleksitas abstraksi sebelum ada kebutuhan nyata.
-5. Jangan menyimpan credential, token, OTP, atau data sensitif di repository, log, response, atau dokumentasi contoh.
+5. Jangan menyimpan credential, token, OTP, atau secret di repository, log, response, atau dokumentasi contoh. Data pribadi operasional hanya boleh dikirim sebagai field response yang dipetakan eksplisit ketika diperlukan use case dan telah dibatasi oleh role serta ownership.
 6. Utamakan perubahan kecil yang bisa direview jelas daripada perubahan besar yang mencampur banyak concern.
 
 ## Stack dan Konvensi Dasar
@@ -141,6 +141,7 @@ Flow yang menyentuh pembayaran, checkout, komisi, disbursement, stok, promo, dan
 - Endpoint authenticated wajib membaca user dari resolver yang dipasang middleware `session.token`.
 - Jangan log OTP, plain token, password, credential bank, identity document path, atau data pribadi sensitif tanpa masking.
 - Model `User` sudah menyembunyikan `password`, `remember_token`, dan `otp_code`; jangan expose field tersebut manual di response.
+- Data pribadi operasional seperti alamat dan koordinat hanya boleh dimasukkan ke response bila diperlukan oleh use case, dipetakan dengan allowlist field eksplisit, dan endpoint telah menerapkan role serta ownership scoping. Jangan mengembalikan model `User` mentah.
 - Upload file harus divalidasi tipe, ukuran, dan ownership-nya.
 - Jangan menerima path file dari client sebagai path absolut.
 - Semua authorization ownership harus dicek di server, misalnya seller hanya boleh mengubah tenant/product/order miliknya.

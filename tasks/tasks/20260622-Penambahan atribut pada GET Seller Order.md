@@ -185,13 +185,20 @@ Contoh pickup:
 
 ### Pengurangan Duplikasi
 
-List dan detail saat ini mempunyai mapping order terpisah. Untuk mencegah kontrak kembali berbeda, gunakan class mapper khusus `SellerOrderResponseMapper` untuk memusatkan bagian berikut:
+List dan detail saat ini mempunyai mapping order terpisah. Untuk mencegah kontrak kembali berbeda, gunakan class mapper khusus `app/Support/SellerOrderResponseMapper.php` untuk memusatkan bagian berikut:
 
 1. Mapping Buyer dan resolusi fallback alamat.
 2. Mapping metode pengiriman.
 3. Mapping metode pembayaran.
 
 Controller list dan detail tetap menyusun field khusus masing-masing, sedangkan mapper menyediakan shared fields tersebut. Mapping tidak ditempatkan pada model `Transaction` agar representasi API Seller tidak tercampur dengan model domain. Refactor dibatasi pada kebutuhan konsistensi response Seller Order dan tidak perlu mengubah seluruh endpoint transaksi lain dalam pekerjaan ini.
+
+### Dokumentasi API
+
+1. Perbarui bagian `GET /api/seller/orders` dan `GET /api/seller/orders/{id}` pada `API_DOCUMENTATION.md`.
+2. Dokumentasikan seluruh field Buyer, metode pengiriman, metode pembayaran, dan opsi pembayaran yang ditambahkan.
+3. Jelaskan bahwa alamat order baru berasal dari snapshot checkout, sedangkan order lama tanpa marker menggunakan profil Buyer terbaru sebagai fallback.
+4. Jelaskan bahwa field opsi pembayaran tetap dikirim dengan nilai `null` untuk metode tanpa opsi.
 
 ## Rancangan Feature Test
 
@@ -218,6 +225,14 @@ Untuk order yang sama, pastikan endpoint list dan detail mengembalikan nilai ide
 2. `delivery_method` dan `delivery_method_code`.
 3. `payment_method` dan `payment_method_code`.
 4. `payment_method_option_name` dan `payment_method_option_code`.
+
+### Authorization dan Ownership
+
+1. Pastikan Buyer atau role selain Seller mendapat response `403` ketika mengakses list maupun detail Seller Order.
+2. Pastikan list Seller tidak memuat order Seller lain, termasuk object Buyer, alamat, dan koordinatnya.
+3. Pastikan detail order Seller lain mengembalikan `404` dan tidak membocorkan data Buyer.
+4. Ownership scoping harus diterapkan pada query sebelum pagination dan sebelum response mapping.
+5. Data Buyer dipetakan menggunakan allowlist field eksplisit; jangan serialize model `User` secara langsung.
 
 ### Transfer Bank
 
@@ -256,6 +271,9 @@ Untuk order yang sama, pastikan endpoint list dan detail mengembalikan nilai ide
 8. `pickup` ditampilkan sebagai metode `Ambil ke Toko`.
 9. Filter dan transisi status order yang sudah ada tidak berubah.
 10. Seluruh feature test lama tetap lulus.
+11. Role selain Seller tidak dapat mengakses endpoint list maupun detail Seller Order.
+12. Seller tidak dapat melihat object Buyer, alamat, atau koordinat dari order Seller lain.
+13. `API_DOCUMENTATION.md` mencerminkan kontrak response list dan detail terbaru beserta aturan snapshot/fallback alamat.
 
 ## Risiko dan Mitigasi
 
@@ -272,7 +290,7 @@ Untuk order yang sama, pastikan endpoint list dan detail mengembalikan nilai ide
 6. QRIS belum aktif pada seeder aplikasi.
    - Mitigasi: fixture test membuat metode yang diperlukan secara eksplisit; aktivasi metode pembayaran production diperlakukan sebagai keputusan terpisah.
 7. Paparan data pribadi Buyer bertambah pada response Seller.
-   - Mitigasi: endpoint tetap dibatasi ke Seller yang memiliki item pada order tersebut dan hanya mengirim atribut alamat yang diperlukan untuk fulfillment.
+   - Mitigasi: endpoint tetap dibatasi ke Seller yang memiliki item pada order tersebut, mapping memakai allowlist field eksplisit, regression test memastikan tidak ada akses silang, dan hanya atribut alamat yang diperlukan untuk fulfillment yang dikirim. Data Buyer tidak boleh ditulis ke log.
 
 ## Out of Scope
 

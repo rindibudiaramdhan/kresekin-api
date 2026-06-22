@@ -54,7 +54,8 @@ Requirement:
 4. Status domain berasal dari constants model.
 5. Seeder reference data harus idempotent.
 6. Index perlu ditambahkan untuk foreign key dan filter dashboard/list yang sering dipakai.
-7. Data sensitif harus disembunyikan dari serialization default dan response manual.
+7. Secret dan data berisiko tinggi seperti OTP, session token, password, credential bank, dan path dokumen identitas harus disembunyikan dari serialization default maupun response manual.
+8. Data pribadi operasional hanya boleh dipetakan secara eksplisit pada response bila diperlukan untuk use case, dibatasi ke role dan ownership yang berwenang, serta tidak boleh berasal dari serialization model mentah. Contohnya, alamat dan koordinat Buyer dapat diberikan kepada Seller yang memiliki item pada order tersebut untuk kebutuhan fulfillment.
 
 ## Import and External Reference
 

@@ -92,7 +92,7 @@ Platform ini harus mendukung:
 3. Endpoint role-specific harus menggunakan middleware role yang sesuai.
 4. Response API harus menjaga struktur yang sudah ada dan tidak mematahkan client.
 5. File sensitif seperti dokumen identitas harus disimpan di storage private, bukan public URL terbuka.
-6. OTP, token, password, credential, dan data sensitif tidak boleh muncul di log, response, atau dokumentasi contoh.
+6. OTP, token, password, credential, dokumen identitas, dan secret lain tidak boleh muncul di log, response, atau dokumentasi contoh. Data pribadi operasional hanya boleh muncul pada response yang diperlukan use case, diminimalkan melalui allowlist field, dan dilindungi role serta ownership scoping.
 7. Perubahan schema harus dibuat melalui migration baru dan menjaga kompatibilitas data production.
 8. Test suite menggunakan SQLite in-memory sesuai konfigurasi project.
 9. Production runtime harus kompatibel dengan Laravel Cloud, termasuk environment variable, deployment command, web compute, queue/worker, scheduler, cache/KV, log/metric, domain/TLS, dan storage.

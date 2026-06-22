@@ -14,7 +14,7 @@ Requirement:
 4. Agent baru mendapat `agent_code` unik dan status awal `pending_review`.
 5. `terms_accepted_at`, `terms_version`, dan `privacy_accepted_at` harus tercatat.
 6. OTP dikirim untuk verifikasi email/phone sesuai flow yang berjalan.
-7. Data sensitif tidak boleh muncul di log atau response.
+7. Secret dan data verifikasi berisiko tinggi seperti OTP, credential bank, dan path dokumen identitas tidak boleh muncul di log atau response. Data profil yang memang boleh dibaca Agent sendiri harus dipetakan eksplisit dan dibatasi oleh ownership.
 
 ## Agent Profile
 
