@@ -48,7 +48,9 @@ Migration tidak melakukan backfill alamat dari profil Buyer. Backfill akan mengu
 
 ### 2. Penyimpanan Saat Checkout
 
-Ketika transaksi dibuat, salin data berikut dari user terautentikasi:
+Di dalam database transaction checkout, baca ulang row user terautentikasi dan kunci dengan `lockForUpdate()`. Snapshot alamat harus diambil dari row hasil query tersebut, bukan dari instance user yang telah dimuat sebelum database transaction dimulai. Dengan demikian, perubahan profil yang berjalan bersamaan harus menunggu checkout selesai dan tidak dapat menghasilkan snapshot campuran.
+
+Ketika transaksi dibuat, salin data berikut dari user yang telah dibaca ulang dan dikunci:
 
 ```php
 'buyer_address' => $user->address,
@@ -58,7 +60,7 @@ Ketika transaksi dibuat, salin data berikut dari user terautentikasi:
 'buyer_address_snapshot_at' => now(),
 ```
 
-Seluruh nilai disimpan di dalam transaksi database checkout yang sama dengan pembuatan order.
+Seluruh nilai disimpan di dalam transaksi database checkout yang sama dengan pembuatan order. Lock dipertahankan sampai database transaction selesai.
 
 Setelah order dibuat, perubahan `users.address`, `users.landmark`, `users.latitude`, atau `users.longitude` tidak boleh mengubah alamat yang ditampilkan untuk order tersebut.
 
@@ -80,9 +82,11 @@ Aturan ini menghasilkan perilaku berikut:
 1. Order baru selalu menggunakan snapshot transaksi secara utuh.
 2. Order lama dengan `buyer_address_snapshot_at = null` menggunakan relasi `user` secara utuh.
 3. Snapshot dan profil terbaru tidak dicampur dalam satu alamat.
-4. Bila user atau data alamat fallback tidak tersedia, atribut alamat tetap dikirim dengan nilai `null`.
+4. Bila data alamat fallback tidak tersedia, atribut alamat tetap dikirim dengan nilai `null`.
 
 Fallback pada order lama merupakan mekanisme kompatibilitas, bukan jaminan alamat historis. Alamat yang ditampilkan dapat merupakan alamat terbaru Buyer karena tidak ada snapshot pada saat order lama dibuat.
+
+Relasi `transactions.user_id` tetap menggunakan foreign key non-nullable dengan `cascadeOnDelete()`. Oleh karena itu, dalam kondisi database normal tidak ada transaksi tanpa relasi user: penghapusan Buyer juga menghapus transaksinya. Mapping tetap menggunakan akses null-safe sebagai defensive code, tetapi skenario relasi user hilang tidak perlu dibuat sebagai feature test.
 
 ## Kontrak Response
 
@@ -159,10 +163,12 @@ Contoh pickup:
 
 ### Checkout
 
-1. Salin snapshot alamat dan timestamp penanda ketika `Transaction` dibuat.
-2. Snapshot dilakukan sebelum profil Buyer dapat berubah dan di dalam database transaction checkout yang sama.
-3. Perubahan ini tidak menambah payload request checkout.
-4. Perubahan ini tidak mengubah validasi checkout dalam scope pekerjaan ini.
+1. Di dalam `DB::transaction()`, baca ulang Buyer berdasarkan ID user terautentikasi menggunakan `lockForUpdate()`.
+2. Salin snapshot alamat dan timestamp penanda dari row Buyer yang telah dikunci ketika `Transaction` dibuat.
+3. Lock dipertahankan sampai checkout selesai agar update profil yang berjalan bersamaan menunggu database transaction checkout selesai.
+4. Snapshot dilakukan di dalam database transaction checkout yang sama dengan pembuatan order.
+5. Perubahan ini tidak menambah payload request checkout.
+6. Perubahan ini tidak mengubah validasi checkout dalam scope pekerjaan ini.
 
 ### GET Seller Order List
 
@@ -179,13 +185,13 @@ Contoh pickup:
 
 ### Pengurangan Duplikasi
 
-List dan detail saat ini mempunyai mapping order terpisah. Untuk mencegah kontrak kembali berbeda, bagian berikut sebaiknya dipusatkan pada mapper/resource/helper reusable:
+List dan detail saat ini mempunyai mapping order terpisah. Untuk mencegah kontrak kembali berbeda, gunakan class mapper khusus `SellerOrderResponseMapper` untuk memusatkan bagian berikut:
 
 1. Mapping Buyer dan resolusi fallback alamat.
 2. Mapping metode pengiriman.
 3. Mapping metode pembayaran.
 
-Refactor dibatasi pada kebutuhan konsistensi response Seller Order dan tidak perlu mengubah seluruh endpoint transaksi lain dalam pekerjaan ini.
+Controller list dan detail tetap menyusun field khusus masing-masing, sedangkan mapper menyediakan shared fields tersebut. Mapping tidak ditempatkan pada model `Transaction` agar representasi API Seller tidak tercampur dengan model domain. Refactor dibatasi pada kebutuhan konsistensi response Seller Order dan tidak perlu mengubah seluruh endpoint transaksi lain dalam pekerjaan ini.
 
 ## Rancangan Feature Test
 
@@ -201,7 +207,8 @@ Refactor dibatasi pada kebutuhan konsistensi response Seller Order dan tidak per
 1. Buat transaksi dengan seluruh kolom snapshot dan `buyer_address_snapshot_at` bernilai `null`.
 2. Pastikan list Seller menggunakan alamat dari relasi `user`.
 3. Pastikan detail Seller menggunakan alamat dari relasi `user`.
-4. Pastikan response tetap valid jika relasi user atau alamat user tidak tersedia.
+4. Pastikan response tetap valid dengan nilai `null` jika atribut alamat user tidak tersedia.
+5. Tidak perlu membuat skenario transaksi tanpa relasi user karena foreign key `transactions.user_id` tetap non-nullable dan menggunakan `cascadeOnDelete()`.
 
 ### Konsistensi List dan Detail
 
@@ -256,13 +263,15 @@ Untuk order yang sama, pastikan endpoint list dan detail mengembalikan nilai ide
    - Mitigasi: dokumentasikan bahwa fallback memakai profil terbaru dan hanya berlaku untuk transaksi tanpa marker snapshot.
 2. Snapshot parsial tercampur dengan profil terbaru.
    - Mitigasi: pilih sumber pada level order menggunakan `buyer_address_snapshot_at`, bukan fallback per field.
-3. Kontrak list dan detail kembali berbeda.
-   - Mitigasi: gunakan mapper/resource/helper reusable dan test konsistensi kedua endpoint.
-4. Client menganggap `Antar Kurir Toko` sebagai status.
+3. Profil Buyer berubah bersamaan dengan proses checkout.
+   - Mitigasi: baca ulang dan kunci row Buyer dengan `lockForUpdate()` di dalam database transaction checkout, lalu ambil snapshot dari row tersebut.
+4. Kontrak list dan detail kembali berbeda.
+   - Mitigasi: gunakan `SellerOrderResponseMapper` dan test konsistensi kedua endpoint.
+5. Client menganggap `Antar Kurir Toko` sebagai status.
    - Mitigasi: pertahankan pemisahan eksplisit antara `delivery_method_code` dan `status_code`.
-5. QRIS belum aktif pada seeder aplikasi.
+6. QRIS belum aktif pada seeder aplikasi.
    - Mitigasi: fixture test membuat metode yang diperlukan secara eksplisit; aktivasi metode pembayaran production diperlakukan sebagai keputusan terpisah.
-6. Paparan data pribadi Buyer bertambah pada response Seller.
+7. Paparan data pribadi Buyer bertambah pada response Seller.
    - Mitigasi: endpoint tetap dibatasi ke Seller yang memiliki item pada order tersebut dan hanya mengirim atribut alamat yang diperlukan untuk fulfillment.
 
 ## Out of Scope
