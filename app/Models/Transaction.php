@@ -24,6 +24,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'payment_method_code',
     'payment_method_option_code',
     'payment_method_option_name',
+    'buyer_address',
+    'buyer_landmark',
+    'buyer_latitude',
+    'buyer_longitude',
+    'buyer_address_snapshot_at',
     'promo_code_id',
     'promo_code',
     'promo_name',
@@ -120,6 +125,9 @@ class Transaction extends Model
             'total_amount' => 'integer',
             'promo_discount_value' => 'integer',
             'discount_amount' => 'integer',
+            'buyer_latitude' => 'float',
+            'buyer_longitude' => 'float',
+            'buyer_address_snapshot_at' => 'datetime',
         ];
     }
 

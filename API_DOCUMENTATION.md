@@ -748,6 +748,10 @@ curl -X POST http://127.0.0.1:8000/api/seller/tenants \
 
 Mengambil daftar order yang berisi item tenant seller aktif.
 
+Object `buyer` memuat alamat efektif order. Order baru menggunakan snapshot alamat saat checkout. Order lama tanpa `buyer_address_snapshot_at` menggunakan profil Buyer terbaru sebagai fallback. Seller hanya dapat melihat data Buyer dari order yang mengandung item tenant miliknya.
+
+Field metode pengiriman dan pembayaran berasal dari snapshot transaksi. `payment_method_option_name` dan `payment_method_option_code` tetap dikirim dengan nilai `null` untuk metode tanpa opsi.
+
 Query opsional:
 
 - `status_code`: `pending_payment`, `accepted_by_store`, `processing`, `on_the_way`, `ready_for_pickup`, `completed`, `canceled`
@@ -759,7 +763,7 @@ curl "http://127.0.0.1:8000/api/seller/orders?status_code=processing" \
 
 ### GET `/api/seller/orders/{id}`
 
-Mengambil detail order seller.
+Mengambil detail order seller dengan aturan alamat Buyer serta snapshot metode pengiriman dan pembayaran yang sama seperti endpoint list. Order di luar scope Seller dikembalikan sebagai `404`.
 
 ```bash
 curl http://127.0.0.1:8000/api/seller/orders/dddddddd-dddd-4ddd-8ddd-dddddddddddd \
@@ -2203,11 +2207,21 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
         "id": "11111111-1111-4111-8111-111111111111",
         "name": "Budi",
         "email": "budi@example.com",
-        "phone": "+6281234567890"
+        "phone": "+6281234567890",
+        "address": "Jl. Mawar No. 10, Blok A2",
+        "landmark": "Dekat portal komplek",
+        "latitude": -6.914744,
+        "longitude": 107.60981
       },
       "store_name": "Toko Asep",
       "total_items": 2,
       "seller_subtotal_amount": 19998,
+      "delivery_method": "Antar Kurir Toko",
+      "delivery_method_code": "store_courier",
+      "payment_method": "Transfer Bank",
+      "payment_method_code": "bank_transfer",
+      "payment_method_option_name": "BCA",
+      "payment_method_option_code": "bca",
       "status": "menunggu pembayaran",
       "status_code": "pending_payment"
     }
@@ -2239,8 +2253,20 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "order_number": "INV-20260527-0001",
     "buyer": {
       "id": "11111111-1111-4111-8111-111111111111",
-      "name": "Budi"
+      "name": "Budi",
+      "email": "budi@example.com",
+      "phone": "+6281234567890",
+      "address": "Jl. Mawar No. 10, Blok A2",
+      "landmark": "Dekat portal komplek",
+      "latitude": -6.914744,
+      "longitude": 107.60981
     },
+    "delivery_method": "Antar Kurir Toko",
+    "delivery_method_code": "store_courier",
+    "payment_method": "QRIS",
+    "payment_method_code": "qr_payment",
+    "payment_method_option_name": null,
+    "payment_method_option_code": null,
     "status": "menunggu pembayaran",
     "status_code": "pending_payment",
     "items": [

@@ -12,6 +12,7 @@ use App\Models\PromoCode;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionStatusHistory;
+use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -49,6 +50,10 @@ class CheckoutController extends Controller
             $discountAmount,
             $grandTotal
         ): Transaction {
+            $buyer = User::query()
+                ->lockForUpdate()
+                ->findOrFail($user->id);
+
             if ($promo) {
                 $promo = PromoCode::query()
                     ->available()
@@ -63,7 +68,7 @@ class CheckoutController extends Controller
             }
 
             $transaction = Transaction::query()->create([
-                'user_id' => $user->id,
+                'user_id' => $buyer->id,
                 'order_number' => $this->generateOrderNumber(),
                 'status' => Transaction::STATUS_PENDING_PAYMENT,
                 'subtotal_amount' => $subtotal,
@@ -77,6 +82,11 @@ class CheckoutController extends Controller
                 'payment_method_code' => $paymentMethod->code,
                 'payment_method_option_code' => $paymentOption?->code,
                 'payment_method_option_name' => $paymentOption?->name,
+                'buyer_address' => $buyer->address,
+                'buyer_landmark' => $buyer->landmark,
+                'buyer_latitude' => $buyer->latitude,
+                'buyer_longitude' => $buyer->longitude,
+                'buyer_address_snapshot_at' => now(),
                 'promo_code_id' => $promo?->id,
                 'promo_code' => $promo?->code,
                 'promo_name' => $promo?->name,

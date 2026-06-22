@@ -661,7 +661,21 @@ class SellerApiTest extends TestCase
         [$otherSeller] = $this->createAuthenticatedUser('other-seller-order@example.com', '+6281200000008', 'other-seller-order-token', User::ROLE_SELLER);
 
         $order = $this->createOrderForSeller($seller, 'ORDER001', Transaction::STATUS_PROCESSING);
-        $this->createOrderForSeller($otherSeller, 'ORDER002', Transaction::STATUS_PROCESSING);
+        $buyer = $order->user;
+        $buyer->forceFill([
+            'address' => 'Alamat profil terbaru',
+            'landmark' => 'Landmark terbaru',
+            'latitude' => -7.1,
+            'longitude' => 108.1,
+        ])->save();
+        $order->forceFill([
+            'buyer_address' => 'Jl. Mawar No. 10',
+            'buyer_landmark' => null,
+            'buyer_latitude' => -6.914744,
+            'buyer_longitude' => 107.60981,
+            'buyer_address_snapshot_at' => now(),
+        ])->save();
+        $otherOrder = $this->createOrderForSeller($otherSeller, 'ORDER002', Transaction::STATUS_PROCESSING);
 
         $listResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/orders');
@@ -671,6 +685,17 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.0.id', $order->id)
             ->assertJsonPath('data.0.order_number', 'ORDER001')
             ->assertJsonPath('data.0.status_code', Transaction::STATUS_CODE_PROCESSING)
+            ->assertJsonPath('data.0.buyer.address', 'Jl. Mawar No. 10')
+            ->assertJsonPath('data.0.buyer.landmark', null)
+            ->assertJsonPath('data.0.buyer.latitude', -6.914744)
+            ->assertJsonPath('data.0.buyer.longitude', 107.60981)
+            ->assertJsonPath('data.0.delivery_method', 'Antar Kurir Toko')
+            ->assertJsonPath('data.0.delivery_method_code', 'store_courier')
+            ->assertJsonPath('data.0.payment_method', Transaction::PAYMENT_METHOD_QRIS)
+            ->assertJsonPath('data.0.payment_method_code', 'qr_payment')
+            ->assertJsonPath('data.0.payment_method_option_name', null)
+            ->assertJsonPath('data.0.payment_method_option_code', null)
+            ->assertJsonMissing(['email' => $otherOrder->user->email])
             ->assertJsonPath('meta.total', 1);
 
         $detailResponse = $this->withHeader('Authorization', 'Bearer '.$token)
@@ -680,8 +705,105 @@ class SellerApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.id', $order->id)
             ->assertJsonPath('data.order_number', 'ORDER001')
+            ->assertJsonPath('data.buyer.address', 'Jl. Mawar No. 10')
+            ->assertJsonPath('data.buyer.landmark', null)
+            ->assertJsonPath('data.buyer.latitude', -6.914744)
+            ->assertJsonPath('data.buyer.longitude', 107.60981)
+            ->assertJsonPath('data.delivery_method', 'Antar Kurir Toko')
+            ->assertJsonPath('data.delivery_method_code', 'store_courier')
+            ->assertJsonPath('data.payment_method', Transaction::PAYMENT_METHOD_QRIS)
+            ->assertJsonPath('data.payment_method_code', 'qr_payment')
+            ->assertJsonPath('data.payment_method_option_name', null)
+            ->assertJsonPath('data.payment_method_option_code', null)
             ->assertJsonPath('data.items.0.product_name', 'Produk ORDER001')
             ->assertJsonPath('data.status_timelines.0.status_code', Transaction::STATUS_CODE_PROCESSING);
+    }
+
+    public function test_seller_order_list_and_detail_fall_back_to_current_buyer_address_for_legacy_order(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-legacy-order@example.com', '+6281200000051', 'seller-legacy-order-token', User::ROLE_SELLER);
+        $order = $this->createOrderForSeller($seller, 'ORDERLEGACY', Transaction::STATUS_PROCESSING);
+        $order->user->forceFill([
+            'address' => 'Jl. Alamat Buyer Saat Ini',
+            'landmark' => null,
+            'latitude' => null,
+            'longitude' => null,
+        ])->save();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/orders')
+            ->assertOk()
+            ->assertJsonPath('data.0.buyer.address', 'Jl. Alamat Buyer Saat Ini')
+            ->assertJsonPath('data.0.buyer.landmark', null)
+            ->assertJsonPath('data.0.buyer.latitude', null)
+            ->assertJsonPath('data.0.buyer.longitude', null);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/orders/'.$order->id)
+            ->assertOk()
+            ->assertJsonPath('data.buyer.address', 'Jl. Alamat Buyer Saat Ini')
+            ->assertJsonPath('data.buyer.landmark', null)
+            ->assertJsonPath('data.buyer.latitude', null)
+            ->assertJsonPath('data.buyer.longitude', null);
+    }
+
+    public function test_seller_order_does_not_mix_null_snapshot_fields_with_current_buyer_profile(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-null-snapshot@example.com', '+6281200000052', 'seller-null-snapshot-token', User::ROLE_SELLER);
+        $order = $this->createOrderForSeller($seller, 'ORDERNULLSNAP', Transaction::STATUS_PROCESSING);
+        $order->user->forceFill([
+            'address' => 'Alamat profil yang tidak boleh dipakai',
+            'landmark' => 'Landmark profil yang tidak boleh dipakai',
+            'latitude' => -7.2,
+            'longitude' => 108.2,
+        ])->save();
+        $order->forceFill([
+            'buyer_address' => null,
+            'buyer_landmark' => null,
+            'buyer_latitude' => null,
+            'buyer_longitude' => null,
+            'buyer_address_snapshot_at' => now(),
+        ])->save();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/orders/'.$order->id)
+            ->assertOk()
+            ->assertJsonPath('data.buyer.address', null)
+            ->assertJsonPath('data.buyer.landmark', null)
+            ->assertJsonPath('data.buyer.latitude', null)
+            ->assertJsonPath('data.buyer.longitude', null);
+    }
+
+    public function test_seller_order_list_and_detail_include_bank_transfer_option_and_pickup_method(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-bank-order@example.com', '+6281200000053', 'seller-bank-order-token', User::ROLE_SELLER);
+        $order = $this->createOrderForSeller($seller, 'ORDERBANK', Transaction::STATUS_PROCESSING, 'pickup');
+        $order->forceFill([
+            'payment_method' => Transaction::PAYMENT_METHOD_BANK_TRANSFER,
+            'payment_method_code' => 'bank_transfer',
+            'payment_method_option_name' => 'BCA',
+            'payment_method_option_code' => 'bca',
+        ])->save();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/orders')
+            ->assertOk()
+            ->assertJsonPath('data.0.delivery_method', 'Ambil ke Toko')
+            ->assertJsonPath('data.0.delivery_method_code', 'pickup')
+            ->assertJsonPath('data.0.payment_method', Transaction::PAYMENT_METHOD_BANK_TRANSFER)
+            ->assertJsonPath('data.0.payment_method_code', 'bank_transfer')
+            ->assertJsonPath('data.0.payment_method_option_name', 'BCA')
+            ->assertJsonPath('data.0.payment_method_option_code', 'bca');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/orders/'.$order->id)
+            ->assertOk()
+            ->assertJsonPath('data.delivery_method', 'Ambil ke Toko')
+            ->assertJsonPath('data.delivery_method_code', 'pickup')
+            ->assertJsonPath('data.payment_method', Transaction::PAYMENT_METHOD_BANK_TRANSFER)
+            ->assertJsonPath('data.payment_method_code', 'bank_transfer')
+            ->assertJsonPath('data.payment_method_option_name', 'BCA')
+            ->assertJsonPath('data.payment_method_option_code', 'bca');
     }
 
     public function test_seller_can_access_split_dashboard_apis_for_own_store(): void
@@ -1068,6 +1190,16 @@ class SellerApiTest extends TestCase
             ->getJson('/api/seller/tenants')
             ->assertForbidden()
             ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh pengguna dengan role seller.');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/orders')
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh pengguna dengan role seller.');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/orders/not-accessible')
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh pengguna dengan role seller.');
     }
 
     public function test_seller_cannot_access_buyer_checkout_endpoint(): void
@@ -1115,7 +1247,7 @@ class SellerApiTest extends TestCase
             'subtotal_amount' => 24000,
             'delivery_fee' => 5000,
             'total_amount' => 29000,
-            'delivery_method' => $deliveryMethodCode === 'pickup' ? 'Ambil ke Toko' : 'Diantar',
+            'delivery_method' => $deliveryMethodCode === 'pickup' ? 'Ambil ke Toko' : 'Antar Kurir Toko',
             'delivery_method_code' => $deliveryMethodCode,
             'payment_method' => Transaction::PAYMENT_METHOD_QRIS,
             'payment_method_code' => 'qr_payment',

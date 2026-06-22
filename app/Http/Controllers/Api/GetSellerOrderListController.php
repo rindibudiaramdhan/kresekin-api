@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Support\SellerOrderResponseMapper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class GetSellerOrderListController extends Controller
 {
+    public function __construct(private readonly SellerOrderResponseMapper $responseMapper) {}
+
     public function __invoke(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -57,12 +60,7 @@ class GetSellerOrderListController extends Controller
         return [
             'id' => $order->id,
             'order_number' => $order->order_number,
-            'buyer' => [
-                'id' => $order->user?->id,
-                'name' => $order->user?->name,
-                'email' => $order->user?->email,
-                'phone' => $order->user?->phone,
-            ],
+            ...$this->responseMapper->sharedFields($order),
             'store_name' => $items->first()?->tenant?->name,
             'total_items' => $items->sum('quantity'),
             'seller_subtotal_amount' => $items->sum('line_total'),

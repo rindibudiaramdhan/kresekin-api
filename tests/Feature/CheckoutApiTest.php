@@ -108,6 +108,12 @@ class CheckoutApiTest extends TestCase
     public function test_authenticated_user_can_checkout_cart_into_transaction(): void
     {
         [$user, $token] = $this->createAuthenticatedUser();
+        $user->forceFill([
+            'address' => 'Jl. Mawar No. 10',
+            'landmark' => 'Dekat portal komplek',
+            'latitude' => -6.914744,
+            'longitude' => 107.60981,
+        ])->save();
         $product = $this->createProduct();
 
         Cart::query()->create([
@@ -143,6 +149,11 @@ class CheckoutApiTest extends TestCase
         $transaction = Transaction::query()->where('user_id', $user->id)->first();
 
         $this->assertNotNull($transaction);
+        $this->assertSame('Jl. Mawar No. 10', $transaction->buyer_address);
+        $this->assertSame('Dekat portal komplek', $transaction->buyer_landmark);
+        $this->assertSame(-6.914744, $transaction->buyer_latitude);
+        $this->assertSame(107.60981, $transaction->buyer_longitude);
+        $this->assertNotNull($transaction->buyer_address_snapshot_at);
         $this->assertDatabaseHas('transaction_items', [
             'transaction_id' => $transaction->id,
             'product_id' => $product->id,
@@ -155,6 +166,75 @@ class CheckoutApiTest extends TestCase
             'delivery_method_code' => null,
         ]);
         $this->assertSame(98, $product->fresh()->stock);
+    }
+
+    public function test_seller_orders_keep_checkout_address_snapshot_after_buyer_updates_profile(): void
+    {
+        [$buyer, $buyerToken] = $this->createAuthenticatedUser();
+        $buyer->forceFill([
+            'address' => 'Jl. Alamat Saat Checkout',
+            'landmark' => 'Dekat taman',
+            'latitude' => -6.91,
+            'longitude' => 107.61,
+        ])->save();
+
+        $seller = User::query()->create([
+            'name' => 'Seller Snapshot',
+            'email' => 'seller-snapshot@example.com',
+            'phone' => '+6281111111111',
+            'type' => User::AUTH_TYPE_PHONE,
+            'role' => User::ROLE_SELLER,
+            'password' => null,
+        ]);
+        $sellerToken = 'seller-snapshot-token';
+        UserSessionToken::query()->create([
+            'user_id' => $seller->id,
+            'token' => hash('sha256', $sellerToken),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $product = $this->createProduct();
+        $product->tenant->forceFill(['owner_user_id' => $seller->id])->save();
+        Cart::query()->create([
+            'user_id' => $buyer->id,
+            'delivery_method_code' => 'store_courier',
+        ]);
+        CartItem::query()->create([
+            'user_id' => $buyer->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+
+        $transactionId = $this->withHeader('Authorization', 'Bearer '.$buyerToken)
+            ->postJson('/api/checkout', [
+                'delivery_method_code' => 'store_courier',
+                'payment_method_code' => 'qr_payment',
+            ])
+            ->assertCreated()
+            ->json('data.transaction_id');
+
+        $buyer->forceFill([
+            'address' => 'Jl. Alamat Profil Terbaru',
+            'landmark' => 'Dekat stasiun',
+            'latitude' => -7.01,
+            'longitude' => 108.01,
+        ])->save();
+
+        $this->withHeader('Authorization', 'Bearer '.$sellerToken)
+            ->getJson('/api/seller/orders')
+            ->assertOk()
+            ->assertJsonPath('data.0.buyer.address', 'Jl. Alamat Saat Checkout')
+            ->assertJsonPath('data.0.buyer.landmark', 'Dekat taman')
+            ->assertJsonPath('data.0.buyer.latitude', -6.91)
+            ->assertJsonPath('data.0.buyer.longitude', 107.61);
+
+        $this->withHeader('Authorization', 'Bearer '.$sellerToken)
+            ->getJson('/api/seller/orders/'.$transactionId)
+            ->assertOk()
+            ->assertJsonPath('data.buyer.address', 'Jl. Alamat Saat Checkout')
+            ->assertJsonPath('data.buyer.landmark', 'Dekat taman')
+            ->assertJsonPath('data.buyer.latitude', -6.91)
+            ->assertJsonPath('data.buyer.longitude', 107.61);
     }
 
     public function test_checkout_can_apply_optional_promo_code(): void

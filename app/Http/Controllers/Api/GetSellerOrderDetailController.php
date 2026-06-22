@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Support\SellerOrderResponseMapper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class GetSellerOrderDetailController extends Controller
 {
+    public function __construct(private readonly SellerOrderResponseMapper $responseMapper) {}
+
     public function __invoke(Request $request, string $id): JsonResponse
     {
         $sellerId = $request->user()->id;
@@ -40,12 +43,7 @@ class GetSellerOrderDetailController extends Controller
         return [
             'id' => $order->id,
             'order_number' => $order->order_number,
-            'buyer' => [
-                'id' => $order->user?->id,
-                'name' => $order->user?->name,
-                'email' => $order->user?->email,
-                'phone' => $order->user?->phone,
-            ],
+            ...$this->responseMapper->sharedFields($order),
             'store_name' => $items->first()?->tenant?->name,
             'status' => $order->status,
             'status_code' => $order->statusCode(),
@@ -79,11 +77,8 @@ class GetSellerOrderDetailController extends Controller
                 'line_total' => $item->line_total,
                 'line_total_label' => $this->moneyLabel($item->line_total),
             ])->values(),
-            'delivery_method' => $order->delivery_method,
             'pickup_time_option' => $order->pickup_time_option,
             'pickup_scheduled_at' => $order->pickup_scheduled_at,
-            'payment_method' => $order->payment_method,
-            'payment_method_option_name' => $order->payment_method_option_name,
             'transaction_at' => $order->transaction_at?->toIso8601String(),
             'transaction_at_label' => $order->transaction_at?->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i').' WIB',
             'status_timelines' => $order->statusHistories->map(fn ($history): array => [
