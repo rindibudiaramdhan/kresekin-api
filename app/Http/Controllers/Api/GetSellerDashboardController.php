@@ -131,11 +131,11 @@ class GetSellerDashboardController extends Controller
 
     private function ordersToday(string $sellerId): Collection
     {
-        $today = CarbonImmutable::now('Asia/Jakarta');
+        // $today = CarbonImmutable::now('Asia/Jakarta');
 
         return Transaction::query()
             ->with(['items.tenant', 'user'])
-            ->whereDate('transaction_at', $today->toDateString())
+            // ->whereDate('transaction_at', $today->toDateString())
             ->whereHas('items.tenant', fn (Builder $query) => $query->where('owner_user_id', $sellerId))
             ->orderByDesc('transaction_at')
             ->orderByDesc('id')
