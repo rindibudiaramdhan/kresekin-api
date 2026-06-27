@@ -40,8 +40,19 @@ Menyesuaikan ukuran popup modal konfirmasi agar lebih proporsional untuk dashboa
    - `Approve Pencairan Dana`
    - `Selesaikan Pencairan Dana`
    - `Konfirmasi Pembayaran`
-4. Menjaga isi modal tetap sama secara fungsional.
-5. Tidak mengubah endpoint API, payload, atau logic transaksi.
+4. Menyamakan skala visual modal rejection agar konsisten dengan modal Finance lainnya:
+   - `Tolak Pencairan Dana` di `rejection-confirmation-modal`
+   - `Detail Penolakan` di `rejection-detail-modal`
+5. Menjaga isi modal tetap sama secara fungsional.
+6. Tidak mengubah endpoint API, payload, atau logic transaksi.
+
+## Keputusan Implementasi
+
+1. Jadikan `approval-confirmation-modal` sebagai compact confirmation modal secara default.
+2. Tidak perlu menambah variant ukuran besar untuk tahap ini karena semua pemakai `approval-confirmation-modal` di halaman Finance adalah dialog konfirmasi operasional.
+3. Terapkan skala compact yang konsisten pada `rejection-confirmation-modal` dan `rejection-detail-modal`, dengan tombol destructive tetap merah dan berbeda jelas dari tombol primer.
+4. Perubahan harus sebatas struktur visual/CSS Blade modal. JavaScript selector, event handler, endpoint, payload, dan copywriting tidak berubah.
+5. Jika di masa depan ada modal yang benar-benar membutuhkan ruang lebih besar, baru tambahkan prop/variant ukuran eksplisit, misalnya `size="large"`.
 
 ## Rekomendasi Ukuran Target
 
@@ -49,20 +60,21 @@ Ukuran desktop yang disarankan:
 
 | Elemen | Target |
 | --- | ---: |
-| Lebar panel | `520px-600px` |
-| Padding panel | `24px-32px` |
-| Border radius | `12px-16px` |
-| Judul | `24px-30px` |
-| Description | `15px-18px` |
-| Detail transaksi | `15px-18px` |
-| Note | `14px-16px` |
-| Tombol | tinggi `44px-52px`, font `15px-17px` |
+| Lebar panel | `min(580px, 100%)` |
+| Padding panel | `28px 30px 32px` |
+| Border radius | `14px` |
+| Judul | `clamp(24px, 2.4vw, 30px)` |
+| Description | `16px` |
+| Detail transaksi | `16px` |
+| Note | `15px` |
+| Tombol | tinggi `48px`, font `16px` |
 
 Catatan:
 
-1. Jika ID transaksi panjang masih sering muncul, lebar `600px` dapat dipilih sebagai kompromi.
-2. Jika ingin mengikuti confirmation modal umum secara lebih ketat, gunakan kisaran `520px`.
+1. Lebar `580px` dipilih sebagai kompromi antara confirmation modal umum dan kebutuhan menampilkan ID transaksi yang panjang.
+2. Jika hasil visual masih terlalu lebar setelah implementasi, turunkan ke `520px-560px`.
 3. Hindari kembali memakai font body di atas `20px` untuk dashboard desktop.
+4. Untuk viewport di bawah `680px`, gunakan panel yang tetap memenuhi lebar aman viewport, tombol full width, font sekitar `15px-16px`, dan `max-height` dengan scroll internal bila konten melebihi tinggi layar.
 
 ## UX Requirement
 
@@ -92,14 +104,17 @@ Catatan:
 
 1. Perubahan utama kemungkinan berada di:
    - `resources/views/components/dashboard/approval-confirmation-modal.blade.php`
-2. Jika perubahan global pada komponen terlalu memengaruhi modal approval lain, pertimbangkan variant/prop ukuran, misalnya:
-   - default compact untuk confirmation,
-   - variant larger untuk modal yang benar-benar membutuhkan ruang lebih.
-3. Pastikan style responsive tetap ada untuk `max-width: 680px`.
-4. Tambahkan handling text wrapping untuk ID transaksi panjang bila diperlukan:
+2. Perubahan konsistensi visual modal rejection berada di:
+   - `resources/views/components/dashboard/rejection-confirmation-modal.blade.php`
+   - `resources/views/components/dashboard/rejection-detail-modal.blade.php`
+3. Jangan menambah variant/prop ukuran pada tahap ini kecuali implementasi compact default terbukti merusak kebutuhan modal yang sudah ada.
+4. Pastikan style responsive tetap ada untuk `max-width: 680px`.
+5. Tambahkan handling text wrapping untuk ID transaksi panjang bila diperlukan:
    - `overflow-wrap: anywhere;`
    - atau pendekatan lain yang menjaga layout tidak pecah.
-5. Jangan mengubah selector JavaScript yang sudah dipakai:
+6. Detail/value modal perlu punya `min-width: 0` agar wrapping bekerja di grid/flex layout.
+7. Pertimbangkan `max-height: calc(100vh - 40px); overflow-y: auto;` pada panel modal agar usable di layar pendek.
+8. Jangan mengubah selector JavaScript yang sudah dipakai:
    - `data-finance-modal`
    - `data-finance-modal-close`
    - `data-finance-modal-confirm`
@@ -117,6 +132,9 @@ Catatan:
 8. Tombol `Batal`, `Ya`, dan close icon tetap bisa digunakan.
 9. Tidak ada perubahan behavior submit/confirm/reject.
 10. Tampilan mobile tetap rapi tanpa horizontal scroll.
+11. Modal `Approve Pencairan Dana` dan `Selesaikan Pencairan Dana` tetap terbaca setelah skala compact diterapkan.
+12. Modal `Tolak Pencairan Dana` dan `Detail Penolakan` menggunakan skala visual yang konsisten dengan modal konfirmasi lain.
+13. Tombol destructive pada modal rejection tetap merah dan tidak tertukar dengan tombol primer.
 
 ## Verification Checklist
 
@@ -130,6 +148,11 @@ Catatan:
 8. Cek viewport desktop sekitar `1280px`.
 9. Cek viewport tablet/mobile atau responsive mode di bawah `680px`.
 10. Pastikan modal approval lain yang memakai komponen sama tidak rusak.
+11. Cek modal `Approve Pencairan Dana`.
+12. Cek modal `Selesaikan Pencairan Dana`.
+13. Cek modal `Tolak Pencairan Dana`, termasuk pilihan alasan dan error validasi alasan.
+14. Cek modal `Detail Penolakan`.
+15. Pastikan tidak ada horizontal scroll pada modal dengan ID transaksi panjang.
 
 ## Out of Scope
 
@@ -138,4 +161,3 @@ Catatan:
 3. Perubahan copywriting modal.
 4. Penambahan animasi modal.
 5. Perubahan flow approval, rejection, atau confirmation.
-
