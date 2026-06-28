@@ -24,34 +24,36 @@
         }
 
         .approval-modal__panel {
-            width: min(760px, 100%);
-            border-radius: 22px;
+            width: min(580px, 100%);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            border-radius: 14px;
             background: #ffffff;
             color: #0b0b0f;
             box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
-            padding: 38px 40px 46px;
+            padding: 28px 30px 32px;
         }
 
         .approval-modal__header {
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            gap: 18px;
+            gap: 14px;
             border-bottom: 1px solid #c5c7cc;
-            padding-bottom: 18px;
+            padding-bottom: 14px;
         }
 
         .approval-modal__title {
             margin: 0;
-            font-size: clamp(32px, 4vw, 46px);
+            font-size: clamp(24px, 2.4vw, 30px);
             font-weight: 900;
-            line-height: 1.05;
+            line-height: 1.12;
             letter-spacing: 0;
         }
 
         .approval-modal__close {
-            width: 48px;
-            height: 48px;
+            width: 36px;
+            height: 36px;
             display: inline-grid;
             place-items: center;
             border: 0;
@@ -68,27 +70,27 @@
         }
 
         .approval-modal__close svg {
-            width: 40px;
-            height: 40px;
+            width: 22px;
+            height: 22px;
         }
 
         .approval-modal__description {
-            margin: 22px 0 28px;
+            margin: 16px 0 18px;
             color: #5c5c5f;
-            font-size: 28px;
+            font-size: 16px;
             font-weight: 500;
-            line-height: 1.25;
+            line-height: 1.45;
             letter-spacing: 0;
         }
 
         .approval-modal__details {
             display: grid;
-            grid-template-columns: max-content 1fr;
-            gap: 18px 20px;
+            grid-template-columns: max-content minmax(0, 1fr);
+            gap: 10px 14px;
             color: #5c5c5f;
-            font-size: 28px;
-            font-weight: 900;
-            line-height: 1.2;
+            font-size: 16px;
+            font-weight: 800;
+            line-height: 1.35;
         }
 
         .approval-modal__details dt,
@@ -97,7 +99,12 @@
         }
 
         .approval-modal__label {
-            min-width: 176px;
+            min-width: 126px;
+        }
+
+        .approval-modal__value {
+            min-width: 0;
+            overflow-wrap: anywhere;
         }
 
         .approval-modal__value::before {
@@ -105,31 +112,32 @@
         }
 
         .approval-modal__note {
-            margin: 40px 0 34px;
+            margin: 22px 0 24px;
             color: #5c5c5f;
-            font-size: 27px;
+            font-size: 15px;
             font-weight: 500;
-            line-height: 1.12;
+            line-height: 1.45;
             letter-spacing: 0;
         }
 
         .approval-modal__actions {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 12px;
         }
 
         .approval-modal__button {
-            width: min(290px, 100%);
-            min-height: 88px;
+            width: min(150px, 100%);
+            min-height: 48px;
             border: 0;
-            border-radius: 12px;
+            border-radius: 8px;
             color: #ffffff;
             cursor: pointer;
             font: inherit;
-            font-size: 28px;
+            font-size: 16px;
             font-weight: 900;
             letter-spacing: 0;
+            padding: 0 18px;
         }
 
         .approval-modal__button--cancel {
@@ -148,19 +156,29 @@
 
         @media (max-width: 680px) {
             .approval-modal__panel {
-                padding: 28px 22px 30px;
+                width: 100%;
+                padding: 22px 18px 24px;
+            }
+
+            .approval-modal__title {
+                font-size: 24px;
+            }
+
+            .approval-modal__close {
+                width: 34px;
+                height: 34px;
             }
 
             .approval-modal__description,
             .approval-modal__details,
             .approval-modal__note,
             .approval-modal__button {
-                font-size: 20px;
+                font-size: 15px;
             }
 
             .approval-modal__details {
                 grid-template-columns: 1fr;
-                gap: 6px;
+                gap: 4px;
             }
 
             .approval-modal__value::before {
@@ -173,7 +191,7 @@
 
             .approval-modal__button {
                 width: 100%;
-                min-height: 62px;
+                min-height: 46px;
             }
         }
     </style>
