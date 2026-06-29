@@ -808,7 +808,7 @@ class SellerApiTest extends TestCase
 
     public function test_seller_can_access_split_dashboard_apis_for_own_store(): void
     {
-        Carbon::setTestNow('2026-04-02 10:00:00');
+        Carbon::setTestNow(Carbon::parse('2026-04-02 10:00:00', 'Asia/Jakarta'));
 
         [$seller, $token] = $this->createAuthenticatedUser('seller-dashboard@example.com', '+6281200000041', 'seller-dashboard-token', User::ROLE_SELLER);
         [$otherSeller] = $this->createAuthenticatedUser('other-seller-dashboard@example.com', '+6281200000042', 'other-seller-dashboard-token', User::ROLE_SELLER);
@@ -843,19 +843,40 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.today_transaction_count', 2)
             ->assertJsonPath('data.change_percentage', 100);
 
+        $newEarlyJakartaToday = $this->createOrderForSeller($seller, 'DASH005', Transaction::STATUS_ACCEPTED_BY_STORE);
+        $newEarlyJakartaToday->forceFill([
+            'transaction_at' => Carbon::parse('2026-04-02 01:00:00', 'Asia/Jakarta')->setTimezone('UTC'),
+        ])->save();
+        $newYesterday = $this->createOrderForSeller($seller, 'DASH006', Transaction::STATUS_ACCEPTED_BY_STORE);
+        $newYesterday->forceFill([
+            'transaction_at' => Carbon::parse('2026-04-01 23:59:59', 'Asia/Jakarta')->setTimezone('UTC'),
+        ])->save();
+
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/dashboard/orders-today/counts')
             ->assertOk()
-            ->assertJsonPath('data.new.count', 1)
+            ->assertJsonPath('data.new.count', 2)
             ->assertJsonPath('data.ready_for_pickup.count', 0)
-            ->assertJsonPath('data.completed.count', 1);
+            ->assertJsonPath('data.completed.count', 1)
+            ->assertJsonPath('meta.period', 'today')
+            ->assertJsonPath('meta.date', '2026-04-02')
+            ->assertJsonPath('meta.date_label', '02 April 2026')
+            ->assertJsonPath('meta.display_label', 'Hari ini - 02 April 2026')
+            ->assertJsonPath('meta.timezone', 'Asia/Jakarta');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/dashboard')
+            ->assertOk()
+            ->assertJsonPath('data.orders_today.status_counts.new.count', 2)
+            ->assertJsonPath('data.orders_today.status_counts.completed.count', 1);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/dashboard/orders/new-preview')
             ->assertOk()
             ->assertJsonPath('data.0.id', $newToday->id)
             ->assertJsonPath('data.0.order_number', 'DASH002')
-            ->assertJsonPath('data.0.can_process', true);
+            ->assertJsonPath('data.0.can_process', true)
+            ->assertJsonPath('data.1.id', $newEarlyJakartaToday->id);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/dashboard/top-products-today')

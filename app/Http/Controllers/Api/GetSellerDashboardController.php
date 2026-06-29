@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Storage;
 
 class GetSellerDashboardController extends Controller
 {
+    private const BUSINESS_TIMEZONE = 'Asia/Jakarta';
+
+    private const STORAGE_TIMEZONE = 'UTC';
+
     public function profile(Request $request): JsonResponse
     {
         $sellerId = $request->user()->id;
@@ -48,7 +52,7 @@ class GetSellerDashboardController extends Controller
 
     public function todayRevenue(Request $request): JsonResponse
     {
-        $todayRevenue = $this->revenueForDate($request->user()->id, CarbonImmutable::now('Asia/Jakarta'));
+        $todayRevenue = $this->revenueForDate($request->user()->id, CarbonImmutable::now(self::BUSINESS_TIMEZONE));
 
         return response()->json([
             'message' => 'Pendapatan seller hari ini berhasil diambil.',
@@ -62,7 +66,7 @@ class GetSellerDashboardController extends Controller
     public function revenueChange(Request $request): JsonResponse
     {
         $sellerId = $request->user()->id;
-        $today = CarbonImmutable::now('Asia/Jakarta');
+        $today = CarbonImmutable::now(self::BUSINESS_TIMEZONE);
         $todayRevenue = $this->revenueForDate($sellerId, $today);
         $yesterdayRevenue = $this->revenueForDate($sellerId, $today->subDay());
 
@@ -82,7 +86,7 @@ class GetSellerDashboardController extends Controller
     public function todayTransactions(Request $request): JsonResponse
     {
         $sellerId = $request->user()->id;
-        $today = CarbonImmutable::now('Asia/Jakarta');
+        $today = CarbonImmutable::now(self::BUSINESS_TIMEZONE);
         $todayTransactionCount = $this->transactionCountForDate($sellerId, $today);
         $yesterdayTransactionCount = $this->transactionCountForDate($sellerId, $today->subDay());
 
@@ -99,17 +103,21 @@ class GetSellerDashboardController extends Controller
 
     public function todayOrderCounts(Request $request): JsonResponse
     {
+        $today = CarbonImmutable::now(self::BUSINESS_TIMEZONE);
+
         return response()->json([
             'message' => 'Count tab pesanan seller hari ini berhasil diambil.',
-            'data' => $this->orderStatusCounts($this->ordersToday($request->user()->id)),
+            'data' => $this->orderStatusCounts($this->ordersToday($request->user()->id, $today)),
+            'meta' => $this->todayPeriodMeta($today),
         ]);
     }
 
     public function newOrderPreview(Request $request): JsonResponse
     {
         $sellerId = $request->user()->id;
+        $today = CarbonImmutable::now(self::BUSINESS_TIMEZONE);
 
-        $orders = $this->ordersToday($sellerId)
+        $orders = $this->ordersToday($sellerId, $today)
             ->filter(fn (Transaction $order): bool => $order->statusCode() === Transaction::STATUS_CODE_ACCEPTED_BY_STORE)
             ->take(3)
             ->map(fn (Transaction $order): array => $this->mapOrderPreview($order, $sellerId))
@@ -125,17 +133,19 @@ class GetSellerDashboardController extends Controller
     {
         return response()->json([
             'message' => 'Produk terlaris seller hari ini berhasil diambil.',
-            'data' => $this->topProductsForDate($request->user()->id, CarbonImmutable::now('Asia/Jakarta')),
+            'data' => $this->topProductsForDate($request->user()->id, CarbonImmutable::now(self::BUSINESS_TIMEZONE)),
         ]);
     }
 
-    private function ordersToday(string $sellerId): Collection
+    private function ordersToday(string $sellerId, ?CarbonImmutable $date = null): Collection
     {
-        // $today = CarbonImmutable::now('Asia/Jakarta');
+        $date ??= CarbonImmutable::now(self::BUSINESS_TIMEZONE);
+        $start = $date->startOfDay()->setTimezone(self::STORAGE_TIMEZONE);
+        $end = $date->endOfDay()->setTimezone(self::STORAGE_TIMEZONE);
 
         return Transaction::query()
             ->with(['items.tenant', 'user'])
-            // ->whereDate('transaction_at', $today->toDateString())
+            ->whereBetween('transaction_at', [$start, $end])
             ->whereHas('items.tenant', fn (Builder $query) => $query->where('owner_user_id', $sellerId))
             ->orderByDesc('transaction_at')
             ->orderByDesc('id')
@@ -145,14 +155,14 @@ class GetSellerDashboardController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $sellerId = $request->user()->id;
-        $today = CarbonImmutable::now('Asia/Jakarta');
+        $today = CarbonImmutable::now(self::BUSINESS_TIMEZONE);
         $yesterday = $today->subDay();
         $profile = $this->profile($request)->getData(true)['data'];
         $todayRevenue = $this->revenueForDate($sellerId, $today);
         $yesterdayRevenue = $this->revenueForDate($sellerId, $yesterday);
         $todayTransactionCount = $this->transactionCountForDate($sellerId, $today);
         $yesterdayTransactionCount = $this->transactionCountForDate($sellerId, $yesterday);
-        $ordersToday = $this->ordersToday($sellerId);
+        $ordersToday = $this->ordersToday($sellerId, $today);
 
         return response()->json([
             'message' => 'Dashboard seller berhasil diambil.',
@@ -232,6 +242,19 @@ class GetSellerDashboardController extends Controller
         ];
     }
 
+    private function todayPeriodMeta(CarbonImmutable $today): array
+    {
+        $dateLabel = $today->locale('id')->translatedFormat('d F Y');
+
+        return [
+            'period' => 'today',
+            'date' => $today->toDateString(),
+            'date_label' => $dateLabel,
+            'display_label' => 'Hari ini - '.$dateLabel,
+            'timezone' => self::BUSINESS_TIMEZONE,
+        ];
+    }
+
     private function mapOrderPreview(Transaction $order, string $sellerId): array
     {
         $items = $this->sellerItems($order, $sellerId);
@@ -269,7 +292,7 @@ class GetSellerDashboardController extends Controller
             'process_deadline_minutes' => 30,
             'process_deadline_label' => 'Segera proses maks 30 menit',
             'transaction_at' => $order->transaction_at?->toIso8601String(),
-            'transaction_at_label' => $order->transaction_at?->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i').' WIB',
+            'transaction_at_label' => $order->transaction_at?->timezone(self::BUSINESS_TIMEZONE)->translatedFormat('d M Y, H:i').' WIB',
         ];
     }
 

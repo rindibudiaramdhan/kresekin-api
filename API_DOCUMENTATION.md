@@ -2099,6 +2099,13 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
       "label": "Selesai",
       "count": 3
     }
+  },
+  "meta": {
+    "period": "today",
+    "date": "2026-04-05",
+    "date_label": "05 April 2026",
+    "display_label": "Hari ini - 05 April 2026",
+    "timezone": "Asia/Jakarta"
   }
 }
 ```
