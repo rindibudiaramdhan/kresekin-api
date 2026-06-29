@@ -864,11 +864,14 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('meta.display_label', 'Hari ini - 02 April 2026')
             ->assertJsonPath('meta.timezone', 'Asia/Jakarta');
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $dashboardResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/dashboard')
             ->assertOk()
+            ->assertJsonPath('data.summary.today_transaction_count', 3)
             ->assertJsonPath('data.orders_today.status_counts.new.count', 2)
-            ->assertJsonPath('data.orders_today.status_counts.completed.count', 1);
+            ->assertJsonPath('data.orders_today.status_counts.completed.count', 1)
+            ->assertJsonPath('data.orders_today.preview.0.id', $newToday->id)
+            ->assertJsonPath('data.orders_today.preview.1.id', $newEarlyJakartaToday->id);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/dashboard/orders/new-preview')
@@ -876,7 +879,8 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.0.id', $newToday->id)
             ->assertJsonPath('data.0.order_number', 'DASH002')
             ->assertJsonPath('data.0.can_process', true)
-            ->assertJsonPath('data.1.id', $newEarlyJakartaToday->id);
+            ->assertJsonPath('data.1.id', $newEarlyJakartaToday->id)
+            ->assertJsonPath('data', $dashboardResponse->json('data.orders_today.preview'));
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/dashboard/top-products-today')

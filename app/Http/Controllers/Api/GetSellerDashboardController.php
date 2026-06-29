@@ -117,15 +117,9 @@ class GetSellerDashboardController extends Controller
         $sellerId = $request->user()->id;
         $today = CarbonImmutable::now(self::BUSINESS_TIMEZONE);
 
-        $orders = $this->ordersToday($sellerId, $today)
-            ->filter(fn (Transaction $order): bool => $order->statusCode() === Transaction::STATUS_CODE_ACCEPTED_BY_STORE)
-            ->take(3)
-            ->map(fn (Transaction $order): array => $this->mapOrderPreview($order, $sellerId))
-            ->values();
-
         return response()->json([
             'message' => 'Preview pesanan baru seller berhasil diambil.',
-            'data' => $orders,
+            'data' => $this->newOrderPreviewForDate($sellerId, $today),
         ]);
     }
 
@@ -140,8 +134,7 @@ class GetSellerDashboardController extends Controller
     private function ordersToday(string $sellerId, ?CarbonImmutable $date = null): Collection
     {
         $date ??= CarbonImmutable::now(self::BUSINESS_TIMEZONE);
-        $start = $date->startOfDay()->setTimezone(self::STORAGE_TIMEZONE);
-        $end = $date->endOfDay()->setTimezone(self::STORAGE_TIMEZONE);
+        [$start, $end] = $this->businessDateBounds($date);
 
         return Transaction::query()
             ->with(['items.tenant', 'user'])
@@ -180,11 +173,7 @@ class GetSellerDashboardController extends Controller
                 ],
                 'orders_today' => [
                     'status_counts' => $this->orderStatusCounts($ordersToday),
-                    'preview' => $ordersToday
-                        ->filter(fn (Transaction $order): bool => $order->statusCode() === Transaction::STATUS_CODE_ACCEPTED_BY_STORE)
-                        ->take(3)
-                        ->map(fn (Transaction $order): array => $this->mapOrderPreview($order, $sellerId))
-                        ->values(),
+                    'preview' => $this->newOrderPreviewFromOrders($ordersToday, $sellerId),
                 ],
                 'top_products_today' => $this->topProductsForDate($sellerId, $today),
             ],
@@ -193,22 +182,48 @@ class GetSellerDashboardController extends Controller
 
     private function revenueForDate(string $sellerId, CarbonImmutable $date): int
     {
+        [$start, $end] = $this->businessDateBounds($date);
+
         return (int) TransactionItem::query()
             ->whereHas('tenant', fn (Builder $query) => $query->where('owner_user_id', $sellerId))
             ->whereHas('transaction', fn (Builder $query) => $query
                 ->where('status', Transaction::STATUS_COMPLETED)
-                ->whereDate('transaction_at', $date->toDateString()))
+                ->whereBetween('transaction_at', [$start, $end]))
             ->sum('line_total');
     }
 
     private function transactionCountForDate(string $sellerId, CarbonImmutable $date): int
     {
+        [$start, $end] = $this->businessDateBounds($date);
+
         return Transaction::query()
-            ->whereDate('transaction_at', $date->toDateString())
+            ->whereBetween('transaction_at', [$start, $end])
             ->where('status', '!=', Transaction::STATUS_CANCELED)
             ->whereHas('items.tenant', fn (Builder $query) => $query->where('owner_user_id', $sellerId))
             ->distinct('transactions.id')
             ->count('transactions.id');
+    }
+
+    private function businessDateBounds(CarbonImmutable $date): array
+    {
+        return [
+            $date->startOfDay()->setTimezone(self::STORAGE_TIMEZONE),
+            $date->endOfDay()->setTimezone(self::STORAGE_TIMEZONE),
+        ];
+    }
+
+    private function newOrderPreviewForDate(string $sellerId, CarbonImmutable $date): Collection
+    {
+        return $this->newOrderPreviewFromOrders($this->ordersToday($sellerId, $date), $sellerId);
+    }
+
+    private function newOrderPreviewFromOrders(Collection $orders, string $sellerId): Collection
+    {
+        return $orders
+            ->filter(fn (Transaction $order): bool => $order->statusCode() === Transaction::STATUS_CODE_ACCEPTED_BY_STORE)
+            ->take(3)
+            ->map(fn (Transaction $order): array => $this->mapOrderPreview($order, $sellerId))
+            ->values();
     }
 
     private function orderStatusCounts(Collection $orders): array
@@ -305,6 +320,8 @@ class GetSellerDashboardController extends Controller
 
     private function topProductsForDate(string $sellerId, CarbonImmutable $date): Collection
     {
+        [$start, $end] = $this->businessDateBounds($date);
+
         return TransactionItem::query()
             ->select([
                 'transaction_items.product_id',
@@ -318,7 +335,7 @@ class GetSellerDashboardController extends Controller
             ->whereHas('tenant', fn (Builder $query) => $query->where('owner_user_id', $sellerId))
             ->whereHas('transaction', fn (Builder $query) => $query
                 ->where('status', Transaction::STATUS_COMPLETED)
-                ->whereDate('transaction_at', $date->toDateString()))
+                ->whereBetween('transaction_at', [$start, $end]))
             ->groupBy('transaction_items.product_id', 'transaction_items.product_name')
             ->orderByDesc('sold_quantity')
             ->orderByDesc('revenue')
