@@ -157,21 +157,28 @@ Fallback yang disarankan untuk client:
 Ada dua opsi terkait helper `ordersToday()`:
 
 1. Scope kecil: hanya tambah metadata tanggal, tidak mengubah query count.
-2. Scope benar secara domain: tambah metadata tanggal dan aktifkan filter `whereDate('transaction_at', $today->toDateString())`.
+2. Scope benar secara domain: tambah metadata tanggal dan aktifkan filter `transaction_at` untuk rentang hari ini berdasarkan timezone bisnis `Asia/Jakarta`.
 
 Rekomendasi: gunakan opsi 2 dalam implementasi endpoint ini, karena label "Hari ini" harus merepresentasikan data yang dihitung. Jika filter tidak diaktifkan, UI akan menampilkan tanggal hari ini tetapi angka count bisa berasal dari semua tanggal.
+
+Keputusan scope yang sudah disepakati:
+
+1. Filter tanggal hari ini masuk scope implementasi karena endpoint dan label menyebut "hari ini".
+2. Perubahan filter boleh ikut memengaruhi `GET /api/seller/dashboard/orders/new-preview` dan `GET /api/seller/dashboard`, karena keduanya juga memakai konsep `orders_today`.
+3. `API_DOCUMENTATION.md` perlu diperbarui minimal pada bagian `GET /api/seller/dashboard/orders-today/counts` untuk menambahkan kontrak `meta`.
 
 Risiko opsi 2:
 
 1. Angka count di UI dapat turun setelah deploy jika sebelumnya endpoint tanpa sengaja menghitung order historis.
 2. Test existing yang bergantung pada data lintas hari perlu disesuaikan agar eksplisit.
-3. Perlu dipastikan endpoint `GET /api/seller/dashboard/orders/new-preview` dan `GET /api/seller/dashboard` tidak ikut berubah tanpa sengaja jika masih memakai helper yang sama.
+3. Endpoint `GET /api/seller/dashboard/orders/new-preview` dan `GET /api/seller/dashboard` akan ikut berubah karena memakai helper yang sama. Perubahan ini diterima sebagai bagian scope karena semantiknya sama-sama `orders_today`.
 
 Mitigasi:
 
 1. Jadikan perubahan filter tanggal sebagai keputusan eksplisit di acceptance criteria.
 2. Tambahkan test order kemarin tidak dihitung di counts hari ini.
-3. Jika product owner belum ingin mengubah perilaku count, implementasi pertama cukup menambah `meta` dan buat tiket terpisah untuk koreksi filter tanggal.
+3. Tambahkan test boundary timezone agar order pada awal hari `Asia/Jakarta` tetap dihitung walaupun tanggal UTC di database masih hari sebelumnya.
+4. Gunakan filter range timezone-aware, bukan `whereDate`, agar tanggal bisnis `Asia/Jakarta` tidak salah saat `transaction_at` tersimpan dengan basis UTC.
 
 ### Dampak Timezone
 
@@ -183,6 +190,22 @@ Ketentuan:
 2. `date_label` memakai format Indonesia `dd Month yyyy`, contoh `05 April 2026`.
 3. `display_label` memakai format siap tampil `Hari ini - 05 April 2026`.
 4. `timezone` dikirim agar client mengetahui basis tanggal.
+
+Catatan penyimpanan waktu:
+
+1. `config/app.php` saat ini memakai timezone aplikasi `UTC`.
+2. `CheckoutController` menyimpan `transaction_at` dengan `now()`, sehingga nilai yang tersimpan praktis berbasis UTC.
+3. Kolom `transaction_at` bertipe `timestamp`, sehingga database tidak menyimpan metadata timezone.
+4. Karena itu, filter tanggal untuk "hari ini" Jakarta tidak boleh memakai `whereDate('transaction_at', $today->toDateString())`, karena `whereDate` akan membandingkan tanggal UTC mentah.
+5. Filter yang direkomendasikan adalah rentang awal-akhir hari `Asia/Jakarta` yang dikonversi ke UTC sebelum dipakai pada query:
+
+```php
+$today = CarbonImmutable::now('Asia/Jakarta');
+$start = $today->startOfDay()->setTimezone('UTC');
+$end = $today->endOfDay()->setTimezone('UTC');
+
+$query->whereBetween('transaction_at', [$start, $end]);
+```
 
 ### Dampak Dokumentasi
 
@@ -220,7 +243,9 @@ Sebagai seller, saya ingin melihat tanggal acuan pada area Kelola Pesanan agar s
 8. `meta.timezone` bernilai `Asia/Jakarta`.
 9. Endpoint harus tetap hanya bisa diakses seller terautentikasi sesuai middleware yang sudah ada.
 10. Count status tetap scoped ke toko milik seller yang login.
-11. Jika disetujui sebagai bagian scope implementasi, count harus difilter ke `transaction_at` pada tanggal `meta.date`.
+11. Count harus difilter ke rentang `transaction_at` yang merepresentasikan tanggal `meta.date` dalam timezone `Asia/Jakarta`.
+12. Filter tanggal harus memakai boundary awal dan akhir hari `Asia/Jakarta` yang dikonversi ke UTC sebelum query, bukan memakai `whereDate`.
+13. Karena `ordersToday()` dipakai oleh `GET /api/seller/dashboard/orders/new-preview` dan `GET /api/seller/dashboard`, kedua endpoint tersebut juga harus memakai scope tanggal hari ini yang sama.
 
 ### Non-Functional Requirements
 
@@ -247,7 +272,9 @@ Sebagai seller, saya ingin melihat tanggal acuan pada area Kelola Pesanan agar s
    - `completed`
 9. Setiap status tetap memiliki `status_code`, `label`, dan `count`.
 10. Client lama yang hanya membaca `data.*.count` tetap berjalan.
-11. Jika koreksi filter tanggal masuk scope, order kemarin tidak dihitung pada count hari ini.
+11. Order kemarin berdasarkan timezone `Asia/Jakarta` tidak dihitung pada count hari ini.
+12. Order pada awal hari `Asia/Jakarta`, misalnya `2026-04-05 01:00 WIB`, tetap dihitung sebagai `2026-04-05` walaupun nilai UTC-nya berada pada tanggal `2026-04-04`.
+13. `GET /api/seller/dashboard/orders/new-preview` dan `GET /api/seller/dashboard` ikut memakai scope order hari ini yang sama.
 
 ## Rekomendasi Implementasi
 
@@ -260,10 +287,13 @@ Sebagai seller, saya ingin melihat tanggal acuan pada area Kelola Pesanan agar s
 private function ordersToday(string $sellerId, ?CarbonImmutable $date = null): Collection
 ```
 
-5. Jika filter tanggal disetujui, aktifkan:
+5. Aktifkan filter tanggal dengan range timezone-aware:
 
 ```php
-->whereDate('transaction_at', $date->toDateString())
+$start = $date->startOfDay()->setTimezone('UTC');
+$end = $date->endOfDay()->setTimezone('UTC');
+
+->whereBetween('transaction_at', [$start, $end])
 ```
 
 6. Pastikan pemanggil lain, seperti dashboard utama dan `newOrderPreview()`, tetap memakai tanggal yang sama bila memang semantik endpoint-nya "today".
@@ -281,6 +311,5 @@ private function ordersToday(string $sellerId, ?CarbonImmutable $date = null): C
 
 ## Open Questions
 
-1. Apakah implementasi langsung harus mengaktifkan kembali filter `transaction_at` hari ini pada `ordersToday()`?
-2. Apakah label harus selalu `Hari ini - ...`, atau mobile ingin menyusun prefix sendiri dari `date_label`?
-3. Apakah endpoint dashboard utama `GET /api/seller/dashboard` juga perlu metadata tanggal serupa untuk `orders_today.status_counts`?
+1. Apakah label harus selalu `Hari ini - ...`, atau mobile ingin menyusun prefix sendiri dari `date_label`?
+2. Apakah endpoint dashboard utama `GET /api/seller/dashboard` juga perlu metadata tanggal serupa untuk `orders_today.status_counts`?
