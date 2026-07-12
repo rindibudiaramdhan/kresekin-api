@@ -47,7 +47,7 @@ Mengirim push notification ke user melalui Firebase Cloud Messaging untuk event 
    - Admin.
    - Finance.
    - Agent.
-4. Notifikasi hanya push atau juga disimpan sebagai inbox/riwayat di aplikasi.
+4. Format dan kebutuhan tampilan inbox/riwayat notifikasi di aplikasi.
 5. Format payload yang dibutuhkan frontend/mobile.
 6. Strategi broadcast/promo masuk scope awal atau ditunda.
 7. Queue connection dan worker production yang akan dipakai di Laravel Cloud.
@@ -60,9 +60,10 @@ Mengirim push notification ke user melalui Firebase Cloud Messaging untuk event 
 4. Token bisa dibuat, diperbarui, dan dihapus saat logout.
 5. Pengiriman notifikasi dilakukan melalui service khusus, bukan langsung dari controller.
 6. Pengiriman notifikasi menggunakan queue/job agar request utama tidak lambat.
-7. Riwayat notifikasi di database ditunda kecuali frontend/mobile membutuhkan inbox notifikasi.
-8. Token invalid dari Firebase perlu dinonaktifkan atau dihapus.
-9. Event promo atau broadcast ditunda dari MVP.
+7. Daftar notifikasi disimpan di database sebagai inbox/riwayat aplikasi.
+8. Setiap notifikasi memiliki penanda status belum dibaca atau sudah dibaca.
+9. Token invalid dari Firebase perlu dinonaktifkan atau dihapus.
+10. Event promo atau broadcast ditunda dari MVP.
 
 ## Scope
 
@@ -71,7 +72,9 @@ Mengirim push notification ke user melalui Firebase Cloud Messaging untuk event 
 3. Menambahkan rancangan Firebase notification service.
 4. Menambahkan rancangan job pengiriman notifikasi.
 5. Menambahkan rancangan trigger notifikasi dari event order/payment yang disepakati.
-6. Menyiapkan test dengan mock/fake Firebase client.
+6. Menambahkan rancangan penyimpanan daftar notifikasi di database.
+7. Menambahkan rancangan penanda notifikasi belum dibaca/sudah dibaca.
+8. Menyiapkan test dengan mock/fake Firebase client.
 
 ## Out of Scope Awal
 
@@ -80,9 +83,8 @@ Mengirim push notification ke user melalui Firebase Cloud Messaging untuk event 
 3. Integrasi frontend/mobile.
 4. Broadcast promo massal.
 5. Segmentasi user untuk campaign notifikasi.
-6. In-app inbox notifikasi, kecuali diputuskan masuk scope MVP.
-7. Dashboard manajemen template notifikasi.
-8. Topic subscription Firebase, kecuali ada kebutuhan eksplisit dari mobile/frontend.
+6. Dashboard manajemen template notifikasi.
+7. Topic subscription Firebase, kecuali ada kebutuhan eksplisit dari mobile/frontend.
 
 ## Event Awal yang Direkomendasikan
 
@@ -106,7 +108,7 @@ Event candidate dari `docs/requirements/11-integrations.md` yang dapat dipertimb
 1. Tentukan platform target notifikasi.
 2. Tentukan event final yang mengirim notifikasi.
 3. Tentukan penerima untuk setiap event.
-4. Tentukan apakah notifikasi perlu in-app inbox.
+4. Tentukan kebutuhan tampilan in-app inbox/riwayat notifikasi.
 5. Tentukan payload data untuk kebutuhan deep link.
 6. Tentukan apakah payload harus memakai template.
 7. Tentukan retry policy, failure handling, dan deduplication key untuk job.
@@ -139,7 +141,21 @@ Event candidate dari `docs/requirements/11-integrations.md` yang dapat dipertimb
 5. Tambahkan unique constraint untuk `token`.
 6. Tambahkan index untuk `user_id`.
 7. Pertimbangkan field `disabled_at` atau `revoked_at` untuk token invalid.
-8. Jika inbox masuk scope, desain tabel `notifications`.
+8. Desain tabel `notifications` untuk menyimpan daftar notifikasi user.
+9. Relasikan notifikasi ke user penerima.
+10. Siapkan field minimum tabel `notifications`:
+   - `id`
+   - `user_id`
+   - `type`
+   - `title`
+   - `body`
+   - `data`
+   - `read_at`
+   - `created_at`
+   - `updated_at`
+11. Gunakan `read_at = null` sebagai penanda belum dibaca.
+12. Gunakan `read_at` berisi timestamp sebagai penanda sudah dibaca.
+13. Tambahkan index untuk `user_id` dan `read_at`.
 
 ## Task Backend/API
 
@@ -154,9 +170,13 @@ Event candidate dari `docs/requirements/11-integrations.md` yang dapat dipertimb
 9. Kirim notifikasi ke semua device aktif milik user penerima.
 10. Tangani token invalid dari Firebase.
 11. Hapus atau nonaktifkan token invalid.
-12. Jika inbox masuk scope, simpan notifikasi ke database sebelum atau sesudah push dikirim.
-13. Tambahkan logging untuk kegagalan pengiriman notifikasi tanpa mencatat credential atau token lengkap.
-14. Pastikan job idempotent atau memiliki deduplication key per event.
+12. Simpan notifikasi ke database agar tersedia sebagai daftar/inbox notifikasi aplikasi.
+13. Notifikasi baru harus tersimpan sebagai belum dibaca.
+14. Buat endpoint daftar notifikasi milik user.
+15. Buat endpoint untuk menandai satu notifikasi sebagai sudah dibaca.
+16. Buat endpoint untuk menandai semua notifikasi user sebagai sudah dibaca.
+17. Tambahkan logging untuk kegagalan pengiriman notifikasi tanpa mencatat credential atau token lengkap.
+18. Pastikan job idempotent atau memiliki deduplication key per event.
 
 ## Rekomendasi Endpoint
 
@@ -164,6 +184,9 @@ Event candidate dari `docs/requirements/11-integrations.md` yang dapat dipertimb
 POST /api/device-tokens
 DELETE /api/device-tokens/{token}
 POST /api/device-tokens/remove
+GET /api/notifications
+POST /api/notifications/{notification}/read
+POST /api/notifications/read-all
 ```
 
 Gunakan salah satu pola delete token yang paling sesuai dengan pola API project saat implementasi. Jika token terlalu panjang untuk path parameter, endpoint `POST /api/device-tokens/remove` dengan body lebih aman.
@@ -198,6 +221,11 @@ Payload final perlu mengikuti kebutuhan frontend/mobile, terutama untuk deep lin
 10. Credential Firebase tidak tersimpan di repository.
 11. Endpoint device token memakai `session.token`.
 12. Queue worker production terdokumentasi untuk Laravel Cloud saat implementasi.
+13. Daftar notifikasi tersimpan di database.
+14. Notifikasi baru memiliki status belum dibaca.
+15. User bisa melihat daftar notifikasi miliknya.
+16. User bisa menandai notifikasi sebagai sudah dibaca.
+17. User tidak bisa melihat atau mengubah notifikasi milik user lain.
 
 ## Task Testing
 
@@ -212,6 +240,11 @@ Payload final perlu mengikuti kebutuhan frontend/mobile, terutama untuk deep lin
 9. Test token invalid ditangani dengan benar.
 10. Test notifikasi tidak dikirim ke user yang tidak terkait dengan pesanan.
 11. Test job tidak mengirim duplikasi untuk event yang sama jika deduplication diterapkan.
+12. Test notifikasi tersimpan di database saat event dibuat.
+13. Test notifikasi baru memiliki `read_at = null`.
+14. Test daftar notifikasi hanya menampilkan notifikasi milik user login.
+15. Test mark as read mengisi `read_at`.
+16. Test user tidak bisa menandai notifikasi milik user lain sebagai sudah dibaca.
 
 ## Verification Checklist
 
@@ -223,4 +256,3 @@ Payload final perlu mengikuti kebutuhan frontend/mobile, terutama untuk deep lin
 6. Pastikan log tidak mencatat token lengkap atau secret.
 7. Pastikan dokumentasi API diperbarui jika endpoint device token sudah diimplementasikan.
 8. Pastikan kebutuhan env var dan queue worker Laravel Cloud terdokumentasi saat implementasi.
-
