@@ -10,6 +10,7 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
 use App\Models\UserSessionToken;
+use App\Support\FinanceDisbursementSyncer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -215,30 +216,76 @@ class FinanceApiTest extends TestCase
             ->assertJsonPath('data.rejection.rejected_by.id', $finance->id);
     }
 
-    public function test_finance_can_view_dummy_seller_transaction_submissions_with_pagination_and_filters(): void
+    public function test_finance_can_view_seller_transaction_submissions_from_disbursements_with_pagination_and_filters(): void
     {
         [, $token] = $this->createAuthenticatedUser('finance-seller-submissions@example.com', '+6281400000011', 'finance-seller-submissions-token', User::ROLE_FINANCE);
+        $syncer = app(FinanceDisbursementSyncer::class);
+
+        $paidTransaction = $this->createTransactionForStore('FIN101', 5200456);
+        $paidTenant = $paidTransaction->items()->firstOrFail()->tenant;
+        $paidTenant->forceFill(['name' => 'Budi Sentosa Sembako Jaya'])->save();
+        $paidTenant->owner->forceFill([
+            'bank_name' => 'BCA',
+            'bank_account_name' => 'Budi Sentosa',
+            'bank_account_number' => '8830129999',
+        ])->save();
+        $paidSubmission = $syncer->syncForTransaction($paidTransaction)->first();
+        $paidSubmission->forceFill([
+            'status' => FinanceTransactionDisbursement::STATUS_DISBURSED_TO_SELLER,
+            'created_at' => now()->setDate(2026, 1, 2),
+            'updated_at' => now()->setDate(2026, 1, 2),
+            'disbursed_at' => now()->setDate(2026, 1, 3),
+        ])->save();
+
+        $requestedTransaction = $this->createTransactionForStore('FIN102', 2450999);
+        $requestedTenant = $requestedTransaction->items()->firstOrFail()->tenant;
+        $requestedTenant->forceFill(['name' => 'Santi Organik Mart'])->save();
+        $requestedTenant->owner->forceFill([
+            'bank_name' => 'Mandiri',
+            'bank_account_name' => 'Santi',
+            'bank_account_number' => '1240098999',
+        ])->save();
+        $requestedSubmission = $syncer->syncForTransaction($requestedTransaction)->first();
+        $requestedSubmission->forceFill([
+            'created_at' => now()->setDate(2026, 2, 15),
+            'updated_at' => now()->setDate(2026, 2, 15),
+        ])->save();
+
+        $approvedTransaction = $this->createTransactionForStore('FIN103', 875056);
+        $approvedSubmission = $syncer->syncForTransaction($approvedTransaction)->first();
+        $approvedSubmission->forceFill([
+            'status' => FinanceTransactionDisbursement::STATUS_BUYER_PAYMENT_CONFIRMED,
+            'created_at' => now()->setDate(2026, 3, 6),
+            'updated_at' => now()->setDate(2026, 3, 6),
+            'buyer_payment_confirmed_at' => now()->setDate(2026, 3, 7),
+        ])->save();
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/finance/seller-transaction-submissions?per_page=5&page=1')
             ->assertOk()
             ->assertJsonPath('message', 'Daftar transaksi pengajuan seller berhasil diambil.')
-            ->assertJsonPath('data.0.id', 'WD-20230914-0042')
-            ->assertJsonPath('data.0.store.name', 'Budi Sentosa Sembako Jaya')
-            ->assertJsonPath('data.0.bank.name', 'BCA')
-            ->assertJsonPath('data.0.bank.account_number_masked', '8830129xxx')
-            ->assertJsonPath('data.0.amount_label', 'Rp 5.200.456')
-            ->assertJsonPath('data.0.status_label', 'Berhasil')
+            ->assertJsonPath('data.0.id', $approvedSubmission->unique_code)
+            ->assertJsonPath('data.1.id', $requestedSubmission->unique_code)
+            ->assertJsonPath('data.2.id', $paidSubmission->unique_code)
+            ->assertJsonPath('data.2.disbursement_id', $paidSubmission->id)
+            ->assertJsonPath('data.2.store.name', 'Budi Sentosa Sembako Jaya')
+            ->assertJsonPath('data.2.bank.name', 'BCA')
+            ->assertJsonPath('data.2.bank.account_number_masked', '8830129xxx')
+            ->assertJsonPath('data.2.amount_label', 'Rp 5.200.456')
+            ->assertJsonPath('data.2.status', 'paid')
+            ->assertJsonPath('data.2.status_label', 'Berhasil')
             ->assertJsonPath('meta.current_page', 1)
             ->assertJsonPath('meta.per_page', 5)
-            ->assertJsonPath('meta.total', 24)
-            ->assertJsonPath('meta.last_page', 5)
-            ->assertJsonCount(5, 'data');
+            ->assertJsonPath('meta.total', 3)
+            ->assertJsonPath('meta.last_page', 1)
+            ->assertJsonCount(3, 'data');
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/finance/seller-transaction-submissions?search=Santi&status=requested&date_from=2026-02-01&date_to=2026-02-28')
             ->assertOk()
             ->assertJsonPath('data.0.store.name', 'Santi Organik Mart')
+            ->assertJsonPath('data.0.bank.name', 'Mandiri')
+            ->assertJsonPath('data.0.bank.account_number_masked', '1240098xxx')
             ->assertJsonPath('data.0.status', 'requested')
             ->assertJsonPath('meta.total', 1);
     }
