@@ -142,6 +142,7 @@ Daftar ini diselaraskan dengan `php artisan route:list --path=api`. Method `GET|
 | POST | `/api/checkout` | Checkout cart menjadi transaksi. |
 | GET | `/api/users/transactions` | Riwayat transaksi buyer. |
 | GET | `/api/users/transactions/{transactionId}` | Detail transaksi buyer. |
+| PATCH | `/api/users/transactions/{transactionId}/complete` | Buyer menyelesaikan pesanan yang sudah dikirim atau siap diambil. |
 | GET | `/api/cancellation-reason-categories` | Kategori alasan pembatalan aktif. |
 
 ### Seller
@@ -1920,6 +1921,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "order_number": "INV-20260527-0001",
     "status": "menunggu pembayaran",
     "status_code": "pending_payment",
+    "can_complete": false,
     "subtotal_amount": 19998,
     "delivery_fee": 2500,
     "discount_amount": 1999,
@@ -1940,6 +1942,23 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
         "sequence": 1
       }
     ]
+  }
+}
+```
+
+#### PATCH `/api/users/transactions/{transactionId}/complete`
+
+Menyelesaikan pesanan milik buyer yang sedang login. Pesanan hanya dapat diselesaikan dari status `on_the_way` atau `ready_for_pickup`. Pemanggilan ulang terhadap pesanan yang sudah `completed` bersifat idempotent dan tidak menambahkan histori status baru.
+
+```json
+{
+  "message": "Pesanan berhasil diselesaikan.",
+  "data": {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "order_number": "INV-20260527-0001",
+    "status": "pesanan selesai",
+    "status_code": "completed",
+    "status_label": "Pesanan Selesai"
   }
 }
 ```

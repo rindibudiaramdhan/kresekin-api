@@ -116,6 +116,14 @@ class Transaction extends Model
         return null;
     }
 
+    public function canBeCompletedByBuyer(): bool
+    {
+        return in_array($this->statusCode(), [
+            self::STATUS_CODE_ON_THE_WAY,
+            self::STATUS_CODE_READY_FOR_PICKUP,
+        ], true);
+    }
+
     protected function casts(): array
     {
         return [

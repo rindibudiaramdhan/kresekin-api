@@ -33,6 +33,7 @@ class GetUserTransactionDetailController extends Controller
                 'status' => $transaction->status,
                 'status_code' => $transaction->statusCode(),
                 'status_label' => $this->formatStatusLabel($transaction->status),
+                'can_complete' => $transaction->canBeCompletedByBuyer(),
                 'cancellation_reason' => $transaction->statusCode() === Transaction::STATUS_CODE_CANCELED ? [
                     'category_id' => $transaction->cancellation_reason_category_id,
                     'category_name' => $transaction->cancellationReasonCategory?->name,

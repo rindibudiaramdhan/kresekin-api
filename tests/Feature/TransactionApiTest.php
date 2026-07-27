@@ -407,6 +407,160 @@ class TransactionApiTest extends TestCase
             ->assertJsonPath('data.status_label', 'Pesanan Dibatalkan');
     }
 
+    public function test_buyer_can_complete_own_transaction_that_is_on_the_way(): void
+    {
+        [$user, $plainTextToken] = $this->createAuthenticatedUser('buyer-complete-token');
+        $transaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'COMPLETE001',
+            'status' => Transaction::STATUS_ON_THE_WAY,
+            'transaction_at' => now(),
+        ]);
+
+        TransactionStatusHistory::query()->create([
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::STATUS_ON_THE_WAY,
+            'title' => 'Pesanan dalam perjalanan',
+            'description' => 'Pesanan sedang dikirim',
+            'sequence' => 1,
+            'status_at' => now(),
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson('/api/users/transactions/'.$transaction->id.'/complete')
+            ->assertOk()
+            ->assertJsonPath('message', 'Pesanan berhasil diselesaikan.')
+            ->assertJsonPath('data.id', $transaction->id)
+            ->assertJsonPath('data.status', Transaction::STATUS_COMPLETED)
+            ->assertJsonPath('data.status_code', Transaction::STATUS_CODE_COMPLETED)
+            ->assertJsonPath('data.status_label', 'Pesanan Selesai');
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => Transaction::STATUS_COMPLETED,
+        ]);
+        $this->assertDatabaseHas('transaction_status_histories', [
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::STATUS_COMPLETED,
+            'description' => 'Pesanan telah diterima dan diselesaikan oleh buyer',
+            'sequence' => 2,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/users/transactions/'.$transaction->id)
+            ->assertOk()
+            ->assertJsonPath('data.can_complete', false);
+    }
+
+    public function test_buyer_can_complete_own_transaction_that_is_ready_for_pickup(): void
+    {
+        [$user, $plainTextToken] = $this->createAuthenticatedUser('buyer-complete-pickup-token');
+        $transaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'COMPLETE002',
+            'status' => Transaction::STATUS_READY_FOR_PICKUP,
+            'transaction_at' => now(),
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/users/transactions/'.$transaction->id)
+            ->assertOk()
+            ->assertJsonPath('data.can_complete', true);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson('/api/users/transactions/'.$transaction->id.'/complete')
+            ->assertOk()
+            ->assertJsonPath('data.status_code', Transaction::STATUS_CODE_COMPLETED);
+    }
+
+    public function test_completing_an_already_completed_transaction_is_idempotent(): void
+    {
+        [$user, $plainTextToken] = $this->createAuthenticatedUser('buyer-complete-idempotent-token');
+        $transaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'COMPLETE003',
+            'status' => Transaction::STATUS_ON_THE_WAY,
+            'transaction_at' => now(),
+        ]);
+
+        $endpoint = '/api/users/transactions/'.$transaction->id.'/complete';
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson($endpoint)
+            ->assertOk();
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson($endpoint)
+            ->assertOk()
+            ->assertJsonPath('message', 'Pesanan sudah selesai.')
+            ->assertJsonPath('data.status_code', Transaction::STATUS_CODE_COMPLETED);
+
+        $this->assertSame(1, $transaction->statusHistories()
+            ->where('status', Transaction::STATUS_COMPLETED)
+            ->count());
+    }
+
+    public function test_buyer_cannot_complete_transaction_from_an_invalid_status(): void
+    {
+        [$user, $plainTextToken] = $this->createAuthenticatedUser('buyer-complete-invalid-token');
+        $transaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'COMPLETE004',
+            'status' => Transaction::STATUS_PROCESSING,
+            'transaction_at' => now(),
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson('/api/users/transactions/'.$transaction->id.'/complete')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['status']);
+
+        $this->assertSame(Transaction::STATUS_PROCESSING, $transaction->fresh()->status);
+    }
+
+    public function test_buyer_cannot_complete_another_buyers_transaction(): void
+    {
+        [, $plainTextToken] = $this->createAuthenticatedUser('buyer-complete-owner-token');
+        $otherUser = User::query()->create([
+            'name' => 'Buyer Lain',
+            'email' => 'buyer-complete-other@example.com',
+            'phone' => '+6281888888888',
+            'type' => 'phone',
+        ]);
+        $transaction = Transaction::query()->create([
+            'user_id' => $otherUser->id,
+            'order_number' => 'COMPLETE005',
+            'status' => Transaction::STATUS_ON_THE_WAY,
+            'transaction_at' => now(),
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson('/api/users/transactions/'.$transaction->id.'/complete')
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Transaksi tidak ditemukan.');
+    }
+
+    public function test_complete_transaction_endpoint_requires_buyer_authentication_and_role(): void
+    {
+        [$user, $plainTextToken] = $this->createAuthenticatedUser('seller-complete-buyer-endpoint-token');
+        $user->forceFill(['role' => User::ROLE_SELLER])->save();
+        $transaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'COMPLETE006',
+            'status' => Transaction::STATUS_ON_THE_WAY,
+            'transaction_at' => now(),
+        ]);
+        $endpoint = '/api/users/transactions/'.$transaction->id.'/complete';
+
+        $this->patchJson($endpoint)
+            ->assertUnauthorized();
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson($endpoint)
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh pengguna dengan role buyer.');
+    }
+
     private function createAuthenticatedUser(string $plainTextToken): array
     {
         $user = User::query()->create([
