@@ -124,6 +124,17 @@ class Transaction extends Model
         ], true);
     }
 
+    public function canBeCanceledByBuyer(): bool
+    {
+        return in_array($this->statusCode(), [
+            self::STATUS_CODE_PENDING_PAYMENT,
+            self::STATUS_CODE_ACCEPTED_BY_STORE,
+            self::STATUS_CODE_PROCESSING,
+            self::STATUS_CODE_ON_THE_WAY,
+            self::STATUS_CODE_READY_FOR_PICKUP,
+        ], true);
+    }
+
     protected function casts(): array
     {
         return [

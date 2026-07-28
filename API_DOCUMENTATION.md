@@ -1921,6 +1921,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "order_number": "INV-20260527-0001",
     "status": "menunggu pembayaran",
     "status_code": "pending_payment",
+    "can_cancel": true,
     "can_complete": false,
     "subtotal_amount": 19998,
     "delivery_fee": 2500,
@@ -1942,6 +1943,38 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
         "sequence": 1
       }
     ]
+  }
+}
+```
+
+#### PATCH `/api/users/transactions/{transactionId}/cancel`
+
+Membatalkan pesanan aktif milik buyer yang sedang login. Gunakan `id` kategori dari `GET /api/cancellation-reason-categories`. Field `cancellation_reason_text` wajib diisi jika kategori mengizinkan teks bebas (misalnya `Alasan Lainnya`). Pesanan yang sudah selesai tidak dapat dibatalkan.
+
+```json
+{
+  "cancellation_reason_category_id": "11111111-1111-4111-8111-111111111111",
+  "cancellation_reason_text": null
+}
+```
+
+Response:
+
+```json
+{
+  "message": "Pesanan berhasil dibatalkan.",
+  "data": {
+    "id": "11111111-1111-4111-8111-111111111111",
+    "order_number": "INV-20260527-0001",
+    "status": "pesanan dibatalkan",
+    "status_code": "canceled",
+    "status_label": "Pesanan Dibatalkan",
+    "cancellation_reason": {
+      "category_id": "11111111-1111-4111-8111-111111111111",
+      "category_name": "Salah Pesan / Salah Produk",
+      "allows_free_text": false,
+      "reason_text": null
+    }
   }
 }
 ```

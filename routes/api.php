@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AddCartItemController;
+use App\Http\Controllers\Api\CancelBuyerTransactionController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\CompleteBuyerTransactionController;
 use App\Http\Controllers\Api\ConfirmFinanceBuyerPaymentController;
@@ -122,6 +123,7 @@ Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::get('/tenants', GetBuyerTenantListController::class);
     Route::get('/users/transactions', GetUserTransactionHistoryController::class);
     Route::get('/users/transactions/{transactionId}', GetUserTransactionDetailController::class);
+    Route::patch('/users/transactions/{transactionId}/cancel', CancelBuyerTransactionController::class);
     Route::patch('/users/transactions/{transactionId}/complete', CompleteBuyerTransactionController::class);
     Route::get('/cancellation-reason-categories', GetCancellationReasonCategoryListController::class);
 });

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CancellationReasonCategory;
 use App\Models\Tenant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
@@ -559,6 +560,130 @@ class TransactionApiTest extends TestCase
             ->patchJson($endpoint)
             ->assertForbidden()
             ->assertJsonPath('message', 'Endpoint ini hanya dapat diakses oleh pengguna dengan role buyer.');
+    }
+
+    public function test_buyer_can_cancel_own_active_transaction_with_a_reason(): void
+    {
+        [$user, $plainTextToken] = $this->createAuthenticatedUser('buyer-cancel-transaction-token');
+        $category = CancellationReasonCategory::query()
+            ->where('allows_free_text', false)
+            ->where('is_active', true)
+            ->firstOrFail();
+        $transaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'CANCEL001',
+            'status' => Transaction::STATUS_PROCESSING,
+            'transaction_at' => now(),
+        ]);
+
+        TransactionStatusHistory::query()->create([
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::STATUS_PROCESSING,
+            'title' => 'Pesanan sedang diproses',
+            'description' => 'Pesanan sedang diproses oleh toko',
+            'sequence' => 1,
+            'status_at' => now(),
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson('/api/users/transactions/'.$transaction->id.'/cancel', [
+                'cancellation_reason_category_id' => $category->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('message', 'Pesanan berhasil dibatalkan.')
+            ->assertJsonPath('data.status', Transaction::STATUS_CANCELED)
+            ->assertJsonPath('data.status_code', Transaction::STATUS_CODE_CANCELED)
+            ->assertJsonPath('data.status_label', 'Pesanan Dibatalkan')
+            ->assertJsonPath('data.cancellation_reason.category_id', $category->id)
+            ->assertJsonPath('data.cancellation_reason.category_name', $category->name);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => Transaction::STATUS_CANCELED,
+            'cancellation_reason_category_id' => $category->id,
+        ]);
+        $this->assertDatabaseHas('transaction_status_histories', [
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::STATUS_CANCELED,
+            'title' => 'Pesanan dibatalkan',
+            'description' => 'Pesanan dibatalkan oleh buyer. Alasan: '.$category->name,
+            'sequence' => 2,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->getJson('/api/users/transactions/'.$transaction->id)
+            ->assertOk()
+            ->assertJsonPath('data.can_cancel', false)
+            ->assertJsonPath('data.cancellation_reason.category_id', $category->id);
+    }
+
+    public function test_buyer_cancel_requires_text_for_other_reason(): void
+    {
+        [$user, $plainTextToken] = $this->createAuthenticatedUser('buyer-cancel-other-token');
+        $category = CancellationReasonCategory::query()
+            ->where('allows_free_text', true)
+            ->where('is_active', true)
+            ->firstOrFail();
+        $transaction = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'CANCEL002',
+            'status' => Transaction::STATUS_PENDING_PAYMENT,
+            'transaction_at' => now(),
+        ]);
+        $endpoint = '/api/users/transactions/'.$transaction->id.'/cancel';
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson($endpoint, [
+                'cancellation_reason_category_id' => $category->id,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['cancellation_reason_text']);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson($endpoint, [
+                'cancellation_reason_category_id' => $category->id,
+                'cancellation_reason_text' => 'Saya berubah pikiran.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.cancellation_reason.reason_text', 'Saya berubah pikiran.');
+    }
+
+    public function test_buyer_cannot_cancel_completed_or_another_buyers_transaction(): void
+    {
+        [$user, $plainTextToken] = $this->createAuthenticatedUser('buyer-cancel-invalid-token');
+        $category = CancellationReasonCategory::query()
+            ->where('allows_free_text', false)
+            ->where('is_active', true)
+            ->firstOrFail();
+        $completed = Transaction::query()->create([
+            'user_id' => $user->id,
+            'order_number' => 'CANCEL003',
+            'status' => Transaction::STATUS_COMPLETED,
+            'transaction_at' => now(),
+        ]);
+        $otherBuyer = User::query()->create([
+            'name' => 'Buyer Lain',
+            'email' => 'buyer-cancel-other-owner@example.com',
+            'phone' => '+6281777777777',
+            'type' => 'phone',
+        ]);
+        $otherTransaction = Transaction::query()->create([
+            'user_id' => $otherBuyer->id,
+            'order_number' => 'CANCEL004',
+            'status' => Transaction::STATUS_PROCESSING,
+            'transaction_at' => now(),
+        ]);
+        $payload = ['cancellation_reason_category_id' => $category->id];
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson('/api/users/transactions/'.$completed->id.'/cancel', $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['status']);
+
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
+            ->patchJson('/api/users/transactions/'.$otherTransaction->id.'/cancel', $payload)
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Transaksi tidak ditemukan.');
     }
 
     private function createAuthenticatedUser(string $plainTextToken): array
