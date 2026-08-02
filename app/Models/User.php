@@ -115,6 +115,11 @@ class User extends Authenticatable
         return $this->hasMany(Transaction::class);
     }
 
+    public function transactionRatings(): HasMany
+    {
+        return $this->hasMany(TransactionRating::class);
+    }
+
     public function ownedTenants(): HasMany
     {
         return $this->hasMany(Tenant::class, 'owner_user_id');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Support\TransactionRatingResponseMapper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +16,7 @@ class GetUserTransactionDetailController extends Controller
     {
         $transaction = $request->user()
             ->transactions()
-            ->with(['items.tenant', 'statusHistories', 'cancellationReasonCategory'])
+            ->with(['items.tenant', 'statusHistories', 'cancellationReasonCategory', 'rating'])
             ->find($transactionId);
 
         if (! $transaction) {
@@ -35,6 +36,11 @@ class GetUserTransactionDetailController extends Controller
                 'status_label' => $this->formatStatusLabel($transaction->status),
                 'can_cancel' => $transaction->canBeCanceledByBuyer(),
                 'can_complete' => $transaction->canBeCompletedByBuyer(),
+                'can_rate' => $transaction->statusCode() === Transaction::STATUS_CODE_COMPLETED
+                    && ! $transaction->rating,
+                'rating' => $transaction->rating
+                    ? TransactionRatingResponseMapper::map($transaction->rating)
+                    : null,
                 'cancellation_reason' => $transaction->statusCode() === Transaction::STATUS_CODE_CANCELED ? [
                     'category_id' => $transaction->cancellation_reason_category_id,
                     'category_name' => $transaction->cancellationReasonCategory?->name,

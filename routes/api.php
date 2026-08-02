@@ -45,6 +45,7 @@ use App\Http\Controllers\Api\GetSellerProductListController;
 use App\Http\Controllers\Api\GetSellerProductSummaryController;
 use App\Http\Controllers\Api\GetSellerTenantListController;
 use App\Http\Controllers\Api\GetTenantCategoriesController;
+use App\Http\Controllers\Api\GetTransactionRatingController;
 use App\Http\Controllers\Api\GetUserProfileController;
 use App\Http\Controllers\Api\GetUserTransactionDetailController;
 use App\Http\Controllers\Api\GetUserTransactionHistoryController;
@@ -54,6 +55,7 @@ use App\Http\Controllers\Api\RefreshUserSessionController;
 use App\Http\Controllers\Api\RegisterUserController;
 use App\Http\Controllers\Api\RegisterUserDeviceController;
 use App\Http\Controllers\Api\ResendOtpController;
+use App\Http\Controllers\Api\StoreTransactionRatingController;
 use App\Http\Controllers\Api\UpdateAgentProfileController;
 use App\Http\Controllers\Api\UpdateCartDeliveryMethodController;
 use App\Http\Controllers\Api\UpdateCartItemController;
@@ -125,6 +127,8 @@ Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::get('/users/transactions/{transactionId}', GetUserTransactionDetailController::class);
     Route::patch('/users/transactions/{transactionId}/cancel', CancelBuyerTransactionController::class);
     Route::patch('/users/transactions/{transactionId}/complete', CompleteBuyerTransactionController::class);
+    Route::post('/users/transactions/{transactionId}/rating', StoreTransactionRatingController::class);
+    Route::get('/users/transactions/{transactionId}/rating', GetTransactionRatingController::class);
     Route::get('/cancellation-reason-categories', GetCancellationReasonCategoryListController::class);
 });
 

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'user_id',
@@ -163,6 +164,11 @@ class Transaction extends Model
     public function items(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
+    }
+
+    public function rating(): HasOne
+    {
+        return $this->hasOne(TransactionRating::class);
     }
 
     public function financeDisbursements(): HasMany

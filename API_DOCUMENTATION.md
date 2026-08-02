@@ -143,6 +143,8 @@ Daftar ini diselaraskan dengan `php artisan route:list --path=api`. Method `GET|
 | GET | `/api/users/transactions` | Riwayat transaksi buyer. |
 | GET | `/api/users/transactions/{transactionId}` | Detail transaksi buyer. |
 | PATCH | `/api/users/transactions/{transactionId}/complete` | Buyer menyelesaikan pesanan yang sudah dikirim atau siap diambil. |
+| POST | `/api/users/transactions/{transactionId}/rating` | Buyer memberi rating untuk pesanan selesai. |
+| GET | `/api/users/transactions/{transactionId}/rating` | Buyer melihat rating pesanan miliknya. |
 | GET | `/api/cancellation-reason-categories` | Kategori alasan pembatalan aktif. |
 
 ### Seller
@@ -1995,6 +1997,41 @@ Menyelesaikan pesanan milik buyer yang sedang login. Pesanan hanya dapat diseles
   }
 }
 ```
+
+#### POST `/api/users/transactions/{transactionId}/rating`
+
+Memberikan rating satu kali untuk pesanan milik buyer yang sudah berstatus `completed`. `rating` wajib berupa bilangan bulat 1 sampai 5, sedangkan `comment` opsional dengan panjang maksimal 1000 karakter.
+
+```json
+{
+  "rating": 5,
+  "comment": "Pesanan sesuai dan cepat."
+}
+```
+
+Response `201 Created`:
+
+```json
+{
+  "message": "Rating pesanan berhasil disimpan.",
+  "data": {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "transaction_id": "11111111-1111-4111-8111-111111111111",
+    "rating": 5,
+    "comment": "Pesanan sesuai dan cepat.",
+    "created_at": "2026-07-30T10:30:00+07:00",
+    "updated_at": "2026-07-30T10:30:00+07:00"
+  }
+}
+```
+
+Endpoint mengembalikan `422` jika pesanan belum selesai, sudah pernah dirating, atau nilai rating tidak valid. Transaksi milik buyer lain dikembalikan sebagai `404`.
+
+#### GET `/api/users/transactions/{transactionId}/rating`
+
+Mengambil rating yang sudah diberikan untuk pesanan milik buyer. Jika belum ada rating, endpoint mengembalikan `404` dengan pesan `Rating pesanan belum tersedia.`. Bentuk `data` sama dengan response submit rating.
+
+Detail transaksi juga menyediakan `can_rate` dan `rating`. `can_rate` bernilai `true` hanya untuk transaksi selesai yang belum dirating.
 
 #### GET `/api/cancellation-reason-categories`
 
