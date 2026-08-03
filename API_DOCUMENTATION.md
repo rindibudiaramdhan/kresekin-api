@@ -1905,6 +1905,10 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
       "order_number": "INV-20260527-0001",
       "status": "menunggu pembayaran",
       "status_code": "pending_payment",
+      "delivery_method": "Antar Kurir Toko",
+      "delivery_method_code": "store_courier",
+      "delivery_fee": 2500,
+      "delivery_fee_label": "Rp. 2.500",
       "total_amount": 20499,
       "total_amount_label": "Rp 20.499",
       "transaction_at": "2026-05-27T10:00:00+07:00"
@@ -1926,7 +1930,10 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "can_cancel": true,
     "can_complete": false,
     "subtotal_amount": 19998,
+    "delivery_method": "Antar Kurir Toko",
+    "delivery_method_code": "store_courier",
     "delivery_fee": 2500,
+    "delivery_fee_label": "Rp. 2.500",
     "discount_amount": 1999,
     "total_amount": 20499,
     "items": [

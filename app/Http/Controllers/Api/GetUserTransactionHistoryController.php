@@ -34,6 +34,10 @@ class GetUserTransactionHistoryController extends Controller
                 'order_number' => $transaction->order_number,
                 'store_name' => $transaction->items->first()?->tenant?->name,
                 'total_items' => $transaction->items->sum('quantity'),
+                'delivery_method' => $transaction->delivery_method,
+                'delivery_method_code' => $transaction->delivery_method_code,
+                'delivery_fee' => $transaction->delivery_fee,
+                'delivery_fee_label' => $this->moneyLabel((int) $transaction->delivery_fee),
                 'items' => $transaction->items->map(fn (TransactionItem $item) => [
                     'id' => $item->id,
                     'product_id' => $item->product_id,
