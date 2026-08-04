@@ -16,7 +16,7 @@ class GetUserTransactionDetailController extends Controller
     {
         $transaction = $request->user()
             ->transactions()
-            ->with(['items.tenant', 'statusHistories', 'cancellationReasonCategory', 'rating'])
+            ->with(['items.tenant', 'items.product', 'statusHistories', 'cancellationReasonCategory', 'rating'])
             ->find($transactionId);
 
         if (! $transaction) {
@@ -56,6 +56,7 @@ class GetUserTransactionDetailController extends Controller
                     'tenant_id' => $item->tenant_id,
                     'tenant_name' => $item->tenant?->name,
                     'product_name' => $item->product_name,
+                    'image_url' => $item->image_url ?? $item->product?->publicImageUrl(),
                     'quantity' => $item->quantity,
                     'unit_price' => $item->unit_price,
                     'unit_price_label' => $this->moneyLabel($item->unit_price),
@@ -66,6 +67,8 @@ class GetUserTransactionDetailController extends Controller
                 'delivery_method_code' => $transaction->delivery_method_code,
                 'delivery_fee' => $transaction->delivery_fee,
                 'delivery_fee_label' => $this->moneyLabel((int) $transaction->delivery_fee),
+                'service_fee' => $transaction->service_fee,
+                'service_fee_label' => $this->moneyLabel((int) $transaction->service_fee),
                 'pickup_scheduled_at' => $transaction->pickup_scheduled_at,
                 'payment_method' => $transaction->payment_method,
                 'transaction_at' => $transaction->transaction_at?->toIso8601String(),

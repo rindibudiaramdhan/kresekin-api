@@ -19,7 +19,7 @@ class ModelRelationAndCastTest extends TestCase
 {
     public function test_cart_has_user_relation(): void
     {
-        $relation = (new Cart())->user();
+        $relation = (new Cart)->user();
 
         $this->assertInstanceOf(BelongsTo::class, $relation);
         $this->assertInstanceOf(User::class, $relation->getRelated());
@@ -27,7 +27,7 @@ class ModelRelationAndCastTest extends TestCase
 
     public function test_cart_item_has_user_and_product_relations_and_quantity_cast(): void
     {
-        $cartItem = new CartItem();
+        $cartItem = new CartItem;
         $cartItem->forceFill(['quantity' => '2']);
 
         $this->assertInstanceOf(BelongsTo::class, $cartItem->user());
@@ -39,7 +39,7 @@ class ModelRelationAndCastTest extends TestCase
 
     public function test_product_has_tenant_relation_and_money_casts(): void
     {
-        $product = new Product();
+        $product = new Product;
         $product->forceFill([
             'price' => '9999',
             'original_price' => '15000',
@@ -53,7 +53,7 @@ class ModelRelationAndCastTest extends TestCase
 
     public function test_user_has_expected_relations_and_attribute_casts(): void
     {
-        $user = new User();
+        $user = new User;
         $user->forceFill([
             'latitude' => '-6.2',
             'longitude' => '106.8',
@@ -73,11 +73,12 @@ class ModelRelationAndCastTest extends TestCase
 
     public function test_transaction_has_expected_relations_and_amount_casts(): void
     {
-        $transaction = new Transaction();
+        $transaction = new Transaction;
         $transaction->forceFill([
             'subtotal_amount' => '10000',
             'delivery_fee' => '2500',
-            'total_amount' => '12500',
+            'service_fee' => '1000',
+            'total_amount' => '13500',
         ]);
 
         $this->assertInstanceOf(BelongsTo::class, $transaction->user());
@@ -87,12 +88,13 @@ class ModelRelationAndCastTest extends TestCase
         $this->assertInstanceOf(TransactionItem::class, $transaction->items()->getRelated());
         $this->assertSame(10000, $transaction->subtotal_amount);
         $this->assertSame(2500, $transaction->delivery_fee);
-        $this->assertSame(12500, $transaction->total_amount);
+        $this->assertSame(1000, $transaction->service_fee);
+        $this->assertSame(13500, $transaction->total_amount);
     }
 
     public function test_transaction_item_has_expected_relations_and_numeric_casts(): void
     {
-        $transactionItem = new TransactionItem();
+        $transactionItem = new TransactionItem;
         $transactionItem->forceFill([
             'quantity' => '3',
             'unit_price' => '5000',
@@ -112,7 +114,7 @@ class ModelRelationAndCastTest extends TestCase
 
     public function test_user_session_token_has_user_relation(): void
     {
-        $relation = (new UserSessionToken())->user();
+        $relation = (new UserSessionToken)->user();
 
         $this->assertInstanceOf(BelongsTo::class, $relation);
         $this->assertInstanceOf(User::class, $relation->getRelated());

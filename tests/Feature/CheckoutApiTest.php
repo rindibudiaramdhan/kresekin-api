@@ -157,6 +157,7 @@ class CheckoutApiTest extends TestCase
         $this->assertDatabaseHas('transaction_items', [
             'transaction_id' => $transaction->id,
             'product_id' => $product->id,
+            'image_url' => 'https://example.com/pakcoy.png',
             'quantity' => 2,
             'line_total' => 19998,
         ]);

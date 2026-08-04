@@ -1909,6 +1909,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
       "delivery_method_code": "store_courier",
       "delivery_fee": 2500,
       "delivery_fee_label": "Rp. 2.500",
+      "service_fee": 1000,
+      "service_fee_label": "Rp. 1.000",
       "total_amount": 20499,
       "total_amount_label": "Rp 20.499",
       "transaction_at": "2026-05-27T10:00:00+07:00"
@@ -1934,6 +1936,8 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "delivery_method_code": "store_courier",
     "delivery_fee": 2500,
     "delivery_fee_label": "Rp. 2.500",
+    "service_fee": 1000,
+    "service_fee_label": "Rp. 1.000",
     "discount_amount": 1999,
     "total_amount": 20499,
     "items": [
@@ -1941,6 +1945,7 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
         "id": "11111111-1111-4111-8111-111111111111",
         "product_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         "product_name": "Bayam",
+        "image_url": "https://example.com/bayam.png",
         "quantity": 2,
         "line_total": 19998
       }

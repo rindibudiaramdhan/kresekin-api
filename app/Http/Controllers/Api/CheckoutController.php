@@ -118,6 +118,7 @@ class CheckoutController extends Controller
                     'product_id' => $cartItem->product_id,
                     'tenant_id' => $product->tenant_id,
                     'product_name' => $product->name,
+                    'image_url' => $product->publicImageUrl(),
                     'quantity' => $cartItem->quantity,
                     'unit_price' => $product->price,
                     'line_total' => $cartItem->quantity * $product->price,

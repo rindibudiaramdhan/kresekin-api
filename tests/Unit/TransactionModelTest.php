@@ -17,6 +17,7 @@ class TransactionModelTest extends TestCase
         $this->assertSame('datetime', $casts['transaction_at']);
         $this->assertSame('integer', $casts['subtotal_amount']);
         $this->assertSame('integer', $casts['delivery_fee']);
+        $this->assertSame('integer', $casts['service_fee']);
         $this->assertSame('integer', $casts['total_amount']);
         $this->assertSame('float', $casts['buyer_latitude']);
         $this->assertSame('float', $casts['buyer_longitude']);

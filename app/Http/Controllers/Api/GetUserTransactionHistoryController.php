@@ -21,7 +21,7 @@ class GetUserTransactionHistoryController extends Controller
 
         $transactions = $request->user()
             ->transactions()
-            ->with(['items.tenant', 'cancellationReasonCategory'])
+            ->with(['items.tenant', 'items.product', 'cancellationReasonCategory'])
             ->when($status, fn ($query) => $query->where('status', $status))
             ->orderByDesc('transaction_at')
             ->orderByDesc('id')
@@ -38,12 +38,15 @@ class GetUserTransactionHistoryController extends Controller
                 'delivery_method_code' => $transaction->delivery_method_code,
                 'delivery_fee' => $transaction->delivery_fee,
                 'delivery_fee_label' => $this->moneyLabel((int) $transaction->delivery_fee),
+                'service_fee' => $transaction->service_fee,
+                'service_fee_label' => $this->moneyLabel((int) $transaction->service_fee),
                 'items' => $transaction->items->map(fn (TransactionItem $item) => [
                     'id' => $item->id,
                     'product_id' => $item->product_id,
                     'tenant_id' => $item->tenant_id,
                     'tenant_name' => $item->tenant?->name,
                     'product_name' => $item->product_name,
+                    'image_url' => $item->image_url ?? $item->product?->publicImageUrl(),
                     'quantity' => $item->quantity,
                     'unit_price' => $item->unit_price,
                     'unit_price_label' => $this->moneyLabel($item->unit_price),

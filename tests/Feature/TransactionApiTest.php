@@ -57,6 +57,7 @@ class TransactionApiTest extends TestCase
                 'order_number' => sprintf('TRX%04d', $index),
                 'status' => 'Pesanan Selesai',
                 'delivery_fee' => $index === 12 ? 2500 : 0,
+                'service_fee' => $index === 12 ? 1000 : 0,
                 'delivery_method' => $index === 12 ? 'Antar Kurir Toko' : 'Ambil ke Toko',
                 'delivery_method_code' => $index === 12 ? 'store_courier' : 'pickup',
                 'transaction_at' => now()->subMinutes(12 - $index),
@@ -67,6 +68,7 @@ class TransactionApiTest extends TestCase
                     'transaction_id' => $transaction->id,
                     'tenant_id' => $tenant->id,
                     'product_name' => 'Beras Pandan Wangi 5kg',
+                    'image_url' => 'https://example.com/beras.png',
                     'quantity' => 2,
                     'unit_price' => 75000,
                     'line_total' => 150000,
@@ -97,8 +99,11 @@ class TransactionApiTest extends TestCase
             ->assertJsonPath('data.0.delivery_method_code', 'store_courier')
             ->assertJsonPath('data.0.delivery_fee', 2500)
             ->assertJsonPath('data.0.delivery_fee_label', 'Rp. 2.500')
+            ->assertJsonPath('data.0.service_fee', 1000)
+            ->assertJsonPath('data.0.service_fee_label', 'Rp. 1.000')
             ->assertJsonPath('data.0.items.0.tenant_name', 'Toko Aminah')
             ->assertJsonPath('data.0.items.0.product_name', 'Beras Pandan Wangi 5kg')
+            ->assertJsonPath('data.0.items.0.image_url', 'https://example.com/beras.png')
             ->assertJsonPath('data.0.items.0.quantity', 2)
             ->assertJsonPath('data.0.items.0.unit_price', 75000)
             ->assertJsonPath('data.0.items.0.unit_price_label', 'Rp. 75.000')
@@ -109,6 +114,8 @@ class TransactionApiTest extends TestCase
             ->assertJsonPath('data.1.delivery_method_code', 'pickup')
             ->assertJsonPath('data.1.delivery_fee', 0)
             ->assertJsonPath('data.1.delivery_fee_label', 'Rp. 0')
+            ->assertJsonPath('data.1.service_fee', 0)
+            ->assertJsonPath('data.1.service_fee_label', 'Rp. 0')
             ->assertJsonPath('data.9.order_number', 'TRX0003');
 
         $this->assertCount(10, $response->json('data'));
@@ -216,6 +223,7 @@ class TransactionApiTest extends TestCase
             'status' => Transaction::STATUS_PROCESSING,
             'total_amount' => 9999999,
             'delivery_fee' => 2500,
+            'service_fee' => 1000,
             'delivery_method' => 'Antar Kurir Toko',
             'delivery_method_code' => 'store_courier',
             'pickup_scheduled_at' => '15:00',
@@ -232,6 +240,7 @@ class TransactionApiTest extends TestCase
             'transaction_id' => $transaction->id,
             'tenant_id' => $tenant->id,
             'product_name' => 'Bayam Hijau',
+            'image_url' => 'https://example.com/bayam.png',
             'quantity' => 3,
             'unit_price' => 5000,
             'line_total' => 15000,
@@ -290,6 +299,7 @@ class TransactionApiTest extends TestCase
             ->assertJsonPath('data.total_items', 3)
             ->assertJsonPath('data.items.0.tenant_name', 'Toko Segar Jaya')
             ->assertJsonPath('data.items.0.product_name', 'Bayam Hijau')
+            ->assertJsonPath('data.items.0.image_url', 'https://example.com/bayam.png')
             ->assertJsonPath('data.items.0.quantity', 3)
             ->assertJsonPath('data.items.0.unit_price', 5000)
             ->assertJsonPath('data.items.0.unit_price_label', 'Rp. 5.000')
@@ -299,6 +309,8 @@ class TransactionApiTest extends TestCase
             ->assertJsonPath('data.delivery_method_code', 'store_courier')
             ->assertJsonPath('data.delivery_fee', 2500)
             ->assertJsonPath('data.delivery_fee_label', 'Rp. 2.500')
+            ->assertJsonPath('data.service_fee', 1000)
+            ->assertJsonPath('data.service_fee_label', 'Rp. 1.000')
             ->assertJsonPath('data.pickup_scheduled_at', '15:00')
             ->assertJsonPath('data.payment_method', 'Transfer Bank')
             ->assertJsonPath('data.status_timelines.0.status_code', Transaction::STATUS_CODE_PENDING_PAYMENT)
