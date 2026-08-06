@@ -46,16 +46,26 @@ Dokumen ini adalah task dan requirement awal sebelum development. Belum ada peru
 13. `Toko aktif` adalah tenant yang memiliki minimal satu order `completed` pada periode terpilih.
 14. Status order dan daftar order terbaru menampilkan semua status, sedangkan summary penjualan hanya menghitung `completed`.
 15. Omzet adalah jumlah `transaction_items.line_total` sebelum alokasi diskon, ongkir, dan service fee.
-16. Periode default adalah hari berjalan dalam zona `Asia/Jakarta`.
-17. Daftar order tidak menampilkan PII buyer; field yang boleh tampil hanya nomor order, cabang, toko, waktu, nominal, dan status.
+16. Owner dapat memilih satu tanggal, dengan default hari berjalan dalam zona `Asia/Jakarta`; date range belum didukung pada MVP.
+17. Tampilan awal mengagregasi seluruh cabang dalam scope owner; owner kemudian dapat memilih satu seller/cabang tertentu.
+18. Nama cabang menggunakan `users.name` milik user ber-role `seller`.
+19. Daftar order tidak menampilkan PII buyer; field yang boleh tampil hanya nomor order, daftar cabang, daftar toko, waktu, nominal dalam scope/filter, dan status.
+20. Transaksi lintas toko/cabang ditampilkan sebagai satu baris per transaksi, dengan daftar cabang/toko yang termasuk scope/filter.
+21. Nominal pada baris order adalah subtotal `transaction_items.line_total` yang termasuk scope/filter, bukan `transactions.total_amount`.
+22. Filter cabang, toko, dan tanggal memengaruhi seluruh dashboard. Filter status dan pencarian nomor order hanya memengaruhi daftar order; `order_status_counts` tetap menampilkan distribusi seluruh status dalam scope cabang, toko, dan tanggal.
+23. Performa toko menampilkan nama toko, nama cabang, omzet completed, jumlah distinct order completed, item terjual, dan waktu order terakhir; urutan default adalah omzet terbesar.
+24. Daftar order terbaru diurutkan berdasarkan `transactions.transaction_at`; perubahan status pada order lama tetap terlihat setelah polling tetapi tidak memindahkan order tersebut ke urutan teratas.
+25. API monitoring dipisahkan menjadi endpoint summary/status, performa toko, dan daftar order agar pagination dan polling lebih efisien.
+26. MVP menggunakan snapshot polling. Endpoint incremental dan test cursor dikeluarkan dari acceptance MVP dan baru dievaluasi setelah pengukuran performa snapshot.
 
 ## Batasan Produk untuk MVP
 
 1. Assignment hanya melalui seeder; belum ada UI atau Artisan command pengelolaan assignment.
 2. Owner tidak memiliki status lifecycle tambahan di luar user/session yang sudah ada.
 3. Detail order interaktif, notifikasi suara, export, dan laporan historis belum masuk scope.
-4. Filter MVP mencakup seller/cabang, toko, status, dan pencarian nomor order.
+4. Filter global MVP mencakup seller/cabang, toko, dan satu tanggal. Status serta pencarian nomor order hanya berlaku pada daftar order.
 5. Perubahan assignment berlaku pada request berikutnya karena semua query selalu membaca scope terbaru dari database; session owner tidak perlu diakhiri.
+6. Date range, laporan historis berbasis rentang, dan incremental cursor belum masuk scope MVP.
 
 ## Model Data yang Disepakati
 
@@ -82,34 +92,54 @@ Relasi Eloquent yang direkomendasikan:
 
 Nama kolom dan relasi sengaja menggunakan `branch_owner`/`branch_manager` agar tidak tertukar dengan `Tenant::owner()` yang berarti seller pemilik toko.
 
-## Kontrak Data Monitoring yang Direkomendasikan
+## Provisioning Owner Pertama yang Disepakati
 
-### Snapshot Dashboard
+1. Akun owner pertama dibuat oleh seeder internal menggunakan data dari environment/deployment input, bukan nilai kontak yang ditulis permanen di repository.
+2. `OWNER_INITIAL_USER_ID` berisi UUID stabil yang menjadi identitas owner pertama dan kunci idempotensi seeder.
+3. Seeder mencari owner berdasarkan `OWNER_INITIAL_USER_ID`, memperbarui nama/kontak bila input berubah, dan tidak membuat owner kedua ketika dijalankan ulang.
+4. Seeder wajib gagal dengan pesan yang jelas apabila:
+   - konfigurasi production tidak lengkap;
+   - email dan nomor WhatsApp sama-sama tidak tersedia;
+   - UUID tersebut sudah dipakai user dengan role selain `owner`;
+   - format UUID, email, nomor WhatsApp, atau metode login utama tidak valid.
+5. Environment/deployment input minimum mencakup UUID stabil, nama, email dan/atau nomor WhatsApp, serta metode login utama.
+6. Seeder tidak menyimpan OTP, password, secret, atau nilai kontak aktual di source code.
+7. Jika email dan nomor WhatsApp tersedia, keduanya dapat digunakan untuk meminta OTP. Metode login utama hanya menentukan pilihan default pada UI.
+8. Jika hanya satu kontak tersedia, UI hanya menawarkan metode OTP tersebut.
+9. Pada provisioning MVP pertama, seluruh user ber-role `seller` yang sudah ada di-assign kepada owner pertama.
+10. Seller yang dibuat setelah provisioning tetap tidak memiliki owner sampai assignment dilakukan secara eksplisit atau seeder assignment dijalankan kembali.
+11. Menambahkan role owner ke `User::roles()` tidak boleh secara tidak sengaja membuka public registration owner; allowlist role autentikasi dan role yang boleh registrasi harus dipisahkan.
+
+## Kontrak Data Monitoring yang Disepakati
+
+### Summary dan Status
 
 ```http
-GET /api/owner/online-monitoring
+GET /api/owner/online-monitoring/summary
 ```
 
-Query awal:
+Query:
 
 ```text
 ?seller_id={uuid}
 &store_id={uuid}
-&status={status_code}
-&date=2026-08-05
-&timezone=Asia/Jakarta
+&date=2026-08-06
 ```
+
+`seller_id` dan `store_id` opsional. Tanpa keduanya, endpoint mengagregasi seluruh cabang dan toko dalam scope owner. Zona bisnis ditetapkan server-side ke `Asia/Jakarta` dan tidak menerima timezone arbitrer dari client.
 
 Response minimum:
 
 ```json
 {
   "data": {
-    "generated_at": "2026-08-05T14:30:10+07:00",
+    "generated_at": "2026-08-06T14:30:10+07:00",
     "refresh_after_seconds": 10,
     "scope": {
-      "seller_id": "uuid",
-      "branch_name": "Cabang Jakarta Selatan"
+      "seller_id": null,
+      "store_id": null,
+      "date": "2026-08-06",
+      "timezone": "Asia/Jakarta"
     },
     "summary": {
       "sales_amount": 12500000,
@@ -118,22 +148,52 @@ Response minimum:
       "item_quantity": 386,
       "active_store_count": 18
     },
-    "order_status_counts": [],
-    "store_performance": [],
-    "latest_orders": []
+    "order_status_counts": []
   }
 }
 ```
 
-### Incremental Update
-
-Untuk mengurangi payload polling, pertimbangkan endpoint lanjutan:
+### Performa Toko
 
 ```http
-GET /api/owner/online-monitoring/updates?seller_id={uuid}&after={ISO-8601 timestamp}
+GET /api/owner/online-monitoring/stores
 ```
 
-Endpoint hanya mengembalikan order/perubahan setelah cursor terakhir. Snapshot penuh tetap dimuat saat halaman pertama dibuka dan secara periodik untuk rekonsiliasi.
+Query:
+
+```text
+?seller_id={uuid}
+&store_id={uuid}
+&date=2026-08-06
+&sort=sales_amount
+&direction=desc
+&page=1
+&per_page=25
+```
+
+Setiap row minimum berisi `store_id`, `store_name`, `seller_id`, `branch_name`, `sales_amount`, `sales_amount_label`, `order_count`, `item_quantity`, dan waktu order terakhir. Pagination wajib memiliki metadata yang eksplisit. `per_page` default 25 dan maksimum 100.
+
+### Daftar Order
+
+```http
+GET /api/owner/online-monitoring/orders
+```
+
+Query:
+
+```text
+?seller_id={uuid}
+&store_id={uuid}
+&date=2026-08-06
+&status={status_code}
+&search={order_number}
+&page=1
+&per_page=25
+```
+
+Setiap transaksi hanya muncul satu kali. `branches` dan `stores` berbentuk daftar unik yang hanya berisi resource dalam scope/filter. Nominal row adalah subtotal item dalam scope/filter. Pagination wajib memiliki metadata yang eksplisit. `per_page` default 25 dan maksimum 100.
+
+Ketiga endpoint menggunakan snapshot, mengembalikan `generated_at` dan `refresh_after_seconds = 10`, serta dipoll berdasarkan interval response. Endpoint incremental belum menjadi bagian MVP.
 
 ### Aturan Perhitungan
 
@@ -144,12 +204,34 @@ Endpoint hanya mengembalikan order/perubahan setelah cursor terakhir. Snapshot p
 5. `jumlah order` menghitung distinct `transactions.id` berstatus `completed`; pada summary lintas cabang, satu transaksi tetap dihitung satu kali meskipun berisi toko dari beberapa seller/cabang.
 6. `item terjual` menjumlahkan `transaction_items.quantity` hanya dari transaksi `completed`.
 7. `toko aktif` adalah distinct tenant yang memiliki sedikitnya satu transaksi `completed` pada periode terpilih.
-8. `status order` menghitung seluruh status transaksi dalam scope agar proses berjalan dapat dipantau; angka ini dipisahkan dari metric penjualan completed-only.
+8. `status order` menghitung seluruh status transaksi dalam scope cabang, toko, dan tanggal agar proses berjalan dapat dipantau; filter status/search tabel order tidak memengaruhi angka ini.
 9. `daftar order terbaru` menampilkan seluruh status, diurutkan dari `transaction_at` terbaru.
 10. Diskon transaksi, ongkir, dan service fee tidak dimasukkan ke omzet per toko.
 11. Periode default adalah awal sampai akhir hari berjalan dalam timezone `Asia/Jakarta`.
 12. Pagination wajib diterapkan untuk daftar order dan performa toko.
-13. Daftar order hanya mengembalikan nomor order, seller/cabang, toko, waktu, nominal item dalam scope, dan status; data buyer tidak di-query atau dipetakan ke response.
+13. Daftar order hanya mengembalikan nomor order, daftar seller/cabang, daftar toko, waktu, nominal item dalam scope/filter, dan status; data buyer tidak di-query atau dipetakan ke response.
+14. Satu transaksi lintas toko/cabang tetap dihitung sekali untuk jumlah order dan ditampilkan sekali pada daftar order.
+15. Waktu order terakhir pada performa toko berasal dari `transactions.transaction_at`, bukan waktu perubahan status.
+16. Filter `seller_id` dan `store_id` di luar scope owner menghasilkan `404`; kombinasi seller dan toko yang tidak berelasi juga menghasilkan `404`.
+
+## Rekomendasi Target Performa dan Kapasitas — Menunggu Persetujuan
+
+Angka berikut merupakan baseline teknis yang direkomendasikan dan belum menjadi acceptance criteria final sampai dikonfirmasi:
+
+| Parameter | Rekomendasi MVP | Target stress test |
+| --- | ---: | ---: |
+| Owner aktif bersamaan | 50 | 100 |
+| Cabang per owner | 100 | 200 |
+| Toko per cabang | 20 | 50 |
+| Total toko dalam scope owner | 2.000 | 5.000 |
+| Transaksi per hari dalam scope owner | 25.000 | 100.000 |
+| Item per transaksi | rata-rata 5, maksimum 50 | 100 |
+| Ukuran halaman order | default 25, maksimum 100 | 100 row |
+| Ukuran halaman performa toko | default 25, maksimum 100 | 100 row |
+
+Target response time yang direkomendasikan pada p95 adalah 500 ms untuk summary/status dan daftar order, serta 750 ms untuk performa toko. Target p99 setiap endpoint adalah 1.500 ms, initial dashboard lengkap maksimal 2 detik, dan error rate monitoring di bawah 1%. Query di atas 1 detik dicatat sebagai slow query.
+
+Dengan tiga endpoint dan 50 owner aktif, estimasi trafik rata-rata adalah 15 request/detik. Client direkomendasikan memberi random jitter 0–2 detik, menghentikan polling saat tab tidak aktif, hanya memuat ulang halaman pagination yang sedang terlihat, dan mencegah request tumpang tindih. Rate limit yang direkomendasikan adalah 60 request/menit per user, bukan per IP.
 
 ## Task Pengerjaan
 
@@ -164,11 +246,11 @@ Endpoint hanya mengembalikan order/perubahan setelah cursor terakhir. Snapshot p
 ### Fase 1 — Role, Authentication, dan Authorization
 
 1. Tambahkan `User::ROLE_OWNER = 'owner'` dan masukkan ke `User::roles()`.
-2. Tambahkan endpoint login/resend OTP owner atau gunakan route generic yang sudah tersedia setelah role terdaftar.
-3. Implementasikan provisioning akun owner melalui seeder internal; jangan membuka public registration owner.
+2. Tambahkan endpoint login/resend OTP owner atau gunakan route generic yang tersedia, tetapi pisahkan allowlist login dari allowlist registration agar public registration owner tetap tertutup.
+3. Implementasikan provisioning akun owner melalui seeder internal sesuai kontrak `OWNER_INITIAL_USER_ID`; jangan membuka public registration owner.
 4. Tambahkan group API `session.token` dan `role:owner` dengan prefix `/owner`.
 5. Tambahkan route web portal owner dan redirect login berdasarkan role.
-6. Tambahkan tab/login copy owner di portal jika owner login dari halaman yang sama.
+6. Tambahkan tab/login copy owner di portal; email dan WhatsApp sama-sama dapat dipilih bila tersedia, metode utama menjadi default, dan metode tanpa kontak tidak ditampilkan.
 7. Pastikan owner tidak dapat mengakses endpoint seller, agent, finance, atau owner lain.
 8. Audit perubahan assignment owner–seller; perubahan scope berlaku pada request berikutnya tanpa invalidasi session.
 
@@ -177,7 +259,7 @@ Endpoint hanya mengembalikan order/perubahan setelah cursor terakhir. Snapshot p
 1. Buat migration `users.branch_owner_user_id` dengan self-referencing foreign key dan index.
 2. Tambahkan relasi Eloquent `managedSellerBranches()` dan `branchManager()` pada `User`.
 3. Gunakan `User::ownedTenants()` yang sudah ada untuk mengambil toko di bawah seller/cabang.
-4. Buat seeder/factory untuk akun owner dan assignment owner–seller.
+4. Buat seeder/factory untuk akun owner dan assignment owner–seller sesuai kontrak provisioning: idempotent berdasarkan `OWNER_INITIAL_USER_ID`, meng-assign seluruh seller existing pada eksekusi MVP pertama, dan tidak otomatis meng-assign future seller.
 5. Validasi kedua sisi assignment berdasarkan role `owner` dan `seller`.
 6. Pastikan assignment ulang seller mengganti owner lama dan tidak dapat menghasilkan assignment ganda.
 7. Pastikan seller tanpa owner tidak dapat terlihat oleh owner mana pun.
@@ -186,14 +268,14 @@ Endpoint hanya mengembalikan order/perubahan setelah cursor terakhir. Snapshot p
 ### Fase 3 — Backend Online Monitoring
 
 1. Buat controller dan support/aggregator khusus owner; jangan menaruh query agregat besar langsung di controller.
-2. Implementasikan endpoint snapshot dashboard.
-3. Implementasikan filter `seller_id`, `store_id`, status, tanggal/periode, search, dan pagination sesuai keputusan final.
+2. Implementasikan tiga endpoint snapshot: summary/status, performa toko, dan daftar order.
+3. Implementasikan filter `seller_id`, `store_id`, satu tanggal, status khusus order, search khusus order, sort performa toko, dan pagination sesuai keputusan final.
 4. Terapkan owner scope sebelum agregasi dan pagination.
 5. Kembalikan `404` untuk seller/cabang atau toko di luar scope agar keberadaan resource tidak bocor.
 6. Gunakan allowlist response; jangan mengembalikan model mentah.
 7. Jangan query atau kembalikan PII buyer pada response monitoring.
 8. Optimalkan query dengan eager loading, aggregate query, index, dan batas jumlah row.
-9. Tambahkan endpoint incremental update bila polling snapshot penuh terlalu berat.
+9. Ukur performa snapshot; endpoint incremental hanya dievaluasi setelah MVP dan bukan bagian acceptance criteria saat ini.
 10. Tambahkan cache singkat hanya jika diperlukan, dengan cache key yang memasukkan owner/seller/filter agar tidak terjadi cross-tenant data leak.
 11. Tambahkan rate limit yang masih mendukung interval refresh yang disetujui.
 
@@ -201,7 +283,7 @@ Endpoint hanya mengembalikan order/perubahan setelah cursor terakhir. Snapshot p
 
 1. Buat route dan halaman dashboard owner.
 2. Tambahkan sidebar owner dengan menu aktif `Online Monitoring`.
-3. Tampilkan selector cabang bila owner memiliki lebih dari satu cabang.
+3. Tampilkan agregat seluruh cabang sebagai default dan selector cabang bila owner memiliki lebih dari satu cabang.
 4. Tampilkan summary cards, status order, performa toko, dan daftar order terbaru sesuai desain final.
 5. Tambahkan auto-refresh dengan interval dari response API, pause saat tab browser tidak aktif, dan resume saat aktif kembali.
 6. Tampilkan indikator koneksi: `Live`, `Menghubungkan ulang`, `Gagal memperbarui`, dan `Terakhir diperbarui`.
@@ -232,10 +314,12 @@ Endpoint hanya mengembalikan order/perubahan setelah cursor terakhir. Snapshot p
 9. Test batas hari berjalan pada timezone `Asia/Jakarta`.
 10. Test summary hanya menghitung `completed`, sedangkan status dan daftar terbaru mencakup semua status.
 11. Test response tidak memuat OTP, token, password, dokumen identitas, rekening, atau PII buyer.
-12. Test filter, sort, pagination, cursor incremental, dan validation error.
+12. Test filter, sort, pagination snapshot, dan validation error; cursor incremental tidak diuji pada MVP.
 13. Test polling/rate-limit contract dan response `generated_at`.
 14. Jalankan regression test seluruh auth dan dashboard seller/agent/finance.
 15. Lakukan query/performance test dengan volume data representatif dan tetapkan target response time.
+16. Test public registration owner tetap tertutup walaupun owner termasuk role yang dapat login dan verifikasi OTP.
+17. Test seeder owner idempotent, validasi UUID/role/kontak, pembaruan kontak, assignment seluruh seller existing, dan perilaku future seller yang tetap unassigned.
 
 ### Fase 7 — Dokumentasi, Observability, dan Release
 
@@ -277,6 +361,11 @@ Endpoint hanya mengembalikan order/perubahan setelah cursor terakhir. Snapshot p
 10. Tidak ada secret atau PII yang tidak disetujui dalam response.
 11. Test auth, authorization, scoping, aggregation, timezone, polling, dan regression lulus.
 12. Dokumentasi role, API, definisi metric, dan strategi refresh telah diperbarui.
+13. Tampilan awal mengagregasi seluruh cabang dan filter cabang/toko/tanggal memperbarui seluruh dashboard.
+14. Status dan pencarian nomor order hanya memengaruhi daftar order, bukan summary atau `order_status_counts`.
+15. Transaksi lintas toko/cabang tampil satu kali dengan daftar cabang/toko dan subtotal item sesuai scope/filter.
+16. API summary/status, performa toko, dan daftar order terpisah serta menggunakan snapshot polling 10 detik.
+17. Seeder owner pertama idempotent berdasarkan `OWNER_INITIAL_USER_ID`, meng-assign seluruh seller existing, dan tidak otomatis meng-assign future seller.
 
 ## Out of Scope MVP
 
@@ -293,10 +382,13 @@ Endpoint hanya mengembalikan order/perubahan setelah cursor terakhir. Snapshot p
 
 1. **Kebocoran data lintas cabang** — scope query dari assignment owner sebelum filter, aggregate, dan pagination; tambahkan negative authorization test.
 2. **Double count transaksi multi-toko** — hitung nilai per toko dari `transaction_items`, bukan seluruh `transactions.total_amount`.
-3. **Polling membebani database** — gunakan interval minimum, pause background tab, aggregate query/index, incremental cursor, dan cache ter-scope bila perlu.
+3. **Polling membebani database** — gunakan interval minimum, pause background tab, aggregate query/index, jitter, dan cache ter-scope bila perlu; incremental cursor hanya dievaluasi setelah pengukuran MVP.
 4. **Definisi omzet berbeda antar halaman** — dokumentasikan bahwa omzet owner adalah subtotal item transaksi `completed` sebelum diskon, ongkir, dan service fee.
 5. **Benturan istilah owner** — bedakan seller owner dan branch owner pada nama model, relasi, controller, serta dokumentasi.
 6. **Data tampak real-time tetapi terlambat** — tampilkan `generated_at`, status koneksi, dan target freshness yang terukur.
+7. **Public registration owner terbuka melalui route generic** — pisahkan allowlist role login/OTP dari allowlist role registration dan tambahkan negative test registration owner.
+8. **Seeder membuat owner duplikat saat kontak berubah** — gunakan `OWNER_INITIAL_USER_ID` sebagai identitas stabil, validasi role row yang ditemukan, dan buat seeder idempotent.
+9. **Lonjakan polling serempak** — tambahkan jitter client, rate limit per user, pause background tab, dan larang request tumpang tindih.
 
 ## Estimasi Urutan Delivery
 
