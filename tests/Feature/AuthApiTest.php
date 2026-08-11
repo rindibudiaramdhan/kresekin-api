@@ -742,7 +742,7 @@ class AuthApiTest extends TestCase
     {
         Notification::fake();
 
-        foreach (User::roles() as $role) {
+        foreach (User::publicRegistrationRoles() as $role) {
             $response = $this->postJson("/api/users/{$role}/register", [
                 'type' => 'email',
                 'email' => "{$role}@example.com",
@@ -758,6 +758,19 @@ class AuthApiTest extends TestCase
                 'role' => $role,
             ]);
         }
+    }
+
+    public function test_owner_cannot_register_through_public_role_endpoint(): void
+    {
+        $this->postJson('/api/users/owner/register', [
+            'type' => 'email',
+            'email' => 'public-owner@example.com',
+        ])->assertNotFound();
+
+        $this->assertDatabaseMissing('users', [
+            'email' => 'public-owner@example.com',
+            'role' => User::ROLE_OWNER,
+        ]);
     }
 
     public function test_login_endpoint_only_finds_user_with_matching_role(): void

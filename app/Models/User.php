@@ -20,6 +20,7 @@ use Illuminate\Notifications\Notifiable;
     'phone',
     'type',
     'role',
+    'branch_owner_user_id',
     'agent_code',
     'password',
     'otp_code',
@@ -54,6 +55,8 @@ class User extends Authenticatable
 
     public const ROLE_AGENT = 'agent';
 
+    public const ROLE_OWNER = 'owner';
+
     public const AGENT_VERIFICATION_PENDING_REVIEW = 'pending_review';
 
     public const AGENT_VERIFICATION_APPROVED = 'approved';
@@ -74,6 +77,17 @@ class User extends Authenticatable
             self::ROLE_SELLER,
             self::ROLE_FINANCE,
             self::ROLE_AGENT,
+            self::ROLE_OWNER,
+        ];
+    }
+
+    public static function publicRegistrationRoles(): array
+    {
+        return [
+            self::ROLE_BUYER,
+            self::ROLE_SELLER,
+            self::ROLE_AGENT,
+            self::ROLE_FINANCE,
         ];
     }
 
@@ -123,6 +137,16 @@ class User extends Authenticatable
     public function ownedTenants(): HasMany
     {
         return $this->hasMany(Tenant::class, 'owner_user_id');
+    }
+
+    public function managedSellerBranches(): HasMany
+    {
+        return $this->hasMany(self::class, 'branch_owner_user_id');
+    }
+
+    public function branchManager(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'branch_owner_user_id');
     }
 
     public function agentTenants(): HasMany

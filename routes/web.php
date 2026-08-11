@@ -47,6 +47,14 @@ Route::view('/finance/finance', 'dashboard.finance', [
     'role' => 'finance',
     'active' => 'finance',
 ])->name('finance.finance');
+Route::view('/owner/online-monitoring', 'dashboard.owner', [
+    'title' => 'Online Monitoring',
+    'headerTitle' => 'Online Monitoring',
+    'panelLabel' => 'Owner Panel',
+    'userName' => 'Owner',
+    'role' => 'owner',
+    'active' => 'monitoring',
+])->name('owner.monitoring');
 
 Route::prefix('seller')->name('seller.')->group(function (): void {
     Route::middleware(['auth', 'role:seller'])->group(function (): void {

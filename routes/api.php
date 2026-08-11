@@ -32,6 +32,9 @@ use App\Http\Controllers\Api\GetFinanceTransactionListController;
 use App\Http\Controllers\Api\GetHousingAreaListController;
 use App\Http\Controllers\Api\GetIndonesiaRegionListController;
 use App\Http\Controllers\Api\GetOrderTimeOptionsController;
+use App\Http\Controllers\Api\GetOwnerMonitoringOrderListController;
+use App\Http\Controllers\Api\GetOwnerMonitoringStoreListController;
+use App\Http\Controllers\Api\GetOwnerMonitoringSummaryController;
 use App\Http\Controllers\Api\GetPaymentMethodsController;
 use App\Http\Controllers\Api\GetProductCategoriesController;
 use App\Http\Controllers\Api\GetProductDetailController;
@@ -91,8 +94,10 @@ Route::post('/agent/resend-otp', ResendOtpController::class)->defaults('role', U
 Route::post('/finance/login', LoginUserController::class)->defaults('role', User::ROLE_FINANCE);
 Route::post('/finance/register', RegisterUserController::class)->defaults('role', User::ROLE_FINANCE);
 Route::post('/finance/resend-otp', ResendOtpController::class)->defaults('role', User::ROLE_FINANCE);
+Route::post('/owner/login', LoginUserController::class)->defaults('role', User::ROLE_OWNER);
+Route::post('/owner/resend-otp', ResendOtpController::class)->defaults('role', User::ROLE_OWNER);
 Route::post('/users/{role}/login', LoginUserController::class)->whereIn('role', User::roles());
-Route::post('/users/{role}/register', RegisterUserController::class)->whereIn('role', User::roles());
+Route::post('/users/{role}/register', RegisterUserController::class)->whereIn('role', User::publicRegistrationRoles());
 Route::post('/users/{role}/resend-otp', ResendOtpController::class)->whereIn('role', User::roles());
 Route::post('/users/verify-otp', VerifyOtpController::class);
 Route::post('/users/logout', LogoutUserController::class)->middleware('session.token');
@@ -186,4 +191,10 @@ Route::middleware(['session.token', 'role:finance'])->prefix('finance')->group(f
     Route::post('/cancellation-reason-categories', CreateFinanceCancellationReasonCategoryController::class);
     Route::put('/cancellation-reason-categories/{id}', UpdateFinanceCancellationReasonCategoryController::class);
     Route::delete('/cancellation-reason-categories/{id}', DeleteFinanceCancellationReasonCategoryController::class);
+});
+
+Route::middleware(['session.token', 'role:owner', 'throttle:owner-monitoring', 'owner.monitoring.log'])->prefix('owner')->group(function (): void {
+    Route::get('/online-monitoring/summary', GetOwnerMonitoringSummaryController::class);
+    Route::get('/online-monitoring/stores', GetOwnerMonitoringStoreListController::class);
+    Route::get('/online-monitoring/orders', GetOwnerMonitoringOrderListController::class);
 });

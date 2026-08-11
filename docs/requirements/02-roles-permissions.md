@@ -12,6 +12,7 @@ Role aktif:
 2. `seller`
 3. `agent`
 4. `finance`
+5. `owner`
 
 Authorization tidak cukup hanya memastikan token valid. Endpoint harus memastikan role sesuai dan data yang diakses berada dalam scope user tersebut.
 
@@ -31,23 +32,25 @@ Authorization tidak cukup hanya memastikan token valid. Endpoint harus memastika
 | Seller | Mengelola tenant, produk, order, dashboard toko | Tenant/product/order milik seller |
 | Agent | Melihat UMKM binaan, dashboard performa, profil payout, withdrawal komisi | Tenant dengan `agent_user_id = current user` |
 | Finance | Memantau transaksi, disbursement, withdrawal komisi, master alasan pembatalan | Data finance global sesuai endpoint |
+| Owner | Memantau penjualan cabang dan toko secara read-only | Seller dengan `branch_owner_user_id = current user` beserta tenant seller tersebut |
 
 ## Permission Matrix
 
-| Area | Buyer | Seller | Agent | Finance |
-| --- | --- | --- | --- | --- |
-| Auth/session sendiri | Yes | Yes | Yes | Yes |
-| Master umum authenticated | Read | Read | Read | Read |
-| Product catalog buyer | Read | No | No | No |
-| Cart dan checkout | Own | No | No | No |
-| Transaction history buyer | Own | No | No | Finance read |
-| Tenant seller | No | Own CRUD terbatas | Managed read | Finance read sesuai kebutuhan |
-| Product seller | No | Own CRUD | Managed read bila diperlukan | Finance read sesuai kebutuhan |
-| Order seller | No | Own manage status | Read agregat managed UMKM | Finance read/status finance |
-| Agent dashboard/profile | No | No | Own | No |
-| Agent withdrawal | No | No | Own create/read | Review/manage |
-| Finance dashboard | No | No | No | Yes |
-| Cancellation reason finance CRUD | No | No | No | Yes |
+| Area | Buyer | Seller | Agent | Finance | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Auth/session sendiri | Yes | Yes | Yes | Yes | Yes |
+| Master umum authenticated | Read | Read | Read | Read | Read |
+| Product catalog buyer | Read | No | No | No | No |
+| Cart dan checkout | Own | No | No | No | No |
+| Transaction history buyer | Own | No | No | Finance read | Monitoring summary only |
+| Tenant seller | No | Own CRUD terbatas | Managed read | Finance read sesuai kebutuhan | Assigned branch read |
+| Product seller | No | Own CRUD | Managed read bila diperlukan | Finance read sesuai kebutuhan | No |
+| Order seller | No | Own manage status | Read agregat managed UMKM | Finance read/status finance | Assigned monitoring read |
+| Agent dashboard/profile | No | No | Own | No | No |
+| Agent withdrawal | No | No | Own create/read | Review/manage | No |
+| Finance dashboard | No | No | No | Yes | No |
+| Cancellation reason finance CRUD | No | No | No | Yes | No |
+| Online monitoring owner | No | No | No | No | Assigned branch read |
 
 ## Data Scoping
 
@@ -55,8 +58,10 @@ Authorization tidak cukup hanya memastikan token valid. Endpoint harus memastika
 2. Seller hanya boleh mengelola tenant dengan `owner_user_id` miliknya dan produk/order yang berasal dari tenant tersebut.
 3. Agent hanya boleh membaca UMKM/tenant dengan `agent_user_id` miliknya.
 4. Finance boleh membaca workflow finance lintas tenant, tetapi tetap tidak boleh mendapat secret seperti OTP, token, atau path dokumen identitas mentah.
-5. Endpoint detail wajib mengembalikan `404` untuk resource di luar scope agar tidak membocorkan keberadaan data.
-6. Query list wajib menerapkan filter scope sebelum pagination.
+5. Owner hanya boleh membaca seller dengan `branch_owner_user_id` miliknya dan tenant dengan `owner_user_id` seller tersebut.
+6. Agregasi owner dimulai dari `transaction_items.tenant_id`; response tidak memuat PII buyer dan tidak memakai total transaksi lintas scope.
+7. Endpoint detail wajib mengembalikan `404` untuk resource di luar scope agar tidak membocorkan keberadaan data.
+8. Query list wajib menerapkan filter scope sebelum pagination.
 
 ## Web Access
 
@@ -65,6 +70,7 @@ Web route yang saat ini ada:
 1. Agent registration: `/agent/register` dan `/agent/verify-otp`.
 2. Dashboard static/server-rendered untuk agent dan finance.
 3. Seller web area di prefix `/seller` dengan middleware `auth` dan `role:seller`.
+4. Portal owner tersedia di `/owner/online-monitoring`; shell halaman menggunakan token portal, sedangkan seluruh data tetap dilindungi `session.token` dan `role:owner` pada API.
 
 Web route yang mengubah data tetap harus memakai validasi, CSRF protection, dan authorization yang setara dengan API.
 
@@ -76,6 +82,7 @@ Web route yang mengubah data tetap harus memakai validasi, CSRF protection, dan 
 4. Agent web registration mengisi data tambahan: nama, email/phone, area, alamat, data bank, dokumen identitas, consent, dan status `pending_review`.
 5. Agent dapat memiliki status review: `pending_review`, `approved`, atau `rejected`.
 6. Perubahan role atau status agent harus diaudit dan dapat mempengaruhi akses fitur sensitif.
+7. Owner tidak memiliki public registration. Akun pertama diprovision secara internal dan seller/cabang di-assign melalui seeder.
 
 ## Service Accounts
 

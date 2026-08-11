@@ -4,11 +4,15 @@
 ])
 
 @php
-    $dashboardRoute = $role === 'finance' ? route('finance.dashboard') : route('agent.dashboard');
+    $dashboardRoute = match ($role) {
+        'finance' => route('finance.dashboard'),
+        'owner' => route('owner.monitoring'),
+        default => route('agent.dashboard'),
+    };
     $items = [
         [
-            'key' => 'dashboard',
-            'label' => 'Dashboard',
+            'key' => $role === 'owner' ? 'monitoring' : 'dashboard',
+            'label' => $role === 'owner' ? 'Online Monitoring' : 'Dashboard',
             'href' => $dashboardRoute,
             'icon' => 'dashboard',
         ],
@@ -21,7 +25,7 @@
             'href' => route('finance.finance'),
             'icon' => 'finance',
         ];
-    } else {
+    } elseif ($role !== 'owner') {
         $items = [
             ...$items,
             [
@@ -234,17 +238,32 @@
 
 @once
     <script>
-        document.addEventListener('click', (event) => {
+        document.addEventListener('click', async (event) => {
             const logoutButton = event.target.closest('[data-dashboard-logout]');
 
             if (!logoutButton) {
                 return;
             }
 
-            localStorage.removeItem('kresekin_token');
-            localStorage.removeItem('kresekin_token_type');
-            localStorage.removeItem('kresekin_user_role');
-            window.location.assign('{{ url('/') }}');
+            const token = localStorage.getItem('kresekin_token');
+            logoutButton.disabled = true;
+
+            try {
+                if (token) {
+                    await fetch('{{ url('/api/users/logout') }}', {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                }
+            } finally {
+                localStorage.removeItem('kresekin_token');
+                localStorage.removeItem('kresekin_token_type');
+                localStorage.removeItem('kresekin_user_role');
+                window.location.assign('{{ url('/') }}');
+            }
         });
     </script>
 @endonce

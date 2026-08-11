@@ -17,7 +17,9 @@
                 const role = localStorage.getItem('kresekin_user_role');
                 const dashboardUrl = role === 'finance'
                     ? '{{ route('finance.dashboard') }}'
-                    : '{{ route('agent.dashboard') }}';
+                    : role === 'owner'
+                        ? '{{ route('owner.monitoring') }}'
+                        : '{{ route('agent.dashboard') }}';
 
                 window.location.replace(dashboardUrl);
             } catch (error) {
@@ -139,7 +141,7 @@
 
         .role-tabs {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             margin-top: clamp(16px, 2.8dvh, 24px);
             padding: 6px;
@@ -921,8 +923,9 @@
                 </div>
 
                 <nav class="role-tabs" aria-label="Pilihan role portal" role="tablist">
-                    <button type="button" role="tab" aria-selected="true" data-role-tab="agent" data-action="{{ url('/api/agent/login') }}">Agent</button>
-                    <button type="button" role="tab" aria-selected="false" data-role-tab="finance" data-action="{{ url('/api/finance/login') }}">Finance</button>
+                    <button type="button" role="tab" aria-selected="true" data-role-tab="agent" data-action="{{ url('/api/agent/login') }}" data-email-enabled="true" data-phone-enabled="true" data-default-method="email">Agent</button>
+                    <button type="button" role="tab" aria-selected="false" data-role-tab="finance" data-action="{{ url('/api/finance/login') }}" data-email-enabled="true" data-phone-enabled="true" data-default-method="email">Finance</button>
+                    <button type="button" role="tab" aria-selected="false" data-role-tab="owner" data-action="{{ url('/api/owner/login') }}" data-email-enabled="{{ config('api.owner.email') ? 'true' : 'false' }}" data-phone-enabled="{{ config('api.owner.phone') ? 'true' : 'false' }}" data-default-method="{{ config('api.owner.login_type', 'email') }}">Owner</button>
                 </nav>
 
                 <form method="POST" action="{{ url('/api/agent/login') }}" class="login-form" id="portal-login-form" novalidate>
@@ -930,11 +933,11 @@
                         <div class="form-row">
                             <label>Metode OTP</label>
                             <div class="method-options" role="radiogroup" aria-label="Metode pengiriman OTP">
-                                <label class="method-option">
+                                <label class="method-option" data-method-option="email">
                                     <input type="radio" name="type" value="email" checked>
                                     Email
                                 </label>
-                                <label class="method-option">
+                                <label class="method-option" data-method-option="phone">
                                     <input type="radio" name="type" value="phone">
                                     WhatsApp
                                 </label>
@@ -1024,6 +1027,12 @@
                 description: 'Kelola validasi pembayaran, transaksi, dan proses disbursement melalui OTP.',
                 help: 'Kami akan mengirim kode OTP ke kontak Finance yang terdaftar.',
             },
+            owner: {
+                label: 'Owner',
+                title: 'Masuk sebagai Owner',
+                description: 'Pantau penjualan seluruh cabang dan toko dalam scope Anda secara near-real-time.',
+                help: 'Kami akan mengirim kode OTP ke kontak Owner yang terdaftar.',
+            },
         };
 
         function activeRole() {
@@ -1050,7 +1059,30 @@
             portalDescription.textContent = copy.description;
             formHelp.textContent = copy.help;
             submitLabel.textContent = `Kirim OTP ${copy.label}`;
+            configureMethods(tab);
             resetOtpStep();
+        }
+
+        function configureMethods(tab) {
+            const enabled = {
+                email: tab.dataset.emailEnabled !== 'false',
+                phone: tab.dataset.phoneEnabled !== 'false',
+            };
+
+            document.querySelectorAll('[data-method-option]').forEach((option) => {
+                const method = option.dataset.methodOption;
+                option.hidden = !enabled[method];
+                option.querySelector('input').disabled = !enabled[method];
+            });
+
+            let selectedMethod = enabled[tab.dataset.defaultMethod] ? tab.dataset.defaultMethod : (enabled.email ? 'email' : 'phone');
+            const selectedInput = document.querySelector(`input[name="type"][value="${selectedMethod}"]`);
+
+            if (selectedInput) {
+                selectedInput.disabled = false;
+                selectedInput.checked = true;
+                updateMethod();
+            }
         }
 
         function updateMethod() {
@@ -1108,7 +1140,9 @@
         }
 
         function dashboardUrlForRole(role) {
-            return role === 'finance' ? '{{ route('finance.dashboard') }}' : '{{ route('agent.dashboard') }}';
+            if (role === 'finance') return '{{ route('finance.dashboard') }}';
+            if (role === 'owner') return '{{ route('owner.monitoring') }}';
+            return '{{ route('agent.dashboard') }}';
         }
 
         roleTabs.forEach((tab) => {

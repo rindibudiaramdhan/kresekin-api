@@ -55,6 +55,7 @@ Role yang tersedia:
 - `seller`
 - `agent`
 - `finance`
+- `owner`
 
 Authentication flow:
 
@@ -217,7 +218,7 @@ Endpoint berikut tidak butuh bearer token, kecuali ditandai.
 
 ### POST `/api/users/{role}/register`
 
-Mendaftarkan user berdasarkan role dan mengirim OTP. Role: `buyer`, `seller`, `agent`, `finance`.
+Mendaftarkan user berdasarkan role dan mengirim OTP. Role public registration: `buyer`, `seller`, `agent`, `finance`. Role `owner` hanya dapat login/OTP dan tidak memiliki public registration.
 
 Body:
 
@@ -2931,3 +2932,80 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
   "message": "Kategori alasan pembatalan berhasil dihapus."
 }
 ```
+
+## Owner Online Monitoring API
+
+Semua endpoint berikut wajib memakai bearer token owner. Data dibatasi ke seller dengan `users.branch_owner_user_id = owner.id` dan tenant milik seller tersebut. Filter `seller_id` atau `store_id` yang valid secara format tetapi berada di luar scope menghasilkan `404`.
+
+Zona bisnis ditetapkan server-side ke `Asia/Jakarta`. `date` berformat `YYYY-MM-DD` dan default ke hari berjalan. Semua endpoint mengembalikan snapshot dengan `generated_at` dan `refresh_after_seconds = 10`.
+
+### GET `/api/owner/online-monitoring/summary`
+
+Query opsional: `seller_id`, `store_id`, dan `date`. Tanpa seller/toko, response mengagregasi seluruh cabang owner. Summary omzet, order, item, dan toko aktif hanya menghitung transaksi `completed`; status counts mencakup semua status.
+
+```json
+{
+  "message": "Ringkasan online monitoring berhasil diambil.",
+  "data": {
+    "generated_at": "2026-08-06T14:30:10+07:00",
+    "refresh_after_seconds": 10,
+    "scope": {
+      "seller_id": null,
+      "store_id": null,
+      "date": "2026-08-06",
+      "timezone": "Asia/Jakarta",
+      "branches": [{"id": "uuid", "name": "Cabang Selatan"}],
+      "stores": [{"id": "uuid", "seller_id": "uuid", "name": "Toko Melati"}]
+    },
+    "summary": {
+      "sales_amount": 12500000,
+      "sales_amount_label": "Rp 12.500.000",
+      "order_count": 142,
+      "item_quantity": 386,
+      "active_store_count": 18
+    },
+    "order_status_counts": [
+      {"status_code": "completed", "status_label": "Pesanan Selesai", "count": 142}
+    ]
+  }
+}
+```
+
+### GET `/api/owner/online-monitoring/stores`
+
+Query: `seller_id`, `store_id`, `date`, `sort`, `direction`, `page`, dan `per_page`. Sort yang didukung: `sales_amount`, `order_count`, `item_quantity`, `last_order_at`, dan `store_name`. `per_page` default 25 dan maksimum 100.
+
+Metrics omzet, order, dan item hanya menghitung completed. `last_order_at` menggunakan order terbaru seluruh status pada tanggal terpilih.
+
+### GET `/api/owner/online-monitoring/orders`
+
+Query: `seller_id`, `store_id`, `date`, `status`, `search`, `page`, dan `per_page`. `status` dan `search` hanya memengaruhi daftar ini.
+
+Satu transaksi selalu tampil satu kali. `branches` dan `stores` berisi daftar resource yang masuk scope/filter. `amount` adalah subtotal `transaction_items.line_total` dalam scope/filter, bukan `transactions.total_amount`. Response tidak memuat buyer, alamat, email, telepon, atau PII lainnya.
+
+```json
+{
+  "data": [{
+    "id": "uuid",
+    "order_number": "ORD-20260806-001",
+    "branches": [{"id": "uuid", "name": "Cabang Selatan"}],
+    "stores": [{"id": "uuid", "name": "Toko Melati"}],
+    "amount": 125000,
+    "amount_label": "Rp 125.000",
+    "status_code": "processing",
+    "status_label": "Sedang Diproses",
+    "transaction_at": "2026-08-06T07:00:00.000000Z",
+    "transaction_at_label": "06 Agt 2026, 14:00 WIB"
+  }],
+  "meta": {
+    "current_page": 1,
+    "per_page": 25,
+    "last_page": 1,
+    "total": 1
+  }
+}
+```
+
+### Provisioning owner pertama
+
+Jalankan `php artisan db:seed --class=OwnerUserSeeder` setelah mengisi `OWNER_INITIAL_USER_ID`, `OWNER_INITIAL_NAME`, minimal salah satu dari email/nomor WhatsApp, dan `OWNER_INITIAL_LOGIN_TYPE`. Seeder idempotent berdasarkan UUID, gagal bila UUID dimiliki non-owner, dan meng-assign seluruh seller yang ada saat seeder dijalankan. Seller baru tidak otomatis mendapat owner sampai assignment dilakukan atau seeder dijalankan kembali.

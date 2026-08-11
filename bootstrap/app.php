@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\AuthenticateUserSessionToken;
+use App\Http\Middleware\EnsureUserRole;
+use App\Http\Middleware\LogOwnerMonitoringRequest;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,11 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->append(\App\Http\Middleware\AssignRequestId::class);
+        $middleware->append(AssignRequestId::class);
 
         $middleware->alias([
-            'session.token' => \App\Http\Middleware\AuthenticateUserSessionToken::class,
-            'role' => \App\Http\Middleware\EnsureUserRole::class,
+            'session.token' => AuthenticateUserSessionToken::class,
+            'role' => EnsureUserRole::class,
+            'owner.monitoring.log' => LogOwnerMonitoringRequest::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
