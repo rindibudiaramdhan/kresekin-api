@@ -674,6 +674,7 @@ class SellerApiTest extends TestCase
             'buyer_latitude' => -6.914744,
             'buyer_longitude' => 107.60981,
             'buyer_address_snapshot_at' => now(),
+            'service_fee' => 1000,
         ])->save();
         $otherOrder = $this->createOrderForSeller($otherSeller, 'ORDER002', Transaction::STATUS_PROCESSING);
 
@@ -715,6 +716,8 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.payment_method_code', 'qr_payment')
             ->assertJsonPath('data.payment_method_option_name', null)
             ->assertJsonPath('data.payment_method_option_code', null)
+            ->assertJsonPath('data.service_fee', 1000)
+            ->assertJsonPath('data.service_fee_label', 'Rp. 1.000')
             ->assertJsonPath('data.items.0.product_name', 'Produk ORDER001')
             ->assertJsonPath('data.status_timelines.0.status_code', Transaction::STATUS_CODE_PROCESSING);
     }

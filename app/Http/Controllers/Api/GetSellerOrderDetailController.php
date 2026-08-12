@@ -60,6 +60,8 @@ class GetSellerOrderDetailController extends Controller
             'subtotal_amount_label' => $this->moneyLabel((int) $order->subtotal_amount),
             'delivery_fee' => $order->delivery_fee,
             'delivery_fee_label' => $this->moneyLabel((int) $order->delivery_fee),
+            'service_fee' => $order->service_fee,
+            'service_fee_label' => $this->moneyLabel((int) $order->service_fee),
             'discount_amount' => $order->discount_amount,
             'discount_amount_label' => $this->moneyLabel((int) $order->discount_amount),
             'total_amount' => $order->total_amount,

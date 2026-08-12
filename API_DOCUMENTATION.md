@@ -2376,6 +2376,8 @@ Detail transaksi juga menyediakan `can_rate` dan `rating`. `can_rate` bernilai `
     "payment_method_code": "qr_payment",
     "payment_method_option_name": null,
     "payment_method_option_code": null,
+    "service_fee": 1000,
+    "service_fee_label": "Rp. 1.000",
     "status": "menunggu pembayaran",
     "status_code": "pending_payment",
     "items": [
