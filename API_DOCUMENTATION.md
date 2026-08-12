@@ -3010,4 +3010,6 @@ Satu transaksi selalu tampil satu kali. `branches` dan `stores` berisi daftar re
 
 ### Provisioning owner pertama
 
-Jalankan `php artisan db:seed --class=OwnerUserSeeder` setelah mengisi `OWNER_INITIAL_USER_ID`, `OWNER_INITIAL_NAME`, minimal salah satu dari email/nomor WhatsApp, dan `OWNER_INITIAL_LOGIN_TYPE`. Seeder idempotent berdasarkan UUID, gagal bila UUID dimiliki non-owner, dan meng-assign seluruh seller yang ada saat seeder dijalankan. Seller baru tidak otomatis mendapat owner sampai assignment dilakukan atau seeder dijalankan kembali.
+Jalankan `php artisan db:seed --class=OwnerUserSeeder` tanpa konfigurasi credential di environment. Jika owner awal belum ada, seeder membuat UUID dan email development `@example.test`, lalu mencetak ID serta email login ke console. OTP tidak disimpan oleh seeder dan tetap dikirim melalui mail driver aplikasi.
+
+Seeder idempotent menggunakan `users.internal_provisioning_key`, sehingga tetap menemukan owner awal ketika nantinya terdapat banyak owner. Seeder hanya meng-assign seller yang `branch_owner_user_id`-nya masih `null`; assignment seller milik owner lain tidak diubah. Seller baru tetap unassigned sampai diatur eksplisit atau seeder dijalankan kembali. Sebelum production, email development owner awal harus diganti ke email atau nomor WhatsApp yang dapat menerima OTP melalui proses administrasi.

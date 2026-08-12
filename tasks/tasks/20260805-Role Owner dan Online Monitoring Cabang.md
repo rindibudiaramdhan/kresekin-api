@@ -94,21 +94,16 @@ Nama kolom dan relasi sengaja menggunakan `branch_owner`/`branch_manager` agar t
 
 ## Provisioning Owner Pertama yang Disepakati
 
-1. Akun owner pertama dibuat oleh seeder internal menggunakan data dari environment/deployment input, bukan nilai kontak yang ditulis permanen di repository.
-2. `OWNER_INITIAL_USER_ID` berisi UUID stabil yang menjadi identitas owner pertama dan kunci idempotensi seeder.
-3. Seeder mencari owner berdasarkan `OWNER_INITIAL_USER_ID`, memperbarui nama/kontak bila input berubah, dan tidak membuat owner kedua ketika dijalankan ulang.
-4. Seeder wajib gagal dengan pesan yang jelas apabila:
-   - konfigurasi production tidak lengkap;
-   - email dan nomor WhatsApp sama-sama tidak tersedia;
-   - UUID tersebut sudah dipakai user dengan role selain `owner`;
-   - format UUID, email, nomor WhatsApp, atau metode login utama tidak valid.
-5. Environment/deployment input minimum mencakup UUID stabil, nama, email dan/atau nomor WhatsApp, serta metode login utama.
-6. Seeder tidak menyimpan OTP, password, secret, atau nilai kontak aktual di source code.
-7. Jika email dan nomor WhatsApp tersedia, keduanya dapat digunakan untuk meminta OTP. Metode login utama hanya menentukan pilihan default pada UI.
-8. Jika hanya satu kontak tersedia, UI hanya menawarkan metode OTP tersebut.
-9. Pada provisioning MVP pertama, seluruh user ber-role `seller` yang sudah ada di-assign kepada owner pertama.
-10. Seller yang dibuat setelah provisioning tetap tidak memiliki owner sampai assignment dilakukan secara eksplisit atau seeder assignment dijalankan kembali.
-11. Menambahkan role owner ke `User::roles()` tidak boleh secara tidak sengaja membuka public registration owner; allowlist role autentikasi dan role yang boleh registrasi harus dipisahkan.
+1. Akun owner awal dibuat otomatis oleh seeder internal tanpa credential dari environment.
+2. Seeder menghasilkan UUID dan email development unik `@example.test`, lalu menampilkan ID dan email tersebut pada console.
+3. Seeder menggunakan `users.internal_provisioning_key` sebagai identitas teknis non-secret agar idempotent dan tetap dapat menemukan owner awal ketika jumlah owner bertambah.
+4. Seeder tidak menyimpan OTP atau password. OTP tetap dikirim melalui mail/WhatsApp driver aplikasi.
+5. Pada eksekusi pertama, seluruh seller yang belum mempunyai owner di-assign kepada owner awal.
+6. Eksekusi ulang hanya meng-assign seller dengan `branch_owner_user_id = null`; assignment milik owner lain tidak diambil alih.
+7. Seller yang dibuat kemudian tetap tidak memiliki owner sampai assignment dilakukan eksplisit atau seeder dijalankan kembali.
+8. Email development harus diganti melalui proses administrasi dengan email atau nomor WhatsApp yang dapat menerima OTP sebelum penggunaan production.
+9. Portal owner menyediakan pilihan email dan WhatsApp untuk mendukung banyak owner dengan kombinasi kontak berbeda; request login tetap hanya berhasil bila kontak terdaftar pada akun owner.
+10. Menambahkan role owner ke `User::roles()` tidak boleh membuka public registration owner; allowlist role autentikasi dan role yang boleh registrasi harus dipisahkan.
 
 ## Kontrak Data Monitoring yang Disepakati
 
@@ -247,7 +242,7 @@ Dengan tiga endpoint dan 50 owner aktif, estimasi trafik rata-rata adalah 15 req
 
 1. Tambahkan `User::ROLE_OWNER = 'owner'` dan masukkan ke `User::roles()`.
 2. Tambahkan endpoint login/resend OTP owner atau gunakan route generic yang tersedia, tetapi pisahkan allowlist login dari allowlist registration agar public registration owner tetap tertutup.
-3. Implementasikan provisioning akun owner melalui seeder internal sesuai kontrak `OWNER_INITIAL_USER_ID`; jangan membuka public registration owner.
+3. Implementasikan provisioning akun owner awal yang digenerate dan idempotent melalui `internal_provisioning_key`; jangan membuka public registration owner.
 4. Tambahkan group API `session.token` dan `role:owner` dengan prefix `/owner`.
 5. Tambahkan route web portal owner dan redirect login berdasarkan role.
 6. Tambahkan tab/login copy owner di portal; email dan WhatsApp sama-sama dapat dipilih bila tersedia, metode utama menjadi default, dan metode tanpa kontak tidak ditampilkan.
@@ -259,7 +254,7 @@ Dengan tiga endpoint dan 50 owner aktif, estimasi trafik rata-rata adalah 15 req
 1. Buat migration `users.branch_owner_user_id` dengan self-referencing foreign key dan index.
 2. Tambahkan relasi Eloquent `managedSellerBranches()` dan `branchManager()` pada `User`.
 3. Gunakan `User::ownedTenants()` yang sudah ada untuk mengambil toko di bawah seller/cabang.
-4. Buat seeder/factory untuk akun owner dan assignment owner–seller sesuai kontrak provisioning: idempotent berdasarkan `OWNER_INITIAL_USER_ID`, meng-assign seluruh seller existing pada eksekusi MVP pertama, dan tidak otomatis meng-assign future seller.
+4. Buat seeder/factory untuk akun owner dan assignment owner–seller sesuai kontrak provisioning: generate owner awal, idempotent berdasarkan `internal_provisioning_key`, dan hanya meng-assign seller yang belum mempunyai owner.
 5. Validasi kedua sisi assignment berdasarkan role `owner` dan `seller`.
 6. Pastikan assignment ulang seller mengganti owner lama dan tidak dapat menghasilkan assignment ganda.
 7. Pastikan seller tanpa owner tidak dapat terlihat oleh owner mana pun.
@@ -365,7 +360,7 @@ Dengan tiga endpoint dan 50 owner aktif, estimasi trafik rata-rata adalah 15 req
 14. Status dan pencarian nomor order hanya memengaruhi daftar order, bukan summary atau `order_status_counts`.
 15. Transaksi lintas toko/cabang tampil satu kali dengan daftar cabang/toko dan subtotal item sesuai scope/filter.
 16. API summary/status, performa toko, dan daftar order terpisah serta menggunakan snapshot polling 10 detik.
-17. Seeder owner pertama idempotent berdasarkan `OWNER_INITIAL_USER_ID`, meng-assign seluruh seller existing, dan tidak otomatis meng-assign future seller.
+17. Seeder owner awal menghasilkan akun development, idempotent berdasarkan `internal_provisioning_key`, dan hanya meng-assign seller yang belum mempunyai owner.
 
 ## Out of Scope MVP
 
@@ -387,7 +382,7 @@ Dengan tiga endpoint dan 50 owner aktif, estimasi trafik rata-rata adalah 15 req
 5. **Benturan istilah owner** — bedakan seller owner dan branch owner pada nama model, relasi, controller, serta dokumentasi.
 6. **Data tampak real-time tetapi terlambat** — tampilkan `generated_at`, status koneksi, dan target freshness yang terukur.
 7. **Public registration owner terbuka melalui route generic** — pisahkan allowlist role login/OTP dari allowlist role registration dan tambahkan negative test registration owner.
-8. **Seeder membuat owner duplikat saat kontak berubah** — gunakan `OWNER_INITIAL_USER_ID` sebagai identitas stabil, validasi role row yang ditemukan, dan buat seeder idempotent.
+8. **Seeder membuat owner duplikat atau mengambil assignment owner lain** — gunakan `internal_provisioning_key` sebagai identitas stabil dan hanya update seller yang belum mempunyai owner.
 9. **Lonjakan polling serempak** — tambahkan jitter client, rate limit per user, pause background tab, dan larang request tumpang tindih.
 
 ## Estimasi Urutan Delivery

@@ -21,6 +21,7 @@ use Illuminate\Notifications\Notifiable;
     'type',
     'role',
     'branch_owner_user_id',
+    'internal_provisioning_key',
     'agent_code',
     'password',
     'otp_code',

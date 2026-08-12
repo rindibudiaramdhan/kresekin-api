@@ -925,7 +925,7 @@
                 <nav class="role-tabs" aria-label="Pilihan role portal" role="tablist">
                     <button type="button" role="tab" aria-selected="true" data-role-tab="agent" data-action="{{ url('/api/agent/login') }}" data-email-enabled="true" data-phone-enabled="true" data-default-method="email">Agent</button>
                     <button type="button" role="tab" aria-selected="false" data-role-tab="finance" data-action="{{ url('/api/finance/login') }}" data-email-enabled="true" data-phone-enabled="true" data-default-method="email">Finance</button>
-                    <button type="button" role="tab" aria-selected="false" data-role-tab="owner" data-action="{{ url('/api/owner/login') }}" data-email-enabled="{{ config('api.owner.email') ? 'true' : 'false' }}" data-phone-enabled="{{ config('api.owner.phone') ? 'true' : 'false' }}" data-default-method="{{ config('api.owner.login_type', 'email') }}">Owner</button>
+                    <button type="button" role="tab" aria-selected="false" data-role-tab="owner" data-action="{{ url('/api/owner/login') }}" data-email-enabled="true" data-phone-enabled="true" data-default-method="email">Owner</button>
                 </nav>
 
                 <form method="POST" action="{{ url('/api/agent/login') }}" class="login-form" id="portal-login-form" novalidate>

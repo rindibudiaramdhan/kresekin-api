@@ -6,87 +6,61 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class OwnerUserSeeder extends Seeder
 {
+    private const INITIAL_PROVISIONING_KEY = 'owner-initial-mvp';
+
     public function run(): void
     {
-        $input = config('api.owner');
-        $this->validateConfiguration($input);
+        [$owner, $created, $assignedSellerCount] = DB::transaction(function (): array {
+            $owner = User::query()
+                ->where('internal_provisioning_key', self::INITIAL_PROVISIONING_KEY)
+                ->first();
 
-        DB::transaction(function () use ($input): void {
-            $owner = User::query()->find($input['initial_user_id']);
-
-            if ($owner && $owner->role !== User::ROLE_OWNER) {
-                throw new RuntimeException('OWNER_INITIAL_USER_ID sudah digunakan oleh user dengan role selain owner.');
-            }
-
-            $this->assertContactIsAvailable($input, $owner);
+            $created = false;
 
             if (! $owner) {
-                $owner = new User;
-                $owner->forceFill(['id' => $input['initial_user_id']]);
+                $owner = User::query()->create([
+                    'name' => 'Owner Awal',
+                    'email' => $this->generateUniqueEmail(),
+                    'phone' => null,
+                    'type' => User::AUTH_TYPE_EMAIL,
+                    'role' => User::ROLE_OWNER,
+                    'internal_provisioning_key' => self::INITIAL_PROVISIONING_KEY,
+                ]);
+                $created = true;
             }
-            $owner->forceFill([
-                'name' => $input['name'],
-                'email' => $input['email'] ?: null,
-                'phone' => $input['phone'] ?: null,
-                'type' => $input['login_type'],
-                'role' => User::ROLE_OWNER,
-            ])->save();
 
             $assignedSellerCount = User::query()
                 ->where('role', User::ROLE_SELLER)
+                ->whereNull('branch_owner_user_id')
                 ->update(['branch_owner_user_id' => $owner->id]);
 
             Log::info('owner_initial_seller_assignment_completed', [
                 'owner_user_id' => $owner->id,
                 'assigned_seller_count' => $assignedSellerCount,
             ]);
+
+            return [$owner, $created, $assignedSellerCount];
         });
+
+        $message = $created ? 'Owner awal berhasil dibuat.' : 'Owner awal sudah tersedia; akun yang sama digunakan kembali.';
+        $this->command?->info($message);
+        $this->command?->table(
+            ['ID', 'Nama', 'Email login', 'Seller baru di-assign'],
+            [[$owner->id, $owner->name, $owner->email, $assignedSellerCount]],
+        );
+        $this->command?->warn('Akun awal memakai email development yang digenerate. Ubah email/nomor WhatsApp melalui proses administrasi sebelum penggunaan production.');
     }
 
-    private function validateConfiguration(array $input): void
+    private function generateUniqueEmail(): string
     {
-        if (! Str::isUuid((string) ($input['initial_user_id'] ?? ''))) {
-            throw new RuntimeException('OWNER_INITIAL_USER_ID wajib berupa UUID yang valid.');
-        }
+        do {
+            $email = 'owner-'.Str::lower(Str::random(12)).'@example.test';
+        } while (User::query()->where('role', User::ROLE_OWNER)->where('email', $email)->exists());
 
-        $validator = Validator::make($input, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'required_without:phone'],
-            'phone' => ['nullable', 'string', 'max:20', 'regex:/^\+?[0-9]{8,15}$/', 'required_without:email'],
-            'login_type' => ['required', 'in:email,phone'],
-        ]);
-
-        if ($validator->fails()) {
-            throw new RuntimeException('Konfigurasi owner awal tidak valid: '.$validator->errors()->first());
-        }
-
-        if (empty($input[$input['login_type']] ?? null)) {
-            throw new RuntimeException('Kontak untuk OWNER_INITIAL_LOGIN_TYPE wajib tersedia.');
-        }
-    }
-
-    private function assertContactIsAvailable(array $input, ?User $owner): void
-    {
-        foreach (['email', 'phone'] as $field) {
-            if (empty($input[$field])) {
-                continue;
-            }
-
-            $exists = User::query()
-                ->where('role', User::ROLE_OWNER)
-                ->where($field, $input[$field])
-                ->when($owner, fn ($query) => $query->whereKeyNot($owner->id))
-                ->exists();
-
-            if ($exists) {
-                throw new RuntimeException(sprintf('%s owner sudah digunakan oleh akun lain.', ucfirst($field)));
-            }
-        }
+        return $email;
     }
 }
