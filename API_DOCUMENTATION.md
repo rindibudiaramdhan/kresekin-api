@@ -130,6 +130,7 @@ Daftar ini diselaraskan dengan `php artisan route:list --path=api`. Method `GET|
 | GET | `/api/delivery-methods` | Master metode pengiriman aktif. |
 | GET | `/api/order-time-options` | Master opsi waktu pesanan aktif. |
 | GET | `/api/payment-methods` | Master metode pembayaran aktif. |
+| GET | `/api/service-fee` | Nominal biaya layanan pada halaman checkout. |
 | GET | `/api/products` | Daftar produk aktif. |
 | GET | `/api/products/{id}` | Detail produk aktif. |
 | GET | `/api/tenants` | Daftar tenant untuk buyer. |
@@ -472,6 +473,15 @@ Mengambil metode pembayaran aktif beserta opsi aktifnya.
 
 ```bash
 curl http://127.0.0.1:8000/api/payment-methods \
+  -H "Authorization: Bearer $BUYER_TOKEN"
+```
+
+### GET `/api/service-fee`
+
+Mengambil nominal biaya layanan yang ditampilkan pada halaman checkout. Nominal dapat diatur melalui environment variable `SERVICE_FEE` dan default-nya adalah `1000`.
+
+```bash
+curl http://127.0.0.1:8000/api/service-fee \
   -H "Authorization: Bearer $BUYER_TOKEN"
 ```
 
@@ -1647,6 +1657,18 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
       ]
     }
   ]
+}
+```
+
+#### GET `/api/service-fee`
+
+```json
+{
+  "message": "Biaya layanan berhasil diambil.",
+  "data": {
+    "service_fee": 1000,
+    "service_fee_label": "Rp 1.000"
+  }
 }
 ```
 

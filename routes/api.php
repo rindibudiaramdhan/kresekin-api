@@ -47,6 +47,7 @@ use App\Http\Controllers\Api\GetSellerProductDetailController;
 use App\Http\Controllers\Api\GetSellerProductListController;
 use App\Http\Controllers\Api\GetSellerProductSummaryController;
 use App\Http\Controllers\Api\GetSellerTenantListController;
+use App\Http\Controllers\Api\GetServiceFeeController;
 use App\Http\Controllers\Api\GetTenantCategoriesController;
 use App\Http\Controllers\Api\GetTransactionRatingController;
 use App\Http\Controllers\Api\GetUserProfileController;
@@ -119,6 +120,7 @@ Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::get('/delivery-methods', GetDeliveryMethodsController::class);
     Route::get('/order-time-options', GetOrderTimeOptionsController::class);
     Route::get('/payment-methods', GetPaymentMethodsController::class);
+    Route::get('/service-fee', GetServiceFeeController::class);
     Route::get('/cart', GetCartController::class);
     Route::patch('/cart/delivery-method', UpdateCartDeliveryMethodController::class);
     Route::post('/cart/items', AddCartItemController::class);
