@@ -49,6 +49,7 @@ use App\Http\Controllers\Api\GetSellerProductSummaryController;
 use App\Http\Controllers\Api\GetSellerTenantListController;
 use App\Http\Controllers\Api\GetServiceFeeController;
 use App\Http\Controllers\Api\GetTenantCategoriesController;
+use App\Http\Controllers\Api\GetTenantProductCategoryListController;
 use App\Http\Controllers\Api\GetTransactionRatingController;
 use App\Http\Controllers\Api\GetUserProfileController;
 use App\Http\Controllers\Api\GetUserTransactionDetailController;
@@ -129,6 +130,7 @@ Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::get('/products/{id}', GetProductDetailController::class);
     Route::get('/products', GetProductListController::class);
     Route::get('/tenants/categories', GetTenantCategoriesController::class);
+    Route::get('/tenants/{tenantId}/product-categories', GetTenantProductCategoryListController::class);
     Route::get('/tenants', GetBuyerTenantListController::class);
     Route::get('/users/transactions', GetUserTransactionHistoryController::class);
     Route::get('/users/transactions/{transactionId}', GetUserTransactionDetailController::class);
