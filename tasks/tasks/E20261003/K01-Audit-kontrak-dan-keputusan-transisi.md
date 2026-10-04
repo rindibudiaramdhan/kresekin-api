@@ -37,6 +37,19 @@ Untuk perubahan PHP, jalankan Pint dan test relevan; perubahan behavior mempunya
 ## Bukti penyelesaian
 
 - PR/commit: belum tersedia.
-- Hasil test/verifikasi: belum tersedia.
+- Hasil test/verifikasi: audit statis backend tersedia pada [matriks audit](K01-Matriks-audit-kontrak.md); `git diff --check` lolos pada 2026-10-04. Tidak ada perubahan behavior/PHP, test aplikasi tidak dijalankan.
 - Bukti deployment/operasi/client jika relevan: belum tersedia.
 - PIC personel dan keputusan gate: belum ditetapkan.
+
+## Catatan grooming — 2026-10-04
+
+- Konfirmasi pengguna: satu-satunya client API aktif adalah mobile seller Android/iOS. Route buyer/agent/finance yang tersedia di backend tetap masuk audit kode; keberadaan route tidak membuktikan adanya client produksi aktif.
+- PIC pembaruan dan pengujian mobile Android/iOS: Rindi (pengguna). PIC mapping data dan release owner belum dikonfirmasi.
+- Aplikasi sudah digunakan pengguna produksi. Kebijakan upgrade wajib; menurut pengguna sudah didiskusikan dengan tim mobile engineer dan perubahan sudah dikembangkan. Nomor versi/build, bukti pengujian, rilis, dan penerapan upgrade wajib belum tersedia.
+- Keputusan bisnis dikonfirmasi: tenant tidak lagi membutuhkan kategori. Penerimaan client terhadap penghapusan field response atau bentuk kosong sementara masih perlu bukti pengujian; keputusan bisnis saja belum membuktikan kompatibilitas client.
+- Klarifikasi pengguna: kode mobile berada di repository terpisah dan tidak tersedia. Pengerjaan dilanjutkan berdasarkan API contract; audit kode/pengujian mobile tidak diklaim telah dilakukan.
+- Pengguna sepakat menghilangkan pengisian kategori tenant/merchant saat buat/ubah. Create mengabaikan input kategori lama; endpoint edit tenant belum tersedia dan tidak ditambahkan pada epic ini.
+- Lokasi dokumentasi API: `API_DOCUMENTATION.md`. [Matriks audit dan keputusan transisi](K01-Matriks-audit-kontrak.md) mencatat kontrak, caller, lokasi kode, pemilik peran, alokasi K02–K13, dan rencana observasi K03/K10.
+- Versi PostgreSQL operasional dan jumlah produk termasuk soft-deleted belum tersedia; perlu hasil query read-only dari database produksi.
+
+Catatan ini merupakan hasil grooming sementara, bukan bukti seluruh acceptance criteria telah terpenuhi.
