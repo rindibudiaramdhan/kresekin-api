@@ -8,7 +8,7 @@
 - Target baseline: M4–M5
 - Estimasi: 3–4 hari kerja effort, bukan janji durasi kalender
 - Dependensi: K02, K08, keputusan dan bukti kompatibilitas K01/K10
-- Tautan dependensi: [K01](K01-Audit-kontrak-dan-keputusan-transisi.md), [K02](K02-Ekspansi-schema-dan-relasi-produk.md), [K08](K08-Filter-dan-agregasi-kategori-tenant-berbasis-ID.md), [K10](K10-Dokumentasi-kontrak-dan-koordinasi-migrasi-client.md)
+- Tautan dependensi: [K01](../../DONE/E20261003/K01-Audit-kontrak-dan-keputusan-transisi.md), [K02](K02-Ekspansi-schema-dan-relasi-produk.md), [K08](K08-Filter-dan-agregasi-kategori-tenant-berbasis-ID.md), [K10](K10-Dokumentasi-kontrak-dan-koordinasi-migrasi-client.md)
 
 ## Tujuan
 

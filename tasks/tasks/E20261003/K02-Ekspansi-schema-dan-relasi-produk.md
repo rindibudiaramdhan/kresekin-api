@@ -8,7 +8,7 @@
 - Target baseline: M1–M2
 - Estimasi: 2–3 hari kerja effort, bukan janji durasi kalender
 - Dependensi: K01
-- Tautan dependensi: [K01](K01-Audit-kontrak-dan-keputusan-transisi.md)
+- Tautan dependensi: [K01](../../DONE/E20261003/K01-Audit-kontrak-dan-keputusan-transisi.md)
 
 ## Tujuan
 

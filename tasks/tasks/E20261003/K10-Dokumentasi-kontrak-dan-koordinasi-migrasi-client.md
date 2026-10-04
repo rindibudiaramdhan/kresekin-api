@@ -8,7 +8,7 @@
 - Target baseline: M1–M7
 - Estimasi: 3–5 internal; effort client dihitung oleh PIC hari kerja effort, bukan janji durasi kalender
 - Dependensi: K01; finalisasi mengikuti K03–K09
-- Tautan dependensi: [K01](K01-Audit-kontrak-dan-keputusan-transisi.md), [K03](K03-Standardisasi-writer-produk-API.md), [K09](K09-Tenant-tanpa-kategori-dan-dashboard-terdampak.md)
+- Tautan dependensi: [K01](../../DONE/E20261003/K01-Audit-kontrak-dan-keputusan-transisi.md), [K03](K03-Standardisasi-writer-produk-API.md), [K09](K09-Tenant-tanpa-kategori-dan-dashboard-terdampak.md)
 
 ## Tujuan
 
@@ -18,7 +18,7 @@ Dokumentasi dan bukti kesiapan semua client tersedia sebelum kontrak lama dihent
 
 1. Dokumentasikan payload/response, fallback edit, deprecation, error dan endpoint master pengganti; selaraskan ADR-012 untuk master database kategori produk.
 2. Buat/link pekerjaan tiap client eksternal dengan PIC, versi, jadwal dan acceptance: tenant tanpa kategori, produk ID, subtitle tanpa kategori tunggal, endpoint master.
-3. Mulai jendela kompatibilitas dua siklus rilis client; verifikasi panjang siklus di K01 dan revisi timeline bila berbeda.
+3. Mulai jendela kompatibilitas dua siklus rilis client; panjang siklus aktual belum terverifikasi saat penutupan audit API K01, sehingga dicatat pada K10 sebelum menghitung jendela rilis; revisi timeline bila berbeda.
 4. Pertahankan slug selama rollout; ID diperoleh dari master environment terkait; alias slug di luar epic.
 5. Sediakan bukti observasi fallback, endpoint lama dan konsumsi field response lama; field read perlu evidence client karena log server tidak membuktikan apakah field dibaca.
 

@@ -219,8 +219,8 @@ Tanggal cutover, durasi kompatibilitas, pemetaan data ambigu, dan bentuk lapisan
 
 Tiket ini mendokumentasikan rencana yang disetujui. Pembuatan tiket tidak menjalankan migration, backfill, deploy, atau perubahan kode aplikasi. Subtask dan bukti implementasi berikutnya ditautkan di bagian ini.
 
-- Subtask: 13 tiket Planned tersedia pada [timeline dan indeks tiket](../timeline.md); PR implementasi belum tersedia.
-- Hasil audit client/data: belum tersedia.
+- Subtask: K01 selesai sebagai audit backend/API contract; K02–K13 tetap Planned pada [timeline dan indeks tiket](../tasks/E20261003/timeline.md). PR implementasi aplikasi belum tersedia.
+- Hasil audit backend/API contract: [K01 selesai](../DONE/E20261003/K01-Audit-kontrak-dan-keputusan-transisi.md) pada 2026-10-04; [matriks](../DONE/E20261003/K01-Matriks-audit-kontrak.md) tersedia. Bukti pengguna: PostgreSQL 18.6 (4e955f5), 17 produk (10 non-soft-deleted, 7 soft-deleted). Client mobile seller Android/iOS; PIC mobile/mapping/operations/release: Rindi. Bukti versi/uji mobile dikecualikan dari penutupan audit K01, bukan diklaim terverifikasi; readiness produksi tetap mengikuti gate epic.
 - Cutover/deprecation: belum ditentukan.
 - Hasil verifikasi: belum tersedia.
 

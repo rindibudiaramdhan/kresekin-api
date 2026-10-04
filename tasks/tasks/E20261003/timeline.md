@@ -34,7 +34,7 @@ K07 dapat dikembangkan sebelum K06 selesai, tetapi perpindahan penuh reader menu
 
 | Tiket | Hasil utama | Target | PIC peran | Dependensi | Estimasi effort hari kerja |
 | --- | --- | --- | --- | --- | --- |
-| [K01](tasks/E20261003/K01-Audit-kontrak-dan-keputusan-transisi.md) | Audit kontrak dan keputusan transisi | M1 | Engineering Lead | — | 2–3 |
+| [K01](../../DONE/E20261003/K01-Audit-kontrak-dan-keputusan-transisi.md) | Audit kontrak dan keputusan transisi | M1 | Engineering Lead | — | 2–3 |
 | [K02](tasks/E20261003/K02-Ekspansi-schema-dan-relasi-produk.md) | Ekspansi schema dan relasi produk | M1–M2 | Backend / Database | K01 | 2–3 |
 | [K03](tasks/E20261003/K03-Standardisasi-writer-produk-API.md) | Standardisasi writer produk API | M2 | Backend API | K02 | 3–4 |
 | [K04](tasks/E20261003/K04-Standardisasi-writer-web-dan-admin.md) | Standardisasi writer web dan admin | M2 | Backend Web / Admin | K02 | 2–3 |
@@ -116,7 +116,7 @@ Setiap PIC memperbarui status tiket, PR, hasil test dan blocker sebelum review m
 
 ## Bukti dan status saat ini
 
-- Seluruh 13 tiket: Planned; nama PIC belum ditetapkan.
-- Inventory client/data, hasil test, backfill dan deployment: belum tersedia.
+- K01: DONE untuk audit backend/API contract pada 2026-10-04; K02–K13 tetap Planned. PIC mobile, mapping kategori lama, operations/database dan release owner: Rindi; personel pelaksana lain belum ditetapkan.
+- Matriks audit backend dan baseline data K01 tersedia: PostgreSQL 18.6 (4e955f5), 17 produk (10 non-soft-deleted, 7 soft-deleted), berdasarkan output query pengguna. Versi/uji mobile, ritme rilis aktual, hasil test aplikasi, backfill dan deployment belum terverifikasi. Penutupan audit API tidak meluluskan gate produksi.
 - Gate G1–G7: belum terpenuhi.
 - Timeline ini dan tiket turunannya mendokumentasikan pekerjaan; tidak menjalankan migration, backfill atau deployment.

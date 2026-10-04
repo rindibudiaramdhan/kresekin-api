@@ -1,5 +1,7 @@
 # K01 — Matriks audit kontrak dan keputusan transisi
 
+Status: audit backend/API contract selesai; penutupan K01 pada 2026-10-04.
+
 Tanggal audit: 2026-10-04. Sumber: kode repository dan konfirmasi pengguna pada grooming. Dokumen ini mencatat kondisi backend saat audit serta kontrak yang disepakati; bukan klaim perubahan sudah diterapkan atau deployment berhasil.
 
 ## Client dan pemilik
@@ -14,7 +16,7 @@ Tanggal audit: 2026-10-04. Sumber: kode repository dan konfirmasi pengguna pada 
 | API buyer/agent/finance eksternal | Route tersedia; pengguna menyatakan client API aktif hanya mobile seller | Backend API, personel belum ditetapkan | Audit kontrak tetap diperlukan; tidak mengasumsikan ada client eksternal aktif |
 | Admin Filament | Resource ditemukan; paket Filament tidak ditemukan di manifest/lockfile | Backend Admin, personel belum ditetapkan | Audit kode resource tetap masuk K04; aktivasi resource belum terbukti |
 
-Nama pemilik teknis berikut adalah peran dari tiket, bukan identitas personel terverifikasi. PIC mapping data, operations, engineering lead, dan release owner masih belum ditetapkan. Pernyataan perubahan mobile sudah dikembangkan tidak disamakan dengan bukti rilis atau hasil uji.
+Nama pemilik teknis berikut adalah peran dari tiket, bukan identitas personel terverifikasi. PIC mapping kategori lama, operations/database dan release owner adalah Rindi, dikonfirmasi pengguna pada follow-up evaluasi PM. Engineering lead dan personel pelaksana backend lain belum ditetapkan. Pernyataan perubahan mobile sudah dikembangkan tidak disamakan dengan bukti rilis atau hasil uji.
 
 ## Matriks endpoint, input dan response
 
@@ -83,11 +85,11 @@ Gunakan structured event melalui logging Laravel yang sudah tersedia, dengan req
 
 K10 harus memastikan retensi cukup untuk menyimpan 14 hari berturut-turut, event tidak disampling, collector aktif di semua instance, serta ekspor ringkasan durable. Header platform/version hanya dipakai jika kontraknya sudah tersedia dan terverifikasi; tidak mengarang versi client dari user-agent. Logging tidak menambah identitas/payload personal.
 
-Ambang removal sesuai epic: semua versi aktif siap, dua siklus rilis terverifikasi, nol fallback/endpoint lama selama 14 hari berturut-turut dengan telemetry lengkap, dan bukti field read dari client. Pemakaian baru mengulang jendela; telemetry hilang tidak dihitung sebagai nol. Release owner belum ditetapkan dan belum ada go/no-go.
+Ambang removal sesuai epic: semua versi aktif siap, dua siklus rilis terverifikasi, nol fallback/endpoint lama selama 14 hari berturut-turut dengan telemetry lengkap, dan bukti field read dari client. Pemakaian baru mengulang jendela; telemetry hilang tidak dihitung sebagai nol. Release owner: Rindi, dikonfirmasi pengguna; belum ada go/no-go.
 
 ## Data operasional yang masih diperlukan
 
-Versi PostgreSQL produksi, volume produk, ritme rilis, versi/build mobile produksi/target, bukti uji/rilis/enforcement upgrade, PIC mapping/operations/release owner, serta akses observasi produksi belum tersedia. Tidak ada koneksi atau mutation database produksi dijalankan pada audit ini.
+Output query yang diberikan pengguna pada 2026-10-04 mengonfirmasi PostgreSQL **18.6 (4e955f5)** dan **17 produk: 10 non-soft-deleted, 7 soft-deleted** pada Laravel Cloud. Ini bukti yang disampaikan pengguna, bukan pemeriksaan langsung agent; waktu persis eksekusi tidak diberikan. Ritme rilis, versi/build mobile produksi/target, bukti uji/rilis/enforcement upgrade, serta akses observasi produksi belum tersedia. PIC mapping/operations/release owner telah dikonfirmasi: Rindi. Tidak ada koneksi atau mutation database produksi dijalankan pada audit ini.
 
 Query read-only untuk dijalankan melalui SQL console produksi oleh pengguna/operations:
 
@@ -107,4 +109,4 @@ FROM products;
 - Tidak ada perubahan PHP, migration, asset, atau behavior aplikasi pada K01; Pint/test/build tidak dijalankan untuk perubahan Markdown ini.
 - Matriks lokasi kontrak/client/peran/tindakan tersedia. Identitas PIC client berdasarkan konfirmasi pengguna; versi produksi dan kompatibilitas belum diverifikasi.
 - Lokasi dokumentasi dan rencana observasi K03/K10 tersedia; operasional collector belum terbukti.
-- AC bukti versi client dan penerimaan response sementara/target masih terbuka. Audit backend dapat direview; K01 keseluruhan belum memenuhi seluruh AC dan gate produksi tetap menunggu evidence.
+- K01 ditutup sebagai audit backend/API contract sesuai arahan pengguna; bukti versi dan uji mobile dikecualikan dari kriteria penutupan audit, bukan dinyatakan terpenuhi. Gate produksi tetap mengikuti epic dan tiket readiness yang sudah ada. Baseline database tersedia; mapping aktual belum dijalankan.
