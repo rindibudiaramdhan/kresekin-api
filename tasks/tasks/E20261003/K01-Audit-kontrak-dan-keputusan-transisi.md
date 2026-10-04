@@ -23,10 +23,10 @@ Inventaris final endpoint, writer, reader, client, dan keputusan rollout sebelum
 
 ## Acceptance criteria dan verifikasi
 
-- [ ] Matriks audit memiliki lokasi kode, jalur kontrak, pemilik, serta status tindakan; tidak hanya mengulang peta awal epic.
+- [x] Matriks audit memiliki lokasi kode, jalur kontrak, pemilik, serta status tindakan; tidak hanya mengulang peta awal epic.
 - [ ] Setiap client aktif mempunyai PIC; identitas PIC dan versi produksi terverifikasi, bukan asumsi.
 - [ ] Bentuk response tenant sementara serta penanganan nilai kosong disepakati dan dibuktikan dapat diterima client sebelum aktivasi tenant tanpa kategori.
-- [ ] Lokasi dokumentasi API dan rencana observasi fallback/endpoint/field lama ditetapkan; perubahan observabilitas yang diperlukan dialokasikan pada K03/K10.
+- [x] Lokasi dokumentasi API dan rencana observasi fallback/endpoint/field lama ditetapkan; perubahan observabilitas yang diperlukan dialokasikan pada K03/K10.
 
 ## Batasan dan Definition of Done
 
@@ -53,3 +53,33 @@ Untuk perubahan PHP, jalankan Pint dan test relevan; perubahan behavior mempunya
 - Versi PostgreSQL operasional dan jumlah produk termasuk soft-deleted belum tersedia; perlu hasil query read-only dari database produksi.
 
 Catatan ini merupakan hasil grooming sementara, bukan bukti seluruh acceptance criteria telah terpenuhi.
+
+## Evaluasi PM — 2026-10-04
+
+Hasil audit backend memadai untuk ditinjau dan menjadi acuan pengerjaan kontrak. Tiket belum dipindahkan ke DONE karena dua acceptance criteria awal serta informasi operasional dalam cakupan belum terpenuhi. Label Planned di header adalah status awal perencanaan; audit backend sudah dilakukan, tetapi penutupan tiket belum disetujui.
+
+| Kriteria | Hasil evaluasi | Kekurangan yang tersisa |
+| --- | --- | --- |
+| Matriks lokasi kode, kontrak, pemilik dan tindakan | Terpenuhi untuk audit repository | Pemilik teknis berbentuk peran, bukan penetapan personel; PIC mobile dikonfirmasi pengguna |
+| PIC dan versi produksi tiap client aktif | Sebagian | PIC Rindi dikonfirmasi; versi/build belum tersedia |
+| Response tenant sementara/penanganan kosong diterima client | Belum terbukti | Target tanpa kategori tunggal jelas dari epic; tidak ada bukti uji client atau keputusan lapisan sementara |
+| Lokasi dokumentasi dan alokasi observasi | Terpenuhi sebagai rencana | Implementasi dan verifikasi collector merupakan pekerjaan lanjutan K03/K10 |
+
+Arahan pengguna untuk bekerja berdasarkan API contract diterima: repository mobile tidak diperlukan untuk audit backend. Arahan ini belum secara eksplisit memindahkan kewajiban bukti versi/uji client dari AC K01 ke K10 atau menghapus gate produksi. Opsi yang direkomendasikan: tutup K01 sebagai audit backend setelah perubahan kriteria disetujui, dengan kewajiban client dialihkan ke K10/K11 dan tetap menjadi syarat G4/G5. Data PostgreSQL/volume dapat dikonfirmasi pada K02/K05 sebelum rehearsal/penetapan batch; perpindahan kewajiban ini juga belum disetujui.
+
+Konfirmasi yang diperlukan untuk penutupan:
+
+1. Apakah K01 diterima sebagai audit backend/API contract, dengan bukti versi dan kompatibilitas mobile diselesaikan oleh Rindi di K10 sebelum G4/G5, tanpa menyatakan bukti tersebut sudah tersedia?
+2. Siapa PIC mapping kategori produk lama, operations/database, dan release owner? Rindi hanya sudah dikonfirmasi sebagai PIC mobile, tidak otomatis memegang ketiga peran tersebut.
+3. Apakah versi PostgreSQL/volume produk dikumpulkan sekarang, atau dialihkan ke K02/K05 sebelum verifikasi migration dan perencanaan backfill? Ritme rilis aktual tetap perlu dicatat di K10 sebelum menghitung dua siklus rilis.
+
+Asumsi material evaluasi:
+
+- Repository saat audit adalah baseline backend untuk kontrak; kesesuaian dengan deployment produksi belum dibuktikan.
+- Pernyataan pengguna tentang client aktif, PIC mobile, pengembangan mobile dan upgrade wajib diterima sebagai konfirmasi stakeholder; bukan hasil pemeriksaan release/build/enforcement.
+- Web/admin/dashboard yang ditemukan tetap masuk audit perubahan kode, meskipun penggunaan produksinya belum dikonfirmasi.
+- Response target tanpa field kategori tunggal berasal dari epic; kesepakatan menghapus pengisian kategori tidak dengan sendirinya membuktikan penerimaan response oleh aplikasi lama.
+- Tidak menambah endpoint edit tenant; kategori produk tetap mengikuti master.
+- Dua siklus rilis dan observasi nol 14 hari mengikuti keputusan epic; tidak diasumsikan sudah berjalan atau terpenuhi.
+
+Verifikasi evaluasi: pembacaan tiket, matriks, dan keputusan grooming; tidak menguji aplikasi atau mengakses produksi. Tidak ada komitmen jadwal/personel baru, pemindahan tiket, atau pelonggaran gate yang dilakukan pada evaluasi ini.
