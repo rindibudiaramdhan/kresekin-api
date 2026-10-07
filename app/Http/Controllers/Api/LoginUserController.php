@@ -54,6 +54,7 @@ class LoginUserController extends Controller
                 'phone' => $user->phone,
                 'type' => $user->type,
                 'role' => $user->role,
+                'whatsapp_otp_sender' => config('services.whatsapp_otp.sender'),
                 'otp_sent_at' => $user->otp_sent_at?->toIso8601String(),
             ],
         ]);

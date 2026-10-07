@@ -1252,6 +1252,8 @@ Contoh response di bawah memakai data dummy. Field tambahan bisa muncul tergantu
 
 ### Auth dan Session
 
+Response sukses registrasi, login, dan kirim ulang OTP (termasuk endpoint alias) menyertakan `data.whatsapp_otp_sender`, yaitu nomor dari konfigurasi `WHATSAPP_OTP_SENDER`. Field ini tersedia untuk request email maupun phone, dan bernilai `null` jika konfigurasi belum diisi.
+
 #### POST `/api/users/{role}/register`
 
 Berlaku juga untuk `POST /api/agent/register` dan `POST /api/finance/register`.

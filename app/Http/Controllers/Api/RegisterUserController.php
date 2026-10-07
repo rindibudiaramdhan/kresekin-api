@@ -45,6 +45,7 @@ class RegisterUserController extends Controller
                 'type' => $user->type,
                 'role' => $user->role,
                 'agent_code' => $user->agent_code,
+                'whatsapp_otp_sender' => config('services.whatsapp_otp.sender'),
                 'otp_sent_at' => $user->otp_sent_at?->toIso8601String(),
             ],
         ], 201);
