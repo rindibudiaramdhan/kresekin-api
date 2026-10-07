@@ -14,7 +14,7 @@ class GetSellerTenantListController extends Controller
 
         $tenants = $request->user()
             ->ownedTenants()
-            ->with(['agent', 'housingAreas', 'productCategory'])
+            ->with(['agent', 'housingAreas'])
             ->latest()
             ->get()
             ->map(function ($tenant) use ($currentTime): array {
@@ -26,13 +26,6 @@ class GetSellerTenantListController extends Controller
                     'agent_user_id' => $tenant->agent_user_id,
                     'agent_code' => $tenant->agent?->agent_code,
                     'name' => $tenant->name,
-                    'category_id' => $tenant->product_category_id,
-                    'category' => $tenant->category,
-                    'category_master' => [
-                        'id' => $tenant->productCategory?->id,
-                        'name' => $tenant->productCategory?->name,
-                        'slug' => $tenant->productCategory?->slug,
-                    ],
                     'location' => $tenant->location,
                     'housing_areas' => $tenant->housingAreas
                         ->map(fn ($housingArea): array => [

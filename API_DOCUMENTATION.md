@@ -723,7 +723,7 @@ curl http://127.0.0.1:8000/api/seller/products/summary \
 
 ### GET `/api/seller/tenants`
 
-Mengambil daftar tenant milik seller aktif.
+Mengambil daftar tenant milik seller aktif. Objek tenant tidak menyertakan kategori atau metadata kategori.
 
 ```bash
 curl http://127.0.0.1:8000/api/seller/tenants \
@@ -732,7 +732,9 @@ curl http://127.0.0.1:8000/api/seller/tenants \
 
 ### POST `/api/seller/tenants`
 
-Membuat tenant/toko untuk seller aktif.
+Membuat tenant/toko untuk seller aktif tanpa kategori tenant. Endpoint update tenant belum tersedia. Model dan request tenant tidak menerima atribut kategori.
+
+Migration `2026_10_07_000002_drop_category_columns_from_tenants` menghapus `category` dan `product_category_id` beserta foreign key kategori pada tenant. Jalankan migration bersama rilis kode ini. Rollback hanya memulihkan struktur kolom nullable, bukan nilai kategori yang telah dihapus.
 
 Body:
 
@@ -742,8 +744,7 @@ Body:
 - `agent_code` opsional, harus milik user role `agent`
 - `name` wajib
 - `profile_picture_url` opsional
-- `category_id` wajib UUID, harus ada di `product_categories`
-- `category` opsional, salah satu `Tenant::CATEGORIES`
+- Tenant tidak memakai kategori. Input legacy `category`, `category_id`, dan `product_category_id` diabaikan.
 - `location` wajib
 - `housing_area_ids` wajib array UUID, minimal 1 maksimal 3
 - `rating` opsional, 0 sampai 5
@@ -755,7 +756,7 @@ Body:
 curl -X POST http://127.0.0.1:8000/api/seller/tenants \
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"owner_name":"Asep Pemilik","owner_phone":"081234567890","owner_email":"asep@example.com","agent_code":"KA-20265","name":"Toko Asep","category_id":"ffffffff-ffff-4fff-8fff-ffffffffffff","location":"Jl Asri Raya No 45","housing_area_ids":["eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"],"latitude":-6.2,"longitude":106.8,"open_time":"07:00","close_time":"21:00"}'
+  -d '{"owner_name":"Asep Pemilik","owner_phone":"081234567890","owner_email":"asep@example.com","agent_code":"KA-20265","name":"Toko Asep","location":"Jl Asri Raya No 45","housing_area_ids":["eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"],"latitude":-6.2,"longitude":106.8,"open_time":"07:00","close_time":"21:00"}'
 ```
 
 ### GET `/api/seller/orders`
@@ -1182,9 +1183,9 @@ curl -X DELETE http://127.0.0.1:8000/api/finance/cancellation-reason-categories/
 | `buyer_payment_confirmed` |
 | `disbursed_to_seller` |
 
-### Kategori tenant/produk legacy
+### Kategori produk legacy
 
-Nilai `category` yang divalidasi oleh beberapa endpoint produk/tenant:
+Nilai `category` legacy yang divalidasi oleh beberapa endpoint produk:
 
 - `Sayur`
 - `Buah`
@@ -1746,7 +1747,6 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
       "name": "Toko Asep",
       "profile_picture_url": "https://example.com/toko.png",
       "rating": 4.8,
-      "category": "Sembako",
       "product_count": 20,
       "is_open": true,
       "store_status": "Buka",
@@ -2150,7 +2150,6 @@ Detail transaksi juga menyediakan `can_rate` dan `rating`. `can_rate` bernilai `
   "data": {
     "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "tenant_name": "Toko Asep",
-    "category": "Sembako",
     "is_open": true,
     "operating_hours_label": "Buka 07:00 sd 21:00"
   }
@@ -2282,8 +2281,6 @@ Detail transaksi juga menyediakan `can_rate` dan `rating`. `can_rate` bernilai `
       "agent_user_id": "33333333-3333-4333-8333-333333333333",
       "agent_code": "KA-20265",
       "name": "Toko Asep",
-      "category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
-      "category": "Sembako",
       "location": "Jl Asri Raya No 45",
       "housing_areas": [
         {
@@ -2314,8 +2311,6 @@ Detail transaksi juga menyediakan `can_rate` dan `rating`. `can_rate` bernilai `
       "email": "asep@example.com"
     },
     "name": "Toko Asep",
-    "category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
-    "category": "Sembako",
     "location": "Jl Asri Raya No 45",
     "housing_areas": [
       {

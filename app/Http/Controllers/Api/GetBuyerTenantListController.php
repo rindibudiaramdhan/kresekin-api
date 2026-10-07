@@ -61,7 +61,6 @@ class GetBuyerTenantListController extends Controller
             ->latest()
             ->get()
             ->map(function (Tenant $tenant) use ($currentTime): array {
-                $categoryUiMetadata = Tenant::categoryUiMetadata($tenant->category);
                 $isOpen = $tenant->isOpenAt($currentTime);
 
                 return [
@@ -69,11 +68,6 @@ class GetBuyerTenantListController extends Controller
                     'name' => $tenant->name,
                     'profile_picture_url' => $tenant->profile_picture_url,
                     'rating' => round((float) $tenant->rating, 1),
-                    'category' => $tenant->category,
-                    'category_slug' => str($tenant->category)->slug()->toString(),
-                    'category_icon_key' => $categoryUiMetadata['icon_key'],
-                    'category_background_color' => $categoryUiMetadata['background_color'],
-                    'category_icon_color' => $categoryUiMetadata['icon_color'],
                     'housing_areas' => $tenant->housingAreas
                         ->map(fn ($housingArea): array => [
                             'id' => $housingArea->id,
@@ -82,17 +76,6 @@ class GetBuyerTenantListController extends Controller
                             'village_code' => $housingArea->village_code,
                         ])
                         ->values(),
-                    'product_categories' => $tenant->products
-                        ->pluck('category')
-                        ->unique()
-                        ->values()
-                        ->all(),
-                    'product_category_slugs' => $tenant->products
-                        ->pluck('category')
-                        ->unique()
-                        ->map(fn (string $category) => str($category)->slug()->toString())
-                        ->values()
-                        ->all(),
                     'product_count' => $tenant->products->count(),
                     'is_open' => $isOpen,
                     'store_status' => $isOpen ? 'Buka' : 'Tutup',

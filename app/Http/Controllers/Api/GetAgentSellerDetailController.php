@@ -48,7 +48,6 @@ class GetAgentSellerDetailController extends Controller
                 'tenants' => $seller->ownedTenants->map(fn (Tenant $tenant): array => [
                     'id' => $tenant->id,
                     'name' => $tenant->name,
-                    'category' => $tenant->category,
                     'profile_picture_url' => $tenant->profile_picture_url,
                     'transaction_count' => $this->transactionCount([$tenant->id]),
                     'total_revenue' => $this->completedRevenue([$tenant->id]),

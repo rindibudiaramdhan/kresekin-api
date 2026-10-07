@@ -71,9 +71,9 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.owner.phone', '081234567890')
             ->assertJsonPath('data.owner.email', 'asep@example.com')
             ->assertJsonPath('data.name', 'Tenant Seller')
-            ->assertJsonPath('data.category_id', $category->id)
-            ->assertJsonPath('data.category', Tenant::CATEGORY_GROCERIES)
-            ->assertJsonPath('data.category_master.slug', 'sembako')
+            ->assertJsonMissingPath('data.category_id')
+            ->assertJsonMissingPath('data.category')
+            ->assertJsonMissingPath('data.category_master')
             ->assertJsonPath('data.location', 'Jl Asri Raya No 45')
             ->assertJsonPath('data.housing_areas.0.id', $housingArea->id);
 
@@ -92,7 +92,9 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.0.owner_user_id', $seller->id)
             ->assertJsonPath('data.0.agent_code', 'KA-20265')
             ->assertJsonPath('data.0.name', 'Tenant Seller')
-            ->assertJsonPath('data.0.category_id', $category->id)
+            ->assertJsonMissingPath('data.0.category_id')
+            ->assertJsonMissingPath('data.0.category')
+            ->assertJsonMissingPath('data.0.category_master')
             ->assertJsonPath('data.0.location', 'Jl Asri Raya No 45')
             ->assertJsonPath('data.0.housing_areas.0.name', 'Komp Setra Dago')
             ->assertJsonPath('data.0.is_open', true)
@@ -100,6 +102,67 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.0.operating_hours_label', 'Buka 07:00 sd 21:00');
 
         Carbon::setTestNow();
+    }
+
+    public function test_seller_can_create_and_list_tenants_without_category(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-no-category@example.com', '+6281200000043', 'seller-no-category-token', User::ROLE_SELLER);
+        $housingArea = HousingArea::query()->create([
+            'name' => 'Komp Tanpa Kategori',
+            'code' => 'AREA-NO-CATEGORY',
+            'village_code' => '3273141003',
+        ]);
+        $payload = [
+            'owner_name' => 'Pemilik Tanpa Kategori',
+            'name' => 'Tenant Tanpa Kategori',
+            'location' => 'Jl Mandiri No 2',
+            'housing_area_ids' => [$housingArea->id],
+        ];
+
+        foreach ([$payload, [...$payload, 'category_id' => null]] as $requestPayload) {
+            $response = $this->withHeader('Authorization', 'Bearer '.$token)
+                ->postJson('/api/seller/tenants', $requestPayload)
+                ->assertCreated()
+                ->assertJsonPath('data.owner_user_id', $seller->id)
+                ->assertJsonMissingPath('data.category_id')
+                ->assertJsonMissingPath('data.category')
+                ->assertJsonMissingPath('data.category_master')
+                ->assertJsonPath('data.housing_areas.0.id', $housingArea->id);
+
+            $this->assertDatabaseHas('tenants', [
+                'id' => $response->json('data.id'),
+                'owner_user_id' => $seller->id,
+            ]);
+        }
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/seller/tenants')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonMissingPath('data.0.category_id')
+            ->assertJsonMissingPath('data.0.category')
+            ->assertJsonMissingPath('data.0.category_master');
+
+        [, $buyerToken] = $this->createAuthenticatedUser('buyer-no-category@example.com', '+6281200000044', 'buyer-no-category-token', User::ROLE_BUYER);
+        $this->withHeader('Authorization', 'Bearer '.$buyerToken)
+            ->getJson('/api/tenants')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonMissingPath('data.0.category')
+            ->assertJsonMissingPath('data.0.category_slug')
+            ->assertJsonMissingPath('data.0.category_icon_key')
+            ->assertJsonMissingPath('data.0.category_background_color')
+            ->assertJsonMissingPath('data.0.category_icon_color')
+            ->assertJsonMissingPath('data.0.product_categories')
+            ->assertJsonMissingPath('data.0.product_category_slugs');
+
+        foreach (['invalid-category', (string) str()->uuid()] as $categoryId) {
+            $this->withHeader('Authorization', 'Bearer '.$token)
+                ->postJson('/api/seller/tenants', [...$payload, 'category' => ['ignored'], 'category_id' => $categoryId, 'product_category_id' => $categoryId])
+                ->assertCreated()
+                ->assertJsonMissingPath('data.category_id')
+                ->assertJsonMissingPath('data.category');
+        }
     }
 
     public function test_seller_tenant_area_is_limited_to_three_housing_areas(): void
@@ -178,7 +241,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Seller Product',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
         $category = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
 
@@ -234,7 +296,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Product Search',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $otherTenant = Tenant::query()->create([
@@ -242,7 +303,6 @@ class SellerApiTest extends TestCase
             'name' => 'Other Tenant Product Search',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         Product::query()->create([
@@ -288,7 +348,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Product Sold',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $product = Product::query()->create([
@@ -356,7 +415,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Invalid Unit',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
         $category = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
 
@@ -383,7 +441,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Invalid Category',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $unit = $this->createProductUnit('ikat');
@@ -411,7 +468,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Invalid Update Unit',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $product = Product::query()->create([
@@ -448,7 +504,6 @@ class SellerApiTest extends TestCase
             'name' => 'Other Tenant',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
         $category = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
 
@@ -480,7 +535,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Upload Product',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
         $category = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
 
@@ -523,7 +577,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Upload Path Product',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
         $category = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
 
@@ -578,7 +631,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Product Summary',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $otherTenant = Tenant::query()->create([
@@ -586,7 +638,6 @@ class SellerApiTest extends TestCase
             'name' => 'Other Tenant Product Summary',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         Product::query()->create([
@@ -1075,7 +1126,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Product Status',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $product = Product::query()->create([
@@ -1115,7 +1165,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Product Status Validation',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $product = Product::query()->create([
@@ -1145,7 +1194,6 @@ class SellerApiTest extends TestCase
             'name' => 'Other Product Status Tenant',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $product = Product::query()->create([
@@ -1176,7 +1224,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant Soft Delete Product',
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $product = Product::query()->create([
@@ -1258,7 +1305,6 @@ class SellerApiTest extends TestCase
             'name' => 'Tenant '.$orderNumber,
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_GROCERIES,
         ]);
 
         $product = Product::query()->create([

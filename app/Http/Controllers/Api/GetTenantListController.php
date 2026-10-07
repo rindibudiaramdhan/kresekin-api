@@ -4,11 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
 class GetTenantListController extends Controller
@@ -18,7 +17,6 @@ class GetTenantListController extends Controller
         $validator = Validator::make($request->query(), [
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
-            'category' => ['nullable', 'string', Rule::in(Tenant::CATEGORIES)],
         ]);
 
         if ($validator->fails()) {
@@ -35,10 +33,6 @@ class GetTenantListController extends Controller
         $currentTime = now('Asia/Jakarta')->format('H:i');
 
         $tenantItems = Tenant::query()
-            ->when(
-                isset($validated['category']),
-                fn ($query) => $query->where('category', $validated['category'])
-            )
             ->orderByDesc('created_at')
             ->get()
             ->map(function (Tenant $tenant) use ($user, $currentTime): array {
@@ -48,7 +42,6 @@ class GetTenantListController extends Controller
                     $tenant->latitude,
                     $tenant->longitude,
                 );
-                $categoryUiMetadata = Tenant::categoryUiMetadata($tenant->category);
                 $isOpen = $tenant->isOpenAt($currentTime);
 
                 return [
@@ -60,11 +53,6 @@ class GetTenantListController extends Controller
                     'distance_km' => $distanceKm,
                     'distance_label' => $this->formatDistanceLabel($distanceKm),
                     'rating' => round((float) $tenant->rating, 1),
-                    'category' => $tenant->category,
-                    'category_slug' => str($tenant->category)->slug()->toString(),
-                    'category_icon_key' => $categoryUiMetadata['icon_key'],
-                    'category_background_color' => $categoryUiMetadata['background_color'],
-                    'category_icon_color' => $categoryUiMetadata['icon_color'],
                     'is_open' => $isOpen,
                     'store_status' => $isOpen ? 'Buka' : 'Tutup',
                     'open_time' => $tenant->open_time,
@@ -72,7 +60,6 @@ class GetTenantListController extends Controller
                     'operating_hours_label' => $tenant->operatingHoursLabel(),
                     'map_marker' => [
                         'title' => $tenant->name,
-                        'subtitle' => $tenant->category,
                         'latitude' => $tenant->latitude,
                         'longitude' => $tenant->longitude,
                         'is_open' => $isOpen,

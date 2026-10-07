@@ -55,6 +55,19 @@ class FinanceApiTest extends TestCase
             ->assertJsonPath('meta.total', 0);
     }
 
+    public function test_finance_spotlight_does_not_include_tenant_category(): void
+    {
+        [, $token] = $this->createAuthenticatedUser('finance-spotlight@example.com', '+6281400000020', 'finance-spotlight-token', User::ROLE_FINANCE);
+        $transaction = $this->createTransactionForStore('FIN020', 150000);
+        $transaction->update(['status' => Transaction::STATUS_COMPLETED]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/finance/dashboard')
+            ->assertOk()
+            ->assertJsonPath('data.umkm_spotlight.0.id', $transaction->items()->first()->tenant_id)
+            ->assertJsonMissingPath('data.umkm_spotlight.0.category');
+    }
+
     public function test_finance_can_confirm_buyer_payment_and_disburse_to_seller(): void
     {
         [, $token] = $this->createAuthenticatedUser('finance-flow@example.com', '+6281400000002', 'finance-flow-token', User::ROLE_FINANCE);
@@ -362,7 +375,6 @@ class FinanceApiTest extends TestCase
             'name' => 'Toko '.$orderNumber,
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_GROCERIES,
         ]);
 
         $product = Product::query()->create([

@@ -135,7 +135,6 @@ class FinanceDashboardAggregator
                     'id' => $tenant->id,
                     'name' => $tenant->name,
                     'initials' => $this->formatter->initials($tenant->name),
-                    'category' => $tenant->category,
                     'growth_percentage' => $this->formatter->growthPercentage($currentRevenue, $previousRevenue),
                     'current_revenue' => $currentRevenue,
                     'current_revenue_formatted' => $this->formatter->money($currentRevenue),

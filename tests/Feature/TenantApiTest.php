@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\HousingArea;
+use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserSessionToken;
@@ -43,7 +45,6 @@ class TenantApiTest extends TestCase
                 'name' => sprintf('Tenant %02d', $index),
                 'profile_picture_url' => sprintf('https://example.com/tenant-%02d.png', $index),
                 'rating' => 4.5,
-                'category' => Tenant::CATEGORY_TOILETRIES,
                 'latitude' => -6.2000000,
                 'longitude' => 106.8200000 + ($index / 1000),
                 'open_time' => '07:00',
@@ -59,11 +60,11 @@ class TenantApiTest extends TestCase
             ->assertJsonPath('meta.current_page', 1)
             ->assertJsonPath('meta.per_page', 10)
             ->assertJsonPath('meta.total', 12)
-            ->assertJsonPath('data.0.category', Tenant::CATEGORY_TOILETRIES)
-            ->assertJsonPath('data.0.category_slug', 'toiletries')
-            ->assertJsonPath('data.0.category_icon_key', 'toiletries')
-            ->assertJsonPath('data.0.category_background_color', '#FFF5DF')
-            ->assertJsonPath('data.0.category_icon_color', '#F4B544')
+            ->assertJsonMissingPath('data.0.category')
+            ->assertJsonMissingPath('data.0.category_slug')
+            ->assertJsonMissingPath('data.0.category_icon_key')
+            ->assertJsonMissingPath('data.0.category_background_color')
+            ->assertJsonMissingPath('data.0.category_icon_color')
             ->assertJsonPath('data.0.latitude', -6.2)
             ->assertJsonPath('data.0.longitude', 106.821)
             ->assertJsonPath('data.0.is_open', true)
@@ -72,7 +73,7 @@ class TenantApiTest extends TestCase
             ->assertJsonPath('data.0.close_time', '21:00')
             ->assertJsonPath('data.0.operating_hours_label', 'Buka 07:00 sd 21:00')
             ->assertJsonPath('data.0.map_marker.title', 'Tenant 01')
-            ->assertJsonPath('data.0.map_marker.subtitle', Tenant::CATEGORY_TOILETRIES)
+            ->assertJsonMissingPath('data.0.map_marker.subtitle')
             ->assertJsonPath('data.0.rating', 4.5);
 
         $this->assertCount(10, $response->json('data'));
@@ -111,7 +112,6 @@ class TenantApiTest extends TestCase
                 'name' => sprintf('Tenant %02d', $index),
                 'profile_picture_url' => sprintf('https://example.com/tenant-%02d.png', $index),
                 'rating' => 5.0,
-                'category' => Tenant::CATEGORY_GROCERIES,
                 'latitude' => -6.2100000,
                 'longitude' => 106.8260000 + ($index / 1000),
                 'open_time' => '07:00',
@@ -126,9 +126,9 @@ class TenantApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('meta.per_page', 3)
             ->assertJsonPath('meta.total', 5)
-            ->assertJsonPath('data.0.category', Tenant::CATEGORY_GROCERIES)
-            ->assertJsonPath('data.0.category_slug', 'sembako')
-            ->assertJsonPath('data.0.category_icon_key', 'groceries')
+            ->assertJsonMissingPath('data.0.category')
+            ->assertJsonMissingPath('data.0.category_slug')
+            ->assertJsonMissingPath('data.0.category_icon_key')
             ->assertJsonPath('data.0.is_open', false)
             ->assertJsonPath('data.0.store_status', 'Tutup');
 
@@ -172,7 +172,6 @@ class TenantApiTest extends TestCase
             'name' => 'Toko Area Target',
             'profile_picture_url' => 'https://example.com/target-area.png',
             'rating' => 4.8,
-            'category' => Tenant::CATEGORY_FOOD,
             'open_time' => '07:00',
             'close_time' => '21:00',
         ]);
@@ -182,7 +181,6 @@ class TenantApiTest extends TestCase
             'name' => 'Toko Area Lain',
             'profile_picture_url' => 'https://example.com/other-area.png',
             'rating' => 4.1,
-            'category' => Tenant::CATEGORY_GROCERIES,
             'open_time' => '07:00',
             'close_time' => '21:00',
         ]);
@@ -230,7 +228,7 @@ class TenantApiTest extends TestCase
             ->assertJsonValidationErrors(['housing_area_id']);
     }
 
-    public function test_tenant_list_can_be_filtered_by_category_and_sorted_by_nearest_distance(): void
+    public function test_tenant_list_can_be_filtered_by_product_category_without_tenant_category_columns(): void
     {
         $user = User::query()->create([
             'name' => 'Budi',
@@ -252,57 +250,63 @@ class TenantApiTest extends TestCase
             'expires_at' => now()->addDays(30),
         ]);
 
-        Tenant::query()->create([
+        $far = Tenant::query()->create([
             'name' => 'Toko Far',
             'profile_picture_url' => 'https://example.com/far.png',
             'rating' => 4.2,
-            'category' => Tenant::CATEGORY_TOILETRIES,
             'latitude' => -6.2400000,
             'longitude' => 106.8500000,
             'open_time' => '07:00',
             'close_time' => '21:00',
         ]);
 
-        Tenant::query()->create([
+        $near = Tenant::query()->create([
             'name' => 'Toko Near',
             'profile_picture_url' => 'https://example.com/near.png',
             'rating' => 4.9,
-            'category' => Tenant::CATEGORY_TOILETRIES,
             'latitude' => -6.2010000,
             'longitude' => 106.8170000,
             'open_time' => '07:00',
             'close_time' => '21:00',
         ]);
 
-        Tenant::query()->create([
+        $groceries = Tenant::query()->create([
             'name' => 'Toko Sembako',
             'profile_picture_url' => 'https://example.com/grocery.png',
             'rating' => 5.0,
-            'category' => Tenant::CATEGORY_GROCERIES,
             'latitude' => -6.2005000,
             'longitude' => 106.8165000,
             'open_time' => '07:00',
             'close_time' => '21:00',
         ]);
 
+        ProductCategory::query()->create([
+            'name' => 'Toiletries',
+            'slug' => 'toiletries',
+            'image_path' => 'images/toiletries.svg',
+        ]);
+        foreach ([$far, $near, $groceries] as $tenant) {
+            Product::query()->create([
+                'tenant_id' => $tenant->id,
+                'name' => 'Produk '.$tenant->name,
+                'category' => $tenant->id === $groceries->id ? 'Sembako' : 'Toiletries',
+                'price' => 10000,
+            ]);
+        }
+
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
-            ->getJson('/api/tenants?category='.urlencode(Tenant::CATEGORY_TOILETRIES));
+            ->getJson('/api/tenants?product_category=toiletries');
 
         $response
             ->assertOk()
             ->assertJsonPath('meta.total', 2)
-            ->assertJsonPath('data.0.name', 'Toko Near')
-            ->assertJsonPath('data.1.name', 'Toko Far')
-            ->assertJsonPath('data.0.category', Tenant::CATEGORY_TOILETRIES)
-            ->assertJsonPath('data.1.category', Tenant::CATEGORY_TOILETRIES);
+            ->assertJsonMissingPath('data.0.category')
+            ->assertJsonMissingPath('data.1.category');
 
-        $this->assertLessThan(
-            $response->json('data.1.distance_km'),
-            $response->json('data.0.distance_km')
-        );
+        $this->assertEqualsCanonicalizing([$far->id, $near->id], array_column($response->json('data'), 'id'));
     }
 
-    public function test_tenant_list_returns_validation_error_for_unknown_category(): void
+    public function test_tenant_list_returns_validation_error_for_unknown_product_category(): void
     {
         $user = User::query()->create([
             'name' => 'Budi',
@@ -325,11 +329,11 @@ class TenantApiTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
-            ->getJson('/api/tenants?category=Elektronik');
+            ->getJson('/api/tenants?product_category=elektronik');
 
         $response
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['category']);
+            ->assertJsonValidationErrors(['product_category']);
     }
 
     public function test_tenant_without_coordinates_has_null_distance_and_is_sorted_last(): void
@@ -360,7 +364,6 @@ class TenantApiTest extends TestCase
             'name' => 'Toko Tanpa Koordinat',
             'profile_picture_url' => 'https://example.com/no-coordinates.png',
             'rating' => 4.1,
-            'category' => Tenant::CATEGORY_FOOD,
             'latitude' => null,
             'longitude' => null,
             'open_time' => '07:00',
@@ -371,7 +374,6 @@ class TenantApiTest extends TestCase
             'name' => 'Toko Dekat',
             'profile_picture_url' => 'https://example.com/near.png',
             'rating' => 4.8,
-            'category' => Tenant::CATEGORY_FOOD,
             'latitude' => -6.2010000,
             'longitude' => 106.8170000,
             'open_time' => '07:00',

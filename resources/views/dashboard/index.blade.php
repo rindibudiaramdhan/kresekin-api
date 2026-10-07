@@ -432,7 +432,6 @@
                         <span class="avatar-initial avatar-initial--cyan">${initials(item.initials)}</span>
                         <div>
                             <div class="spotlight-card__name">${escapeHtml(item.name)}</div>
-                            <div class="spotlight-card__category">${escapeHtml(item.category || '-')}</div>
                         </div>
                         <div class="spotlight-card__growth">+${Number(item.growth_percentage || 0)}%</div>
                     </div>

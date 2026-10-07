@@ -48,7 +48,6 @@ class TransactionApiTest extends TestCase
 
         $tenant = Tenant::query()->create([
             'name' => 'Toko Aminah',
-            'category' => Tenant::CATEGORY_GROCERIES,
         ]);
 
         foreach (range(1, 12) as $index) {
@@ -233,7 +232,6 @@ class TransactionApiTest extends TestCase
 
         $tenant = Tenant::query()->create([
             'name' => 'Toko Segar Jaya',
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         TransactionItem::query()->create([

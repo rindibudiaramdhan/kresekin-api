@@ -66,7 +66,6 @@ class GetAgentSellerListController extends Controller
                 ->map(fn (Tenant $tenant): array => [
                     'id' => $tenant->id,
                     'name' => $tenant->name,
-                    'category' => $tenant->category,
                     'profile_picture_url' => $tenant->profile_picture_url,
                 ])
                 ->values(),

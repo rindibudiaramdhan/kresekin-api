@@ -53,7 +53,6 @@ class AgentManagedUmkmPerformanceQuery
             'display_id' => $tenant->id,
             'name' => $tenant->name,
             'initials' => $this->formatter->initials($tenant->name),
-            'category' => $tenant->category,
             'total_transaction_amount' => $currentRevenue,
             'total_transaction_amount_label' => $this->formatter->money($currentRevenue),
             'growth_percentage' => $growth,

@@ -15,8 +15,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'name',
     'profile_picture_url',
     'rating',
-    'category',
-    'product_category_id',
     'location',
     'latitude',
     'longitude',
@@ -210,11 +208,6 @@ class Tenant extends Model
         return $this->belongsTo(User::class, 'agent_user_id');
     }
 
-    public function productCategory(): BelongsTo
-    {
-        return $this->belongsTo(ProductCategory::class);
-    }
-
     public function housingAreas(): BelongsToMany
     {
         return $this->belongsToMany(HousingArea::class)
@@ -222,7 +215,7 @@ class Tenant extends Model
             ->withTimestamps();
     }
 
-    public static function categoryUiMetadata(string $category): array
+    public static function categoryUiMetadata(?string $category): array
     {
         return self::CATEGORY_UI_METADATA[$category] ?? [
             'icon_key' => str($category)->slug('_')->toString(),

@@ -39,7 +39,8 @@ class AgentApiTest extends TestCase
             ->assertJsonPath('data.stores.0.id', $tenant->id)
             ->assertJsonPath('data.stores.0.name', 'Tenant AGENT001')
             ->assertJsonPath('data.stores.0.transaction_count', 1)
-            ->assertJsonPath('data.stores.0.agent_commission', 5000);
+            ->assertJsonPath('data.stores.0.agent_commission', 5000)
+            ->assertJsonMissingPath('data.stores.0.category');
 
         $sellerListResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/agent/sellers');
@@ -48,7 +49,21 @@ class AgentApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.id', $seller->id)
             ->assertJsonPath('data.0.total_revenue', 100000)
-            ->assertJsonPath('meta.total', 1);
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonMissingPath('data.0.tenants.0.category');
+    }
+
+    public function test_agent_seller_detail_does_not_include_tenant_category(): void
+    {
+        [$agent, $token] = $this->createAuthenticatedUser('detail-agent@example.com', '+6281300000020', 'detail-agent-token', User::ROLE_AGENT);
+        [$seller] = $this->createAuthenticatedUser('detail-seller@example.com', '+6281300000021', 'detail-seller-token', User::ROLE_SELLER);
+        $tenant = $this->createTenantWithCompletedOrder($agent, $seller, 'DETAIL001', 100000);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/agent/sellers/'.$seller->id)
+            ->assertOk()
+            ->assertJsonPath('data.tenants.0.id', $tenant->id)
+            ->assertJsonMissingPath('data.tenants.0.category');
     }
 
     public function test_agent_dashboard_returns_distinct_managed_area_count(): void
@@ -98,6 +113,7 @@ class AgentApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('message', 'Performa UMKM binaan berhasil diambil.')
             ->assertJsonPath('data.0.id', $alpha->id)
+            ->assertJsonMissingPath('data.0.category')
             ->assertJsonPath('data.0.total_transaction_amount', 200000)
             ->assertJsonPath('data.0.agent_commission', 10000)
             ->assertJsonPath('data.0.growth_label', 'Baru')
@@ -205,7 +221,6 @@ class AgentApiTest extends TestCase
             'name' => 'Tenant '.$orderNumber,
             'profile_picture_url' => null,
             'rating' => 0,
-            'category' => Tenant::CATEGORY_GROCERIES,
         ]);
 
         $buyer = User::query()->create([

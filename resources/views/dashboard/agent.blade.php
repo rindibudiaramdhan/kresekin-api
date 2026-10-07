@@ -552,7 +552,6 @@
                             <thead>
                                 <tr>
                                     <th>NAMA UMKM</th>
-                                    <th>KATEGORI</th>
                                     <th>TOTAL TRANSAKSI</th>
                                     <th>GROWTH</th>
                                     <th>KOMISI FEE</th>
@@ -716,7 +715,6 @@
                                     </span>
                                 </span>
                             </td>
-                            <td>${escapeHtml(row.category || '-')}</td>
                             <td>${escapeHtml(row.total_transaction_amount_label || 'Rp 0')}</td>
                             <td><span class="growth-value ${growthClass}">${escapeHtml(row.growth_label || '0.0%')}</span></td>
                             <td><span class="money-positive">${escapeHtml(row.agent_commission_label || 'Rp 0')}</span></td>

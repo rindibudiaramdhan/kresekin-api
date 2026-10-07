@@ -44,9 +44,9 @@ class OwnerMonitoringApiTest extends TestCase
         $this->sellerB->update(['name' => 'Cabang B', 'branch_owner_user_id' => $this->owner->id]);
         $this->outsideSeller->update(['name' => 'Cabang Luar', 'branch_owner_user_id' => $otherOwner->id]);
 
-        $this->storeA = Tenant::query()->create(['owner_user_id' => $this->sellerA->id, 'name' => 'Toko A', 'category' => Tenant::CATEGORY_GROCERIES]);
-        $this->storeB = Tenant::query()->create(['owner_user_id' => $this->sellerB->id, 'name' => 'Toko B', 'category' => Tenant::CATEGORY_GROCERIES]);
-        $outsideStore = Tenant::query()->create(['owner_user_id' => $this->outsideSeller->id, 'name' => 'Toko Luar', 'category' => Tenant::CATEGORY_GROCERIES]);
+        $this->storeA = Tenant::query()->create(['owner_user_id' => $this->sellerA->id, 'name' => 'Toko A']);
+        $this->storeB = Tenant::query()->create(['owner_user_id' => $this->sellerB->id, 'name' => 'Toko B']);
+        $outsideStore = Tenant::query()->create(['owner_user_id' => $this->outsideSeller->id, 'name' => 'Toko Luar']);
 
         $completed = $this->transaction('ORDER-001', Transaction::STATUS_COMPLETED, '2026-08-06 08:00:00');
         $this->item($completed, $this->storeA, 2, 100000);

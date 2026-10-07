@@ -31,7 +31,6 @@ class ProductApiTest extends TestCase
             'name' => 'Toko Aminah',
             'profile_picture_url' => 'https://example.com/aminah.png',
             'rating' => 5.0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $plainTextToken = 'product-list-token';
@@ -88,14 +87,12 @@ class ProductApiTest extends TestCase
             'name' => 'Toko Aminah',
             'profile_picture_url' => null,
             'rating' => 5.0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $tenantB = Tenant::query()->create([
             'name' => 'Toko Asep',
             'profile_picture_url' => null,
             'rating' => 4.7,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         $plainTextToken = 'product-filter-token';
@@ -176,7 +173,6 @@ class ProductApiTest extends TestCase
             'name' => 'Toko Area Target',
             'profile_picture_url' => null,
             'rating' => 4.8,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
         $targetTenant->housingAreas()->sync([$targetArea->id]);
 
@@ -184,7 +180,6 @@ class ProductApiTest extends TestCase
             'name' => 'Toko Area Lain',
             'profile_picture_url' => null,
             'rating' => 4.1,
-            'category' => Tenant::CATEGORY_GROCERIES,
         ]);
         $otherTenant->housingAreas()->sync([$otherArea->id]);
 
@@ -278,7 +273,6 @@ class ProductApiTest extends TestCase
             'name' => 'Toko Promo',
             'profile_picture_url' => null,
             'rating' => 4.8,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         Product::query()->create([
@@ -347,7 +341,6 @@ class ProductApiTest extends TestCase
             'name' => 'Toko Null Distance',
             'profile_picture_url' => 'https://example.com/null-distance.png',
             'rating' => 4.2,
-            'category' => Tenant::CATEGORY_VEGETABLES,
             'latitude' => null,
             'longitude' => null,
         ]);

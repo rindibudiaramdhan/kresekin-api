@@ -655,7 +655,6 @@ class CheckoutApiTest extends TestCase
             'name' => 'Toko Aminah',
             'profile_picture_url' => 'https://example.com/aminah.png',
             'rating' => 5.0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
         ]);
 
         return Product::query()->create([

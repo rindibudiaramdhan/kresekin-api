@@ -55,13 +55,6 @@
             letter-spacing: .04em;
         }
 
-        .spotlight-card__category {
-            margin-top: 4px;
-            color: rgba(255, 255, 255, .72);
-            font-size: 13px;
-            font-weight: 700;
-        }
-
         .spotlight-card__growth {
             color: #69f090;
             font-size: 16px;
@@ -101,7 +94,6 @@
                     <x-dashboard.avatar-initial :initials="$item['initials']" tone="cyan" />
                     <div>
                         <div class="spotlight-card__name">{{ $item['name'] }}</div>
-                        <div class="spotlight-card__category">{{ $item['category'] }}</div>
                     </div>
                     <div class="spotlight-card__growth">+{{ $item['growth'] }}%</div>
                 </div>

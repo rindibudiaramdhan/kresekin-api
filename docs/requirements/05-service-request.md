@@ -51,9 +51,10 @@ Requirement:
 Requirement:
 
 1. Seller dapat melihat dan membuat tenant melalui prefix `/api/seller/tenants`.
-2. Tenant baru wajib terkait ke seller aktif sebagai owner.
-3. Seller tidak boleh mengubah tenant seller lain.
+2. Tenant baru wajib terkait ke seller aktif sebagai owner. Tenant tidak memiliki kolom kategori; input legacy `category`, `category_id`, dan `product_category_id` diabaikan saat create.
+3. Seller tidak boleh mengubah tenant seller lain. Endpoint update tenant belum tersedia; model dan request tenant tidak menerima atribut kategori.
 4. Data tenant yang berdampak ke katalog buyer harus divalidasi ketat.
+5. Respons data tenant pada create/list seller, list buyer, serta list/detail seller binaan agent tidak menyertakan field kategori atau metadata kategori.
 
 ## Seller Product Management
 

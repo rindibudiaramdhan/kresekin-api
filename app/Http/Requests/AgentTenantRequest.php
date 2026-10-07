@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,7 +28,6 @@ class AgentTenantRequest extends FormRequest
             'seller_password' => ['nullable', 'string', 'min:8', 'required_if:owner_mode,new'],
             'name' => ['required', 'string', 'max:255'],
             'profile_picture_url' => ['nullable', 'url', 'max:255'],
-            'category' => ['required', 'string', Rule::in(Tenant::CATEGORIES)],
             'rating' => ['nullable', 'numeric', 'min:0', 'max:5'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],

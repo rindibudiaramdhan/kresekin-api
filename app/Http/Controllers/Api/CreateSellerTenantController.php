@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateSellerTenantRequest;
-use App\Models\ProductCategory;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +21,6 @@ class CreateSellerTenantController extends Controller
                 ->where('agent_code', $validated['agent_code'])
                 ->firstOrFail()
             : null;
-        $category = ProductCategory::query()->findOrFail($validated['category_id']);
 
         $seller->forceFill([
             'name' => $validated['owner_name'],
@@ -34,8 +32,6 @@ class CreateSellerTenantController extends Controller
             'owner_user_id' => $seller->id,
             'agent_user_id' => $agent?->id,
             'name' => $validated['name'],
-            'category' => $category->name,
-            'product_category_id' => $category->id,
             'location' => $validated['location'],
             'profile_picture_url' => $validated['profile_picture_url'] ?? null,
             'rating' => $validated['rating'] ?? 0,
@@ -46,7 +42,7 @@ class CreateSellerTenantController extends Controller
         ]);
 
         $tenant->housingAreas()->sync($validated['housing_area_ids']);
-        $tenant->load(['agent', 'housingAreas', 'owner', 'productCategory']);
+        $tenant->load(['agent', 'housingAreas', 'owner']);
 
         return response()->json([
             'message' => 'Tenant seller berhasil dibuat.',
@@ -62,13 +58,6 @@ class CreateSellerTenantController extends Controller
                     'email' => $tenant->owner?->email,
                 ],
                 'name' => $tenant->name,
-                'category_id' => $tenant->product_category_id,
-                'category' => $tenant->category,
-                'category_master' => [
-                    'id' => $tenant->productCategory?->id,
-                    'name' => $tenant->productCategory?->name,
-                    'slug' => $tenant->productCategory?->slug,
-                ],
                 'location' => $tenant->location,
                 'housing_areas' => $tenant->housingAreas
                     ->map(fn ($housingArea): array => [

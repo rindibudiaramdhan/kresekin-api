@@ -326,7 +326,6 @@ class CartApiTest extends TestCase
             'name' => 'Toko Aminah',
             'profile_picture_url' => 'https://example.com/aminah.png',
             'rating' => 5.0,
-            'category' => Tenant::CATEGORY_VEGETABLES,
             'latitude' => -6.2010000,
             'longitude' => 106.8170000,
         ]);

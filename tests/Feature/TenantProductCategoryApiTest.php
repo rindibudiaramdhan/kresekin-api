@@ -122,7 +122,6 @@ class TenantProductCategoryApiTest extends TestCase
         return Tenant::query()->create([
             'name' => $name,
             'rating' => 4.8,
-            'category' => Tenant::CATEGORY_GROCERIES,
         ]);
     }
 

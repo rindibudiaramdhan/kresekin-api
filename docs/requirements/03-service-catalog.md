@@ -13,14 +13,14 @@ Master data pendukung meliputi kategori produk, satuan produk, area perumahan, m
 
 ## Tenant / UMKM
 
-Tenant menyimpan identitas usaha, owner seller, agent pembina, kategori, lokasi, rating, jam operasional, dan relasi area perumahan.
+Tenant menyimpan identitas usaha, owner seller, agent pembina, lokasi, rating, jam operasional, dan relasi area perumahan.
 
 Requirement:
 
 1. Tenant harus memiliki owner seller melalui `owner_user_id`.
 2. Tenant dapat dikaitkan ke agent melalui `agent_user_id`.
 3. Tenant dapat dikaitkan ke banyak housing area.
-4. Kategori tenant harus berasal dari daftar yang stabil atau product category yang valid.
+4. Tabel `tenants` tidak memiliki kolom `category` maupun `product_category_id`; kategori hanya terkait produk. Respons objek tenant tidak menyertakan `category`, `category_id`, `category_master`, metadata `category_*`, `product_categories`, atau `product_category_slugs`.
 5. Jam operasional harus dapat ditampilkan sebagai label dan dipakai untuk status buka/tutup.
 6. Endpoint seller hanya boleh membuat/mengubah tenant milik seller aktif.
 7. Endpoint buyer hanya menampilkan tenant yang relevan untuk katalog buyer.
