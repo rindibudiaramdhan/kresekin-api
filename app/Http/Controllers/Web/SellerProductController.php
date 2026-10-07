@@ -5,18 +5,18 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SellerProductRequest;
 use App\Models\Product;
-use App\Models\Tenant;
+use App\Models\ProductCategory;
+use App\Support\ProductCategoryWriter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\Response;
 
 class SellerProductController extends Controller
 {
     public function index(Request $request): View
     {
         $products = Product::query()
-            ->with('tenant')
+            ->with(['tenant', 'productCategory'])
             ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
             ->latest()
             ->paginate(10);
@@ -29,15 +29,15 @@ class SellerProductController extends Controller
     public function create(Request $request): View
     {
         return view('seller.products.form', [
-            'product' => new Product(),
+            'product' => new Product,
             'tenants' => $request->user()->ownedTenants()->latest()->get(),
-            'categories' => Tenant::CATEGORIES,
+            'categories' => ProductCategory::query()->orderBy('name')->get(),
         ]);
     }
 
     public function store(SellerProductRequest $request): RedirectResponse
     {
-        Product::query()->create($request->validated());
+        Product::query()->create(app(ProductCategoryWriter::class)->attributes($request->validated()));
 
         return redirect()
             ->route('seller.products.index')
@@ -47,7 +47,7 @@ class SellerProductController extends Controller
     public function edit(Request $request, string $id): View
     {
         $product = Product::query()
-            ->with('tenant')
+            ->with(['tenant', 'productCategory'])
             ->where('id', $id)
             ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
             ->firstOrFail();
@@ -55,7 +55,7 @@ class SellerProductController extends Controller
         return view('seller.products.form', [
             'product' => $product,
             'tenants' => $request->user()->ownedTenants()->latest()->get(),
-            'categories' => Tenant::CATEGORIES,
+            'categories' => ProductCategory::query()->orderBy('name')->get(),
         ]);
     }
 
@@ -66,7 +66,7 @@ class SellerProductController extends Controller
             ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
             ->firstOrFail();
 
-        $product->update($request->validated());
+        $product->update(app(ProductCategoryWriter::class)->attributes($request->validated()));
 
         return redirect()
             ->route('seller.products.index')

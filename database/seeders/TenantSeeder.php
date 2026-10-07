@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Models\Tenant;
+use App\Support\ProductCategoryResolver;
 use Illuminate\Database\Seeder;
 
 class TenantSeeder extends Seeder
@@ -86,6 +87,10 @@ class TenantSeeder extends Seeder
 
             foreach ($products as $productData) {
                 $unitName = $productData['unit'] ?? 'pcs';
+                $productCategory = app(ProductCategoryResolver::class)->resolve($productData['category']);
+                if (! $productCategory) {
+                    throw new \RuntimeException('Kategori fixture tidak cocok dengan master unik. Jalankan ProductCategorySeeder terlebih dahulu.');
+                }
                 $productUnit = ProductUnit::query()->where('name', $unitName)->first();
 
                 Product::query()->updateOrCreate(
@@ -94,7 +99,8 @@ class TenantSeeder extends Seeder
                         'name' => $productData['name'],
                     ],
                     [
-                        'category' => $productData['category'],
+                        'category' => $productCategory->name,
+                        'product_category_id' => $productCategory->id,
                         'image_url' => $productData['image_url'],
                         'price' => $productData['price'],
                         'original_price' => $productData['original_price'] ?? null,

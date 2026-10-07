@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Support\ProductCategoryPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,7 +14,7 @@ class GetSellerProductDetailController extends Controller
     public function __invoke(Request $request, string $id): JsonResponse
     {
         $product = Product::query()
-            ->with(['tenant', 'productUnit'])
+            ->with(['tenant', 'productUnit', 'productCategory'])
             ->where('id', $id)
             ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
             ->first();
@@ -37,7 +38,7 @@ class GetSellerProductDetailController extends Controller
             'tenant_id' => $product->tenant_id,
             'tenant_name' => $product->tenant?->name,
             'name' => $product->name,
-            'category' => $product->category,
+            ...ProductCategoryPresenter::fields($product),
             'image_url' => $product->publicImageUrl(),
             'price' => $product->price,
             'original_price' => $product->original_price,

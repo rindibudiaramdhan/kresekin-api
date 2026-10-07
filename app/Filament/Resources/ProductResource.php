@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
-use App\Models\Tenant;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -23,6 +22,7 @@ class ProductResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with('productCategory')
             ->whereHas('tenant', fn (Builder $query) => $query->where('owner_user_id', auth()->id()));
     }
 
@@ -43,8 +43,11 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('category')
-                    ->options(array_combine(Tenant::CATEGORIES, Tenant::CATEGORIES))
+                Forms\Components\Select::make('product_category_id')
+                    ->label('Kategori')
+                    ->relationship('productCategory', 'name')
+                    ->rules(['uuid', 'exists:product_categories,id'])
+                    ->helperText(fn (?Product $record) => $record && ! $record->product_category_id ? 'Kategori lama belum dipetakan. Pilih kategori master sebelum menyimpan.' : null)
                     ->required()
                     ->searchable(),
                 Forms\Components\FileUpload::make('image_path')
@@ -93,7 +96,7 @@ class ProductResource extends Resource
                     ->label('Tenant')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('category')
+                Tables\Columns\TextColumn::make('productCategory.name')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price')

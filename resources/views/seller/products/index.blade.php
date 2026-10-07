@@ -36,7 +36,7 @@
                         <div class="text-secondary small">{{ $product->weight_label }}</div>
                     </td>
                     <td>{{ $product->tenant?->name }}</td>
-                    <td>{{ $product->category }}</td>
+                    <td>{{ $product->categoryName() }}</td>
                     <td>Rp {{ number_format($product->price, 0, ',', '.') }}</td>
                     <td>
                         <div class="d-flex flex-wrap gap-2">

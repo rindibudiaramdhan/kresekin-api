@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +21,7 @@ class SellerProductRequest extends FormRequest
                 Rule::exists('tenants', 'id')->where(fn ($query) => $query->where('owner_user_id', $this->user()->id)),
             ],
             'name' => ['required', 'string', 'max:255'],
-            'category' => ['required', 'string', Rule::in(Tenant::CATEGORIES)],
+            'product_category_id' => ['required', 'uuid', Rule::exists('product_categories', 'id')],
             'image_url' => ['nullable', 'url', 'max:255'],
             'price' => ['required', 'integer', 'min:0'],
             'original_price' => ['nullable', 'integer', 'min:0', 'gte:price'],

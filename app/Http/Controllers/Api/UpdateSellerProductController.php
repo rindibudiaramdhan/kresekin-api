@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateSellerProductRequest;
 use App\Models\Product;
 use App\Models\ProductUnit;
+use App\Support\ProductCategoryPresenter;
 use App\Support\ProductImageStorage;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +16,7 @@ class UpdateSellerProductController extends Controller
     public function __invoke(UpdateSellerProductRequest $request, string $id): JsonResponse
     {
         $product = Product::query()
-            ->with(['tenant', 'productUnit'])
+            ->with(['tenant', 'productUnit', 'productCategory'])
             ->where('id', $id)
             ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
             ->first();
@@ -27,6 +28,9 @@ class UpdateSellerProductController extends Controller
         }
 
         $validated = $request->safe()->except('image');
+        $productCategory = $request->productCategory();
+        $validated['product_category_id'] = $productCategory->id;
+        $validated['category'] = $productCategory->name;
         $productUnit = ProductUnit::query()->findOrFail($validated['product_unit_id']);
         $validated['unit'] = $productUnit->name;
         $imageStorage = new ProductImageStorage;
@@ -53,7 +57,7 @@ class UpdateSellerProductController extends Controller
         }
 
         $product->update($validated);
-        $product->load(['tenant', 'productUnit']);
+        $product->load(['tenant', 'productUnit', 'productCategory']);
 
         return response()->json([
             'message' => 'Produk seller berhasil diperbarui.',
@@ -68,7 +72,7 @@ class UpdateSellerProductController extends Controller
             'tenant_id' => $product->tenant_id,
             'tenant_name' => $product->tenant?->name,
             'name' => $product->name,
-            'category' => $product->category,
+            ...ProductCategoryPresenter::fields($product),
             'image_url' => $product->publicImageUrl(),
             'price' => $product->price,
             'original_price' => $product->original_price,

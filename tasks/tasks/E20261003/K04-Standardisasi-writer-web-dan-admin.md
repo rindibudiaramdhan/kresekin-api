@@ -1,9 +1,9 @@
 # E20261003-K04 — Standardisasi writer web dan admin
 
 - Tanggal: 2026-10-03
-- Status: Planned — belum diimplementasikan
+- Status: Implementasi web teruji; admin belum terverifikasi runtime
 - Epic: [E20261003](../../epic/E20261003-Pemisahan%20Kategori%20Tenant%20dan%20Standardisasi%20Kategori%20Produk.md)
-- Timeline: [timeline](../../timeline.md)
+- Timeline: [timeline](timeline.md)
 - PIC peran: Backend Web / Admin; nama personel ditetapkan pada K01
 - Target baseline: M2
 - Estimasi: 2–3 hari kerja effort, bukan janji durasi kalender
@@ -39,3 +39,13 @@ Untuk perubahan PHP, jalankan Pint dan test relevan; perubahan behavior mempunya
 - Hasil test/verifikasi: belum tersedia.
 - Bukti deployment/operasi/client jika relevan: belum tersedia.
 - PIC personel dan keputusan gate: belum ditetapkan.
+
+## Implementasi dan bukti lokal — 2026-10-04
+
+- Form web mengambil pilihan master database, mengirim ID, memvalidasi UUID/existence dan ownership tenant, serta dual-write lewat `ProductCategoryWriter`. Edit memilih ID tersimpan; produk legacy tanpa ID menampilkan penjelasan dan tetap meminta pilihan eksplisit. Tidak ada default/fuzzy mapping otomatis pada form.
+- ProductResource admin memakai relasi master, validasi ID dan penjelasan legacy. Hook create/save menjalankan dual-write dan memeriksa tenant tujuan milik user aktif.
+- TenantSeeder/PromoProductSeeder sebagai writer fixture memakai resolver master unik, menyimpan ID dan nama master, serta gagal eksplisit bila master tidak tersedia. ProductCategorySeeder harus dijalankan lebih dahulu; identitas master dipertahankan.
+- `ProductCategoryWebWriterTest`: 5 test, 70 assertion lolos (web create/edit/preselection, record legacy, ownership, helper writer admin, fixture repeat). Test helper tidak membuktikan UI/hook Filament berfungsi.
+- Filament tidak ditemukan di composer.json/composer.lock/vendor; tidak memasang dependensi baru. Verifikasi UI/admin pada environment yang mengaktifkan Filament masih diperlukan sebelum checklist lintas web/admin dinyatakan selesai. PHP admin diperiksa syntax/format secara lokal.
+- Hanya template Blade berubah; tidak ada CSS/JS/Vite asset berubah. Render form sudah diuji melalui HTTP test, sehingga build asset tidak diperlukan untuk perubahan ini.
+- Verifikasi gabungan: 58 test lolos, 484 assertion. Gate K02/deployment tetap belum terpenuhi; tiket belum DONE.

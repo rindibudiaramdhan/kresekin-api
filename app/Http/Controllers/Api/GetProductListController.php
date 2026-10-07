@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductCategory;
-use App\Models\Tenant;
+use App\Support\ProductCategoryPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -41,7 +41,7 @@ class GetProductListController extends Controller
             : null;
 
         $products = Product::query()
-            ->with(['tenant', 'productUnit'])
+            ->with(['tenant', 'productUnit', 'productCategory'])
             ->where('is_active', true)
             ->when(
                 $productCategory,
@@ -79,7 +79,6 @@ class GetProductListController extends Controller
         return response()->json([
             'message' => 'Daftar barang berhasil diambil.',
             'data' => $products->getCollection()->map(function (Product $product): array {
-                $categoryUiMetadata = Tenant::categoryUiMetadata($product->category);
                 $discountPercentage = $this->discountPercentage($product->price, $product->original_price);
 
                 return [
@@ -87,11 +86,7 @@ class GetProductListController extends Controller
                     'tenant_id' => $product->tenant_id,
                     'tenant_name' => $product->tenant?->name,
                     'name' => $product->name,
-                    'category' => $product->category,
-                    'category_slug' => str($product->category)->slug()->toString(),
-                    'category_icon_key' => $categoryUiMetadata['icon_key'],
-                    'category_background_color' => $categoryUiMetadata['background_color'],
-                    'category_icon_color' => $categoryUiMetadata['icon_color'],
+                    ...ProductCategoryPresenter::fields($product, withMetadata: true),
                     'image_url' => $product->publicImageUrl(),
                     'price' => $product->price,
                     'price_label' => $this->moneyLabel($product->price),

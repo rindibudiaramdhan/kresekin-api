@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\Tenant;
+use App\Support\ProductCategoryPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,7 +14,7 @@ class GetProductDetailController extends Controller
     public function __invoke(Request $request, string $id): JsonResponse
     {
         $product = Product::query()
-            ->with(['tenant', 'productUnit'])
+            ->with(['tenant', 'productUnit', 'productCategory'])
             ->where('is_active', true)
             ->find($id);
 
@@ -34,8 +34,6 @@ class GetProductDetailController extends Controller
             )
             : null;
 
-        $categoryUiMetadata = Tenant::categoryUiMetadata($product->category);
-
         return response()->json([
             'message' => 'Detail barang berhasil diambil.',
             'data' => [
@@ -44,11 +42,7 @@ class GetProductDetailController extends Controller
                 'tenant_name' => $tenant?->name,
                 'tenant_profile_picture_url' => $tenant?->profile_picture_url,
                 'name' => $product->name,
-                'category' => $product->category,
-                'category_slug' => str($product->category)->slug()->toString(),
-                'category_icon_key' => $categoryUiMetadata['icon_key'],
-                'category_background_color' => $categoryUiMetadata['background_color'],
-                'category_icon_color' => $categoryUiMetadata['icon_color'],
+                ...ProductCategoryPresenter::fields($product, withMetadata: true),
                 'image_url' => $product->publicImageUrl(),
                 'price' => $product->price,
                 'price_label' => $this->moneyLabel($product->price),

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\DeliveryMethod;
+use App\Support\ProductCategoryPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,7 +19,7 @@ class GetCartController extends Controller
         ]);
 
         $cartItems = CartItem::query()
-            ->with(['product.tenant'])
+            ->with(['product.tenant', 'product.productCategory'])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get();
@@ -42,6 +43,7 @@ class GetCartController extends Controller
                     'product' => [
                         'id' => $item->product->id,
                         'name' => $item->product->name,
+                        ...ProductCategoryPresenter::fields($item->product),
                         'image_url' => $item->product->publicImageUrl(),
                         'price' => $item->product->price,
                         'price_label' => $this->moneyLabel($item->product->price),

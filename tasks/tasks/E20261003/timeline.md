@@ -1,8 +1,8 @@
 # Timeline — E20261003: Pemisahan Kategori Tenant dan Standardisasi Kategori Produk
 
 - Dibuat: 2026-10-03; zona waktu Asia/Jakarta.
-- Status: baseline perencanaan; belum ada implementasi atau deployment yang dijalankan.
-- Epic: [E20261003](epic/E20261003-Pemisahan%20Kategori%20Tenant%20dan%20Standardisasi%20Kategori%20Produk.md).
+- Status: baseline rollout; implementasi lokal K02–K05/K07 tersedia sebagian/teruji sesuai catatan berikut. Deployment dan gate produksi belum terverifikasi.
+- Epic: [E20261003](../../epic/E20261003-Pemisahan%20Kategori%20Tenant%20dan%20Standardisasi%20Kategori%20Produk.md).
 - Target mulai: Senin, 5 Oktober 2026. Target selesai bersyarat: Jumat, 27 November 2026.
 
 ## Tujuan untuk tim
@@ -35,18 +35,18 @@ K07 dapat dikembangkan sebelum K06 selesai, tetapi perpindahan penuh reader menu
 | Tiket | Hasil utama | Target | PIC peran | Dependensi | Estimasi effort hari kerja |
 | --- | --- | --- | --- | --- | --- |
 | [K01](../../DONE/E20261003/K01-Audit-kontrak-dan-keputusan-transisi.md) | Audit kontrak dan keputusan transisi | M1 | Engineering Lead | — | 2–3 |
-| [K02](tasks/E20261003/K02-Ekspansi-schema-dan-relasi-produk.md) | Ekspansi schema dan relasi produk | M1–M2 | Backend / Database | K01 | 2–3 |
-| [K03](tasks/E20261003/K03-Standardisasi-writer-produk-API.md) | Standardisasi writer produk API | M2 | Backend API | K02 | 3–4 |
-| [K04](tasks/E20261003/K04-Standardisasi-writer-web-dan-admin.md) | Standardisasi writer web dan admin | M2 | Backend Web / Admin | K02 | 2–3 |
-| [K05](tasks/E20261003/K05-Alat-audit-dan-backfill-kategori-produk.md) | Alat audit dan backfill kategori produk | M2 | Backend / Database | K02 | 3–4 |
-| [K06](tasks/E20261003/K06-Eksekusi-dan-rekonsiliasi-backfill.md) | Eksekusi dan rekonsiliasi backfill | M3 | Database / Operations + Domain Owner | K03, K04, K05 sudah dirilis | 2–3 |
-| [K07](tasks/E20261003/K07-Reader-dan-response-produk-berbasis-master.md) | Reader dan response produk berbasis master | M3–M4 | Backend API | K03, K06; pengembangan dapat dimulai setelah K03 | 3–4 |
-| [K08](tasks/E20261003/K08-Filter-dan-agregasi-kategori-tenant-berbasis-ID.md) | Filter dan agregasi kategori tenant berbasis ID | M4 | Backend API / Query | K06, K07 | 3–4 |
-| [K09](tasks/E20261003/K09-Tenant-tanpa-kategori-dan-dashboard-terdampak.md) | Tenant tanpa kategori dan dashboard terdampak | M4–M5 | Backend API / Dashboard | K02, K08, keputusan dan bukti kompatibilitas K01/K10 | 3–4 |
-| [K10](tasks/E20261003/K10-Dokumentasi-kontrak-dan-koordinasi-migrasi-client.md) | Dokumentasi kontrak dan koordinasi migrasi client | M1–M7 | Engineering Lead + Client PIC + Product | K01; finalisasi mengikuti K03–K09 | 3–5 internal; effort client dihitung oleh PIC |
-| [K11](tasks/E20261003/K11-Verifikasi-rollout-dan-readiness-gate.md) | Verifikasi rollout dan readiness gate | M5–M7 | QA + Release Owner | K03–K10; persiapan paralel, sign-off setelah semuanya siap | 3–4 |
-| [K12](tasks/E20261003/K12-Penghentian-kontrak-kategori-lama.md) | Penghentian kontrak kategori lama | M8 awal | Backend API + Client PIC | K11 sign-off, K10 selesai | 1–2 |
-| [K13](tasks/E20261003/K13-Cleanup-schema-dan-verifikasi-akhir.md) | Cleanup schema dan verifikasi akhir | M8 akhir | Backend / Database + Release Owner | K12 observasi lulus, backup dan gate K11 masih valid | 2–3 |
+| [K02](K02-Ekspansi-schema-dan-relasi-produk.md) | Ekspansi schema dan relasi produk | M1–M2 | Backend / Database | K01 | 2–3 |
+| [K03](K03-Standardisasi-writer-produk-API.md) | Standardisasi writer produk API | M2 | Backend API | K02 | 3–4 |
+| [K04](K04-Standardisasi-writer-web-dan-admin.md) | Standardisasi writer web dan admin | M2 | Backend Web / Admin | K02 | 2–3 |
+| [K05](K05-Alat-audit-dan-backfill-kategori-produk.md) | Alat audit dan backfill kategori produk | M2 | Backend / Database | K02 | 3–4 |
+| [K06](K06-Eksekusi-dan-rekonsiliasi-backfill.md) | Eksekusi dan rekonsiliasi backfill | M3 | Database / Operations + Domain Owner | K03, K04, K05 sudah dirilis | 2–3 |
+| [K07](K07-Reader-dan-response-produk-berbasis-master.md) | Reader dan response produk berbasis master | M3–M4 | Backend API | K03, K06; pengembangan dapat dimulai setelah K03 | 3–4 |
+| [K08](K08-Filter-dan-agregasi-kategori-tenant-berbasis-ID.md) | Filter dan agregasi kategori tenant berbasis ID | M4 | Backend API / Query | K06, K07 | 3–4 |
+| [K09](K09-Tenant-tanpa-kategori-dan-dashboard-terdampak.md) | Tenant tanpa kategori dan dashboard terdampak | M4–M5 | Backend API / Dashboard | K02, K08, keputusan dan bukti kompatibilitas K01/K10 | 3–4 |
+| [K10](K10-Dokumentasi-kontrak-dan-koordinasi-migrasi-client.md) | Dokumentasi kontrak dan koordinasi migrasi client | M1–M7 | Engineering Lead + Client PIC + Product | K01; finalisasi mengikuti K03–K09 | 3–5 internal; effort client dihitung oleh PIC |
+| [K11](K11-Verifikasi-rollout-dan-readiness-gate.md) | Verifikasi rollout dan readiness gate | M5–M7 | QA + Release Owner | K03–K10; persiapan paralel, sign-off setelah semuanya siap | 3–4 |
+| [K12](K12-Penghentian-kontrak-kategori-lama.md) | Penghentian kontrak kategori lama | M8 awal | Backend API + Client PIC | K11 sign-off, K10 selesai | 1–2 |
+| [K13](K13-Cleanup-schema-dan-verifikasi-akhir.md) | Cleanup schema dan verifikasi akhir | M8 akhir | Backend / Database + Release Owner | K12 observasi lulus, backup dan gate K11 masih valid | 2–3 |
 
 ## Dependensi dan jalur yang menentukan selesai
 
@@ -116,7 +116,21 @@ Setiap PIC memperbarui status tiket, PR, hasil test dan blocker sebelum review m
 
 ## Bukti dan status saat ini
 
-- K01: DONE untuk audit backend/API contract pada 2026-10-04; K02–K13 tetap Planned. PIC mobile, mapping kategori lama, operations/database dan release owner: Rindi; personel pelaksana lain belum ditetapkan.
-- Matriks audit backend dan baseline data K01 tersedia: PostgreSQL 18.6 (4e955f5), 17 produk (10 non-soft-deleted, 7 soft-deleted), berdasarkan output query pengguna. Versi/uji mobile, ritme rilis aktual, hasil test aplikasi, backfill dan deployment belum terverifikasi. Penutupan audit API tidak meluluskan gate produksi.
+- K01: DONE untuk audit backend/API contract pada 2026-10-04; K02–K05/K07 mempunyai implementasi lokal dan K10 dokumentasi writer sebagian. K06/K08–K09/K11–K13 belum dijalankan; belum ada tiket tambahan dipindahkan ke DONE. PIC mobile, mapping kategori lama, operations/database dan release owner: Rindi; personel pelaksana lain belum ditetapkan.
+- Matriks audit backend dan baseline data K01 tersedia: PostgreSQL 18.6 (4e955f5), 17 produk (10 non-soft-deleted, 7 soft-deleted), berdasarkan output query pengguna. Versi/uji mobile, ritme rilis aktual, hasil uji client/produksi, backfill dan deployment belum terverifikasi. Penutupan audit API tidak meluluskan gate produksi.
 - Gate G1–G7: belum terpenuhi.
-- Timeline ini dan tiket turunannya mendokumentasikan pekerjaan; tidak menjalankan migration, backfill atau deployment.
+- Migration/backfill hanya dijalankan pada fixture database test terisolasi; belum ada migration, backfill atau deployment pada database bersama/produksi.
+
+### Kelanjutan engineering lokal — 2026-10-04
+
+- Perubahan K02 yang sudah ada dipertahankan. K03 API dual-write, resolver/fallback terukur dan response master teruji lokal. K04 web/master selection serta fixture dual-write teruji; implementasi admin diperbarui, UI Filament belum dapat diuji karena dependensi tidak terpasang.
+- K05 command dry-run/apply, laporan S3 durable, batch/checkpoint/resume, rekonsiliasi dan guard concurrent edit tersedia. Runbook ada pada K05. Disk operasional aktual, tuning PostgreSQL dan persetujuan mapping belum terverifikasi.
+- `php artisan test --filter='ProductCategoryBackfillTest|ProductCategoryWebWriterTest|ProductCategoryWriterApiTest|ProductCategorySchemaTest|SellerApiTest'`: **58 lolos, 484 assertion**, SQLite in-memory, fake storage S3. Pint dijalankan pada PHP perubahan. Tidak ada asset CSS/JS berubah; template Blade dirender dalam test web.
+- PostgreSQL rehearsal tetap tertahan: binary server PostgreSQL tidak ditemukan; `docker version` mengonfirmasi Docker Desktop belum tersedia melalui WSL. Tidak memakai credential/database pengembangan atau produksi sebagai substitusi test.
+- API_DOCUMENTATION.md dan ADR-012 diselaraskan untuk writer yang diimplementasikan; K10 client readiness tetap terbuka. Gate G1–G7 tetap belum terpenuhi; K06 operasi produksi menunggu deployment writer, mapping approved, rehearsal serta akses operasional. K07 dapat dikembangkan setelah K03, tetapi aktivasi seluruh reader tetap menunggu rekonsiliasi K06/G3.
+
+- K07 dikembangkan sesuai izin urutan timeline setelah K03: reader produk/master, metadata berbasis slug dan nested cart tersedia secara lokal. Suite reader/writer/web/product/cart/seller: **67 lolos, 555 assertion**; tidak menjumlahkan angka dengan suite sebelumnya karena overlap. Perpindahan penuh tetap menunggu K06/G3, filter/agregasi K08 belum diubah.
+
+- Pemeriksaan tambahan `php artisan test --filter=ProductDetailApiTest`: 1 lolos, 1 gagal (4 assertion). Kegagalan autentikasi mengharapkan `Unauthenticated.` sedangkan middleware existing memberi `Tidak terautentikasi.`; identik dengan kegagalan baseline yang sudah dibuktikan sebelum perubahan K02. Middleware dan ekspektasi test tersebut tidak diubah.
+
+- Pemeriksaan akhir: Pint `--test` pada PHP perubahan reader/writer/tool lolos; PHP lint pada ketiga file admin lolos; `git diff --check` lolos. Working tree ditinjau, tanpa commit/push/deployment atau pemindahan tiket DONE.

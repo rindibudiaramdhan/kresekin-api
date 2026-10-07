@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
     'tenant_id',
     'name',
     'category',
+    'product_category_id',
     'image_url',
     'image_path',
     'price',
@@ -70,6 +71,21 @@ class Product extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function productCategory(): BelongsTo
+    {
+        return $this->belongsTo(ProductCategory::class);
+    }
+
+    public function categoryName(): ?string
+    {
+        return $this->productCategory?->name ?? ($this->product_category_id === null ? $this->category : null);
+    }
+
+    public function categorySlug(): ?string
+    {
+        return $this->productCategory?->slug ?? ($this->product_category_id === null ? str($this->category)->slug()->toString() : null);
     }
 
     public function productUnit(): BelongsTo

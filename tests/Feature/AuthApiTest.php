@@ -19,8 +19,28 @@ class AuthApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_otp_response_includes_null_sender_when_not_configured(): void
+    {
+        Notification::fake();
+        config()->set('services.whatsapp_otp.sender', null);
+
+        foreach (['register', 'login', 'resend-otp'] as $action) {
+            $response = $this->postJson('/api/users/buyer/'.$action, [
+                'type' => 'email',
+                'email' => 'user@example.com',
+            ]);
+
+            $response
+                ->assertSuccessful()
+                ->assertJsonStructure(['data' => ['whatsapp_otp_sender']])
+                ->assertJsonPath('data.whatsapp_otp_sender', null);
+        }
+    }
+
     public function test_user_can_register_with_email_and_receive_otp_notification(): void
     {
+        config()->set('services.whatsapp_otp.sender', '+6289876543210');
+
         Notification::fake();
 
         $response = $this->postJson('/api/users/buyer/register', [
@@ -29,6 +49,7 @@ class AuthApiTest extends TestCase
         ]);
 
         $response
+            ->assertJsonPath('data.whatsapp_otp_sender', '+6289876543210')
             ->assertCreated()
             ->assertJsonPath('data.email', 'user@example.com')
             ->assertJsonPath('data.phone', null)
@@ -46,6 +67,8 @@ class AuthApiTest extends TestCase
 
     public function test_user_can_register_with_phone_and_receive_otp_via_whatsapp_sender(): void
     {
+        config()->set('services.whatsapp_otp.sender', '+6289876543210');
+
         $whatsappOtpSender = Mockery::mock(WhatsappOtpSender::class);
         $whatsappOtpSender
             ->shouldReceive('send')
@@ -60,6 +83,7 @@ class AuthApiTest extends TestCase
         ]);
 
         $response
+            ->assertJsonPath('data.whatsapp_otp_sender', '+6289876543210')
             ->assertCreated()
             ->assertJsonPath('data.email', null)
             ->assertJsonPath('data.phone', '+6281234567890')
@@ -197,6 +221,8 @@ class AuthApiTest extends TestCase
 
     public function test_user_can_login_with_email_and_receive_otp_notification(): void
     {
+        config()->set('services.whatsapp_otp.sender', '+6289876543210');
+
         Notification::fake();
 
         $user = User::query()->create([
@@ -215,6 +241,7 @@ class AuthApiTest extends TestCase
         ]);
 
         $response
+            ->assertJsonPath('data.whatsapp_otp_sender', '+6289876543210')
             ->assertOk()
             ->assertJsonPath('data.id', $user->id)
             ->assertJsonPath('data.email', 'user@example.com')
@@ -230,6 +257,8 @@ class AuthApiTest extends TestCase
 
     public function test_user_can_login_with_phone_and_receive_otp_via_whatsapp_sender(): void
     {
+        config()->set('services.whatsapp_otp.sender', '+6289876543210');
+
         $user = User::query()->create([
             'name' => 'Budi',
             'email' => null,
@@ -254,6 +283,7 @@ class AuthApiTest extends TestCase
         ]);
 
         $response
+            ->assertJsonPath('data.whatsapp_otp_sender', '+6289876543210')
             ->assertOk()
             ->assertJsonPath('data.id', $user->id)
             ->assertJsonPath('data.phone', '+6281234567890')
@@ -484,6 +514,8 @@ class AuthApiTest extends TestCase
 
     public function test_user_can_resend_email_otp(): void
     {
+        config()->set('services.whatsapp_otp.sender', '+6289876543210');
+
         Notification::fake();
 
         $user = User::query()->create([
@@ -505,6 +537,7 @@ class AuthApiTest extends TestCase
         ]);
 
         $response
+            ->assertJsonPath('data.whatsapp_otp_sender', '+6289876543210')
             ->assertOk()
             ->assertJsonPath('message', 'OTP berhasil dikirim ulang.')
             ->assertJsonPath('data.id', $user->id)
@@ -521,6 +554,8 @@ class AuthApiTest extends TestCase
 
     public function test_user_can_resend_phone_otp_and_previous_code_becomes_invalid(): void
     {
+        config()->set('services.whatsapp_otp.sender', '+6289876543210');
+
         $user = User::query()->create([
             'name' => 'Budi',
             'email' => null,
@@ -551,6 +586,7 @@ class AuthApiTest extends TestCase
         ]);
 
         $response
+            ->assertJsonPath('data.whatsapp_otp_sender', '+6289876543210')
             ->assertOk()
             ->assertJsonPath('message', 'OTP berhasil dikirim ulang.')
             ->assertJsonPath('data.id', $user->id)

@@ -31,14 +31,17 @@
                 @error('tenant_id')<div class="text-danger small">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6">
-                <label for="category" class="form-label">Kategori</label>
-                <select id="category" name="category" class="form-select" required>
+                <label for="product_category_id" class="form-label">Kategori</label>
+                <select id="product_category_id" name="product_category_id" class="form-select" required>
                     <option value="">Pilih kategori</option>
                     @foreach ($categories as $category)
-                        <option value="{{ $category }}" @selected(old('category', $product->category) === $category)>{{ $category }}</option>
+                        <option value="{{ $category->id }}" @selected(old('product_category_id', $product->product_category_id) === $category->id)>{{ $category->name }}</option>
                     @endforeach
                 </select>
-                @error('category')<div class="text-danger small">{{ $message }}</div>@enderror
+                @if ($product->exists && !$product->product_category_id)
+                    <div class="text-secondary small">Kategori lama “{{ $product->category }}” belum dipetakan. Pilih kategori master untuk menyimpan perubahan.</div>
+                @endif
+                @error('product_category_id')<div class="text-danger small">{{ $message }}</div>@enderror
             </div>
         </div>
 

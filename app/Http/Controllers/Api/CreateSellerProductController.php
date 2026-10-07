@@ -7,6 +7,7 @@ use App\Http\Requests\CreateSellerProductRequest;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductUnit;
+use App\Support\ProductCategoryPresenter;
 use App\Support\ProductImageStorage;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,7 +21,6 @@ class CreateSellerProductController extends Controller
         $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : true;
         $productCategory = ProductCategory::query()->findOrFail($validated['product_category_id']);
         $validated['category'] = $productCategory->name;
-        unset($validated['product_category_id']);
         $productUnit = ProductUnit::query()->findOrFail($validated['product_unit_id']);
         $validated['unit'] = $productUnit->name;
 
@@ -33,7 +33,7 @@ class CreateSellerProductController extends Controller
         }
 
         $product = Product::query()->create($validated);
-        $product->load(['tenant', 'productUnit']);
+        $product->load(['tenant', 'productUnit', 'productCategory']);
 
         return response()->json([
             'message' => 'Produk seller berhasil dibuat.',
@@ -48,7 +48,7 @@ class CreateSellerProductController extends Controller
             'tenant_id' => $product->tenant_id,
             'tenant_name' => $product->tenant?->name,
             'name' => $product->name,
-            'category' => $product->category,
+            ...ProductCategoryPresenter::fields($product),
             'image_url' => $product->publicImageUrl(),
             'price' => $product->price,
             'original_price' => $product->original_price,

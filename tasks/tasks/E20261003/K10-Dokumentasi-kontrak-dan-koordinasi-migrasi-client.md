@@ -1,9 +1,9 @@
 # E20261003-K10 — Dokumentasi kontrak dan koordinasi migrasi client
 
 - Tanggal: 2026-10-03
-- Status: Planned — belum diimplementasikan
+- Status: Dokumentasi writer diperbarui; koordinasi dan bukti client belum selesai
 - Epic: [E20261003](../../epic/E20261003-Pemisahan%20Kategori%20Tenant%20dan%20Standardisasi%20Kategori%20Produk.md)
-- Timeline: [timeline](../../timeline.md)
+- Timeline: [timeline](timeline.md)
 - PIC peran: Engineering Lead + Client PIC + Product; nama personel ditetapkan pada K01
 - Target baseline: M1–M7
 - Estimasi: 3–5 internal; effort client dihitung oleh PIC hari kerja effort, bukan janji durasi kalender
@@ -42,3 +42,9 @@ Untuk perubahan PHP, jalankan Pint dan test relevan; perubahan behavior mempunya
 - Hasil test/verifikasi: belum tersedia.
 - Bukti deployment/operasi/client jika relevan: belum tersedia.
 - PIC personel dan keputusan gate: belum ditetapkan.
+
+## Progres dokumentasi — 2026-10-04
+
+Kontrak writer K03 pada API_DOCUMENTATION.md diselaraskan untuk ID wajib create, ID utama edit, fallback hanya saat key tidak dikirim, error 422, PUT/POST multipart, serta objek master allowlist pada response create/edit. ADR-012 mencatat kategori produk sebagai master database, dengan konstanta tenant dipertahankan hanya selama transisi. Dokumentasi reader K07 ikut diselaraskan untuk list/detail dan kontrak nested cart. Reader belum dinyatakan aktif di produksi; filter/tenant target K08–K09 belum diimplementasikan.
+
+Event fallback tersedia dari K03 dan teruji lokal. Collector seluruh instance, retensi tanpa sampling, bukti mobile/PIC release/build/enforcement upgrade, dua siklus rilis dan observasi 14 hari masih belum tersedia. Tidak ada koordinasi pesan eksternal atau sign-off client dijalankan. K10 belum DONE.

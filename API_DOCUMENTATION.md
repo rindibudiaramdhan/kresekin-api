@@ -908,13 +908,16 @@ curl http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbb
 
 ### PUT `/api/seller/products/{id}`
 
-Mengubah produk seller. Body mirip create product, tetapi gambar opsional. Sesuai validation saat ini, update masih membutuhkan `category` legacy dan `product_unit_id`.
+Mengubah produk seller. Body mirip create product, tetapi gambar opsional. Gunakan `product_category_id` dari master environment terkait dan `product_unit_id`.
+
+Transisi E20261003 (implementasi lokal; deployment belum diverifikasi): create/edit menyimpan ID dan nama master selama reader lama masih aktif. Migration ekspansi K02 wajib dipasang sebelum writer ini diaktifkan. Reader list/detail seller/buyer dan nested product pada GET /api/cart juga mempunyai field master dari K07 secara lokal. Aktivasi reader produksi menunggu rekonsiliasi K06/G3; filter slug berbasis ID masih menunggu K08. Pada record transisi dengan ID null, category masih memakai teks lama sementara product_category_id/product_category bernilai null. Metadata buyer memakai slug master, kategori baru memakai ikon category dan warna netral.
 
 Body:
 
 - `tenant_id` wajib UUID, tenant harus milik seller aktif
 - `name` wajib
-- `category` wajib, salah satu `Tenant::CATEGORIES`
+- `product_category_id` UUID master valid. ID valid menang atas `category`; ID null/kosong/invalid menghasilkan `422` walaupun teks valid.
+- Hanya untuk edit tanpa key `product_category_id`, `category` wajib nama master unik: cocok persis lebih dahulu, lalu trim/normalisasi spasi/case jika unik. Nama ambigu/tidak cocok menghasilkan `422`; tanpa fuzzy matching, default atau master otomatis. Create teks-only tetap `422`. Fallback sementara dicatat sebagai event `product_category_legacy_fallback` accepted/rejected tanpa nilai kategori/payload personal; penghentiannya mengikuti K10/K11.
 - `image`, `image_path`, atau `image_url` opsional
 - `price` wajib, integer minimal 0
 - `original_price` opsional, harus lebih besar atau sama dengan `price`
@@ -930,7 +933,7 @@ Body:
 curl -X PUT http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam Super","category":"Sayur","image_url":"https://example.com/bayam-super.png","price":8000,"original_price":10000,"stock":80,"product_unit_id":"22222222-2222-4222-8222-222222222222","minimum_stock":5,"is_active":true}'
+  -d '{"tenant_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"Bayam Super","product_category_id":"ffffffff-ffff-4fff-8fff-ffffffffffff","image_url":"https://example.com/bayam-super.png","price":8000,"original_price":10000,"stock":80,"product_unit_id":"22222222-2222-4222-8222-222222222222","minimum_stock":5,"is_active":true}'
 ```
 
 ### PATCH `/api/seller/products/{id}/status`
@@ -957,7 +960,7 @@ curl -X POST http://127.0.0.1:8000/api/seller/products/bbbbbbbb-bbbb-4bbb-8bbb-b
   -H "Authorization: Bearer $SELLER_TOKEN" \
   -F "tenant_id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" \
   -F "name=Bayam Super" \
-  -F "category=Sayur" \
+  -F "product_category_id=ffffffff-ffff-4fff-8fff-ffffffffffff" \
   -F "image=@/path/to/bayam-super.jpg" \
   -F "price=8000" \
   -F "stock=80" \
@@ -1251,6 +1254,8 @@ Contoh response di bawah memakai data dummy. Field tambahan bisa muncul tergantu
 ```
 
 ### Auth dan Session
+
+Response sukses registrasi, login, dan kirim ulang OTP (termasuk endpoint alias) menyertakan `data.whatsapp_otp_sender`, yaitu nomor dari konfigurasi `WHATSAPP_OTP_SENDER`. Field ini tersedia untuk request email maupun phone, dan bernilai `null` jika konfigurasi belum diisi.
 
 #### POST `/api/users/{role}/register`
 
@@ -1684,6 +1689,12 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
       "tenant_name": "Toko Asep",
       "name": "Bayam",
       "category": "Sayur",
+    "product_category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    "product_category": {
+      "id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      "name": "Sayur",
+      "slug": "sayur"
+    },
       "category_slug": "sayur",
       "image_url": "http://127.0.0.1:8000/storage/products/bayam.jpg",
       "price": 7000,
@@ -1722,6 +1733,12 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
     "tenant_name": "Toko Asep",
     "name": "Bayam",
     "category": "Sayur",
+    "product_category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    "product_category": {
+      "id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      "name": "Sayur",
+      "slug": "sayur"
+    },
     "image_url": "http://127.0.0.1:8000/storage/products/bayam.jpg",
     "price": 7000,
     "price_label": "Rp 7.000",
@@ -2464,6 +2481,12 @@ Detail transaksi juga menyediakan `can_rate` dan `rating`. `can_rate` bernilai `
       "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       "name": "Bayam",
       "category": "Sayur",
+    "product_category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    "product_category": {
+      "id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      "name": "Sayur",
+      "slug": "sayur"
+    },
       "image_url": "https://example.com/bayam.png",
       "price": 7000,
       "stock": 100,
@@ -2516,6 +2539,12 @@ Detail transaksi juga menyediakan `can_rate` dan `rating`. `can_rate` bernilai `
     "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "name": "Bayam",
     "category": "Sayur",
+    "product_category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    "product_category": {
+      "id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      "name": "Sayur",
+      "slug": "sayur"
+    },
     "price": 7000,
     "original_price": 9000,
     "stock": 100,
@@ -2543,6 +2572,12 @@ Detail transaksi juga menyediakan `can_rate` dan `rating`. `can_rate` bernilai `
     "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "name": "Bayam",
     "category": "Sayur",
+    "product_category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    "product_category": {
+      "id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      "name": "Sayur",
+      "slug": "sayur"
+    },
     "price": 7000,
     "stock": 100,
     "unit": "ikat",
@@ -2570,6 +2605,12 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
     "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "name": "Bayam Super",
     "category": "Sayur",
+    "product_category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    "product_category": {
+      "id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      "name": "Sayur",
+      "slug": "sayur"
+    },
     "price": 8000,
     "stock": 80,
     "unit": "ikat",
@@ -2607,6 +2648,12 @@ Berlaku juga untuk `POST /api/seller/products/{id}`.
     "tenant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     "name": "Bayam Super",
     "category": "Sayur",
+    "product_category_id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    "product_category": {
+      "id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      "name": "Sayur",
+      "slug": "sayur"
+    },
     "price": 8000,
     "stock": 80,
     "unit": "ikat",
