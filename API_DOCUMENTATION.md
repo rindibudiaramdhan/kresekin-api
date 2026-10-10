@@ -3053,7 +3053,29 @@ Daftar tenant seller dan buyer menggunakan status yang sama. Tenant yang belum
 mengatur status manual tetap mengikuti jam operasional (kolom `is_open` bernilai null).
 Request berulang dengan nilai sama tetap aman. Tenant tidak ada atau milik seller lain
 menghasilkan 404; payload tidak valid 422; tanpa token 401; role selain seller 403.
-Endpoint ini belum menerapkan pembatasan checkout atau perubahan pesanan.
+Checkout baru ditolak jika toko tutup. Pesanan yang sudah dibuat tetap dapat diproses.
 
 Deployment: jalankan `php artisan migrate` sebelum menggunakan endpoint. Rollback
 migrasi menghapus status manual; status kembali dihitung dari jam operasional.
+
+### Checkout ketika toko tutup
+
+`POST /api/checkout` memeriksa status toko terbaru di database saat transaksi dibuat.
+Status mengikuti `is_open` manual; jika null, mengikuti jam operasional Asia/Jakarta.
+Jika satu tenant dalam keranjang tutup, seluruh checkout ditolak dengan HTTP 422:
+
+```json
+{
+  "message": "Toko sedang tutup. Checkout tidak dapat dilanjutkan.",
+  "errors": {
+    "tenant_id": "tenant-uuid",
+    "tenant_name": "Toko Aminah"
+  }
+}
+```
+
+Keranjang dan pilihan pengiriman tetap tersimpan; stok serta penggunaan promo tidak
+berubah, dan tidak ada transaksi baru yang tersimpan. Pembeli dapat mencoba lagi
+setelah toko buka atau menghapus produk toko tersebut dari keranjang.
+Toko tetap terlihat pada GET tenant. Penutupan toko tidak membatalkan pesanan yang
+sudah dibuat dan tidak menghalangi seller memproses pesanan sampai selesai.

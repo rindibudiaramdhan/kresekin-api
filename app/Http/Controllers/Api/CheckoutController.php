@@ -9,6 +9,7 @@ use App\Models\PaymentMethod;
 use App\Models\PaymentMethodOption;
 use App\Models\Product;
 use App\Models\PromoCode;
+use App\Models\Tenant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionStatusHistory;
@@ -104,6 +105,19 @@ class CheckoutController extends Controller
                 if (! $product?->is_active) {
                     throw new HttpResponseException(response()->json([
                         'message' => 'Produk tidak tersedia.',
+                    ], 422));
+                }
+
+                // Read the current store status under a lock, rather than the cart snapshot.
+                $tenant = Tenant::query()->lockForUpdate()->find($product->tenant_id);
+
+                if (! $tenant || ! $tenant->isOpenAt(now('Asia/Jakarta')->format('H:i'))) {
+                    throw new HttpResponseException(response()->json([
+                        'message' => 'Toko sedang tutup. Checkout tidak dapat dilanjutkan.',
+                        'errors' => [
+                            'tenant_id' => $product->tenant_id,
+                            'tenant_name' => $tenant?->name,
+                        ],
                     ], 422));
                 }
 

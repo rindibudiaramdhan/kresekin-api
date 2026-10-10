@@ -13,6 +13,7 @@ use App\Models\Tenant;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\UserSessionToken;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -626,6 +627,60 @@ class CheckoutApiTest extends TestCase
             ->assertJsonPath('message', 'Tidak terautentikasi.');
     }
 
+    public function test_checkout_rechecks_closed_store_and_preserves_entire_cart(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $openProduct = $this->createProduct();
+        $closedProduct = $this->createProduct();
+        $cart = Cart::query()->create(['user_id' => $user->id, 'delivery_method_code' => 'store_courier']);
+        foreach ([$openProduct, $closedProduct] as $product) {
+            CartItem::query()->create(['user_id' => $user->id, 'product_id' => $product->id, 'quantity' => 2]);
+        }
+        $promo = PromoCode::query()->create([
+            'code' => 'STORETEST', 'name' => 'Store Test',
+            'discount_type' => PromoCode::DISCOUNT_TYPE_PERCENTAGE, 'discount_value' => 10,
+            'minimum_order_amount' => 0, 'quantity' => 10, 'used_quantity' => 0,
+            'is_active' => true,
+        ]);
+        // Store closes after products have already been placed in the cart.
+        $closedProduct->tenant->forceFill(['is_open' => false])->save();
+        $this->withToken($token)->postJson('/api/checkout', [
+            'delivery_method_code' => 'store_courier', 'payment_method_code' => PaymentMethod::COD,
+            'promo_code' => $promo->code,
+        ])->assertUnprocessable()
+            ->assertJsonPath('message', 'Toko sedang tutup. Checkout tidak dapat dilanjutkan.')
+            ->assertJsonPath('errors.tenant_id', $closedProduct->tenant_id);
+
+        $this->assertDatabaseCount('transactions', 0);
+        $this->assertDatabaseCount('transaction_items', 0);
+        $this->assertDatabaseCount('transaction_status_histories', 0);
+        $this->assertSame(2, CartItem::query()->where('user_id', $user->id)->count());
+        $this->assertSame(100, $openProduct->fresh()->stock);
+        $this->assertSame(100, $closedProduct->fresh()->stock);
+        $this->assertSame(0, $promo->fresh()->used_quantity);
+        $this->assertSame('store_courier', $cart->fresh()->delivery_method_code);
+
+        $closedProduct->tenant->forceFill(['is_open' => true])->save();
+        $this->withToken($token)->postJson('/api/checkout', [
+            'delivery_method_code' => 'store_courier', 'payment_method_code' => PaymentMethod::COD,
+        ])->assertCreated();
+        $this->assertDatabaseCount('transaction_items', 2);
+    }
+
+    public function test_checkout_respects_operating_hours_without_manual_status(): void
+    {
+        [$user, $token] = $this->createAuthenticatedUser();
+        $product = $this->createProduct();
+        CartItem::query()->create(['user_id' => $user->id, 'product_id' => $product->id, 'quantity' => 1]);
+        $this->travelTo(Carbon::parse('2026-10-10 12:00:00', 'Asia/Jakarta'));
+        $product->tenant->forceFill(['is_open' => null, 'open_time' => '08:00', 'close_time' => '10:00'])->save();
+        $payload = ['delivery_method_code' => 'store_courier', 'payment_method_code' => PaymentMethod::COD];
+        $this->withToken($token)->postJson('/api/checkout', $payload)->assertUnprocessable();
+        $product->tenant->forceFill(['close_time' => '17:00'])->save();
+        $this->withToken($token)->postJson('/api/checkout', $payload)->assertCreated();
+        $this->travelBack();
+    }
+
     private function createAuthenticatedUser(): array
     {
         $user = User::query()->create([
@@ -653,6 +708,7 @@ class CheckoutApiTest extends TestCase
     {
         $tenant = Tenant::query()->create([
             'name' => 'Toko Aminah',
+            'is_open' => true,
             'profile_picture_url' => 'https://example.com/aminah.png',
             'rating' => 5.0,
         ]);

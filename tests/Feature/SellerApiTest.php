@@ -943,6 +943,33 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.0.sold_quantity', 2);
     }
 
+    public function test_closing_store_keeps_existing_orders_processable_until_completed(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('closed-store@example.com', '+6281200000099', 'closed-store-token', User::ROLE_SELLER);
+        foreach (['store_courier', 'pickup'] as $deliveryMethod) {
+            $order = $this->createOrderForSeller($seller, ($deliveryMethod === 'pickup' ? 'CLOSED002' : 'CLOSED001'), Transaction::STATUS_PENDING_PAYMENT, $deliveryMethod);
+            $tenant = $order->items()->firstOrFail()->tenant;
+            $tenant->forceFill(['is_open' => true])->save();
+            $this->withToken($token)->patchJson('/api/seller/tenants/'.$tenant->id.'/status', ['is_open' => false])->assertOk();
+            $this->assertSame(Transaction::STATUS_PENDING_PAYMENT, $order->fresh()->status);
+            $this->assertSame(1, $order->statusHistories()->count());
+            $this->withToken($token)->getJson('/api/seller/orders/'.$order->id)->assertOk();
+            foreach ([
+                Transaction::STATUS_CODE_ACCEPTED_BY_STORE,
+                Transaction::STATUS_CODE_PROCESSING,
+                $deliveryMethod === 'pickup' ? Transaction::STATUS_CODE_READY_FOR_PICKUP : Transaction::STATUS_CODE_ON_THE_WAY,
+                Transaction::STATUS_CODE_COMPLETED,
+            ] as $statusCode) {
+                $this->withToken($token)->patchJson('/api/seller/orders/'.$order->id.'/status', ['status_code' => $statusCode])
+                    ->assertOk()->assertJsonPath('data.status_code', $statusCode);
+            }
+            $this->assertSame(Transaction::STATUS_COMPLETED, $order->fresh()->status);
+            $this->assertFalse($tenant->fresh()->is_open);
+            $this->assertSame(5, $order->statusHistories()->count());
+            $this->assertFalse($order->statusHistories()->where('status', Transaction::STATUS_CANCELED)->exists());
+        }
+    }
+
     public function test_seller_can_update_order_status_until_completed(): void
     {
         [$seller, $token] = $this->createAuthenticatedUser('seller-status@example.com', '+6281200000009', 'seller-status-token', User::ROLE_SELLER);
