@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'longitude',
     'open_time',
     'close_time',
+    'is_open',
 ])]
 class Tenant extends Model
 {
@@ -154,6 +155,7 @@ class Tenant extends Model
     protected function casts(): array
     {
         return [
+            'is_open' => 'boolean',
             'rating' => 'float',
             'latitude' => 'float',
             'longitude' => 'float',
@@ -162,6 +164,10 @@ class Tenant extends Model
 
     public function isOpenAt(string $currentTime): bool
     {
+        if ($this->is_open !== null) {
+            return $this->is_open;
+        }
+
         if (! $this->open_time || ! $this->close_time) {
             return false;
         }

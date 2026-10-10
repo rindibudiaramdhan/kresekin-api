@@ -163,6 +163,7 @@ Daftar ini diselaraskan dengan `php artisan route:list --path=api`. Method `GET|
 | GET | `/api/seller/dashboard/top-products-today` | Produk terlaris hari ini. |
 | GET | `/api/seller/tenants` | Daftar tenant seller aktif. |
 | POST | `/api/seller/tenants` | Buat tenant seller aktif. |
+| PATCH | `/api/seller/tenants/{id}/status` | Ubah status buka/tutup toko milik seller. |
 | GET | `/api/seller/orders` | Daftar order seller. |
 | GET | `/api/seller/orders/{id}` | Detail order seller. |
 | PATCH | `/api/seller/orders/{id}/status` | Update status order seller. |
@@ -3032,3 +3033,27 @@ Satu transaksi selalu tampil satu kali. `branches` dan `stores` berisi daftar re
 Jalankan `php artisan db:seed --class=OwnerUserSeeder` tanpa konfigurasi credential di environment. Jika owner awal belum ada, seeder membuat UUID dan email development `@example.test`, lalu mencetak ID serta email login ke console. OTP tidak disimpan oleh seeder dan tetap dikirim melalui mail driver aplikasi.
 
 Seeder idempotent menggunakan `users.internal_provisioning_key`, sehingga tetap menemukan owner awal ketika nantinya terdapat banyak owner. Seeder hanya meng-assign seller yang `branch_owner_user_id`-nya masih `null`; assignment seller milik owner lain tidak diubah. Seller baru tetap unassigned sampai diatur eksplisit atau seeder dijalankan kembali. Sebelum production, email development owner awal harus diganti ke email atau nomor WhatsApp yang dapat menerima OTP melalui proses administrasi.
+
+### PATCH `/api/seller/tenants/{id}/status`
+
+Memerlukan bearer token seller. Body JSON: `{"is_open": true}` untuk buka,
+`{"is_open": false}` untuk tutup. Field wajib dengan validasi boolean.
+
+Respons 200:
+
+```json
+{
+  "message": "Status toko seller berhasil diperbarui.",
+  "data": {"id": "tenant-uuid", "is_open": true, "store_status": "Buka"}
+}
+```
+
+Status manual tersimpan dan mengesampingkan jam operasional sampai seller mengubahnya lagi.
+Daftar tenant seller dan buyer menggunakan status yang sama. Tenant yang belum
+mengatur status manual tetap mengikuti jam operasional (kolom `is_open` bernilai null).
+Request berulang dengan nilai sama tetap aman. Tenant tidak ada atau milik seller lain
+menghasilkan 404; payload tidak valid 422; tanpa token 401; role selain seller 403.
+Endpoint ini belum menerapkan pembatasan checkout atau perubahan pesanan.
+
+Deployment: jalankan `php artisan migrate` sebelum menggunakan endpoint. Rollback
+migrasi menghapus status manual; status kembali dihitung dari jam operasional.
