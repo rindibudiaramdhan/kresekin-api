@@ -632,6 +632,8 @@ class CheckoutApiTest extends TestCase
         [$user, $token] = $this->createAuthenticatedUser();
         $openProduct = $this->createProduct();
         $closedProduct = $this->createProduct();
+        // Both products belong to one store under the single-store checkout rule.
+        $closedProduct->update(['tenant_id' => $openProduct->tenant_id]);
         $cart = Cart::query()->create(['user_id' => $user->id, 'delivery_method_code' => 'store_courier']);
         foreach ([$openProduct, $closedProduct] as $product) {
             CartItem::query()->create(['user_id' => $user->id, 'product_id' => $product->id, 'quantity' => 2]);

@@ -8,6 +8,7 @@ use App\Models\TransactionItem;
 use App\Support\SellerOrderResponseMapper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\Response;
 
 class GetSellerOrderDetailController extends Controller
@@ -36,9 +37,40 @@ class GetSellerOrderDetailController extends Controller
         ]);
     }
 
+    public function receipt(Request $request, string $id): JsonResponse
+    {
+        $response = $this->__invoke($request, $id);
+        if ($response->getStatusCode() !== 200) {
+            return $response;
+        }
+
+        $body = $response->getData(true);
+        if (! $body['data']['is_single_store']) {
+            return response()->json(['message' => 'Struk transaksi lama dengan beberapa toko belum dapat dipisahkan per toko.'], 422);
+        }
+
+        return response()->json([
+            'message' => 'Data struk pesanan berhasil diambil.',
+            'data' => Arr::only($body['data'], [
+                'id', 'order_number', 'store_name', 'buyer', 'items',
+                'delivery_method', 'delivery_method_code', 'payment_method',
+                'subtotal_amount', 'subtotal_amount_label', 'delivery_fee', 'delivery_fee_label',
+                'shipping_snapshot', 'service_fee', 'service_fee_label',
+                'discount_amount', 'discount_amount_label', 'total_amount', 'total_amount_label',
+                'transaction_at', 'transaction_at_label',
+            ]),
+        ]);
+    }
+
     private function mapOrder(Transaction $order, string $sellerId): array
     {
         $items = $this->sellerItems($order, $sellerId);
+        $isSingleStore = $order->items->pluck('tenant_id')->unique()->count() === 1;
+        $snapshot = $order->shipping_snapshot;
+        if ($snapshot !== null && ! $items->contains('tenant_id', $snapshot['tenant_id'] ?? null)) {
+            $snapshot = null;
+        }
+        $sellerDeliveryFee = $snapshot['delivery_fee'] ?? ($isSingleStore ? $order->delivery_fee : null);
 
         return [
             'id' => $order->id,
@@ -58,6 +90,10 @@ class GetSellerOrderDetailController extends Controller
             'seller_subtotal_amount_label' => $this->moneyLabel($items->sum('line_total')),
             'subtotal_amount' => $order->subtotal_amount,
             'subtotal_amount_label' => $this->moneyLabel((int) $order->subtotal_amount),
+            'is_single_store' => $isSingleStore,
+            'shipping_snapshot' => $snapshot,
+            'seller_delivery_fee' => $sellerDeliveryFee,
+            'seller_delivery_fee_label' => $sellerDeliveryFee === null ? null : $this->moneyLabel($sellerDeliveryFee),
             'delivery_fee' => $order->delivery_fee,
             'delivery_fee_label' => $this->moneyLabel((int) $order->delivery_fee),
             'service_fee' => $order->service_fee,

@@ -161,6 +161,7 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
     Route::patch('/tenants/{id}/status', UpdateSellerTenantStatusController::class);
     Route::get('/orders', GetSellerOrderListController::class);
     Route::get('/orders/{id}', GetSellerOrderDetailController::class);
+    Route::get('/orders/{id}/receipt', [GetSellerOrderDetailController::class, 'receipt']);
     Route::patch('/orders/{id}/status', UpdateSellerOrderStatusController::class);
     Route::get('/cancellation-reason-categories', GetCancellationReasonCategoryListController::class);
     Route::get('/products', GetSellerProductListController::class);

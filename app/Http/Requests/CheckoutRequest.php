@@ -9,6 +9,7 @@ use App\Models\OrderTimeOption;
 use App\Models\PaymentMethod;
 use App\Models\PaymentMethodOption;
 use App\Models\PromoCode;
+use App\Support\CartShippingCalculator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Collection;
@@ -149,7 +150,7 @@ class CheckoutRequest extends FormRequest
     public function cartItems(): Collection
     {
         return $this->resolvedCartItems ??= CartItem::query()
-            ->with('product')
+            ->with('product.tenant')
             ->where('user_id', $this->user()->id)
             ->get();
     }
@@ -236,7 +237,16 @@ class CheckoutRequest extends FormRequest
 
     public function deliveryFee(): int
     {
-        return $this->deliveryMethod()?->fee ?? 0;
+        return $this->shippingQuote()['delivery_fee'];
+    }
+
+    public function shippingQuote(): array
+    {
+        $calculator = app(CartShippingCalculator::class);
+        $quote = $calculator->calculate($this->cartItems(), $this->user(), $this->deliveryMethod());
+        $calculator->requireDeliverable($quote);
+
+        return $quote;
     }
 
     public function promoCode(): ?PromoCode

@@ -127,7 +127,7 @@ Daftar ini diselaraskan dengan `php artisan route:list --path=api`. Method `GET|
 
 | Method | Endpoint | Deskripsi |
 | --- | --- | --- |
-| GET | `/api/delivery-methods` | Master metode pengiriman aktif. |
+| GET | `/api/delivery-methods` | Metode aktif dengan estimasi ongkir toko dalam cart. |
 | GET | `/api/order-time-options` | Master opsi waktu pesanan aktif. |
 | GET | `/api/payment-methods` | Master metode pembayaran aktif. |
 | GET | `/api/service-fee` | Nominal biaya layanan pada halaman checkout. |
@@ -452,7 +452,8 @@ Semua endpoint pada bagian ini butuh token dengan role `buyer`.
 
 ### GET `/api/delivery-methods`
 
-Mengambil metode pengiriman aktif.
+Mengambil metode pengiriman aktif dengan estimasi ongkir toko dalam cart.
+Tarif mengikuti pengaturan toko untuk `store_courier`; lihat [aturan ongkir dan ketersediaan](docs/api/shipping-settings.md#integrasi-metode-pengiriman-cart-dan-checkout).
 
 ```bash
 curl http://127.0.0.1:8000/api/delivery-methods \
@@ -1824,8 +1825,17 @@ Berlaku juga untuk `POST /api/agent/resend-otp` dan `POST /api/finance/resend-ot
 {
   "message": "Metode pengiriman keranjang berhasil diperbarui.",
   "data": {
-    "id": "11111111-1111-4111-8111-111111111111",
-    "delivery_method_code": "store_courier"
+    "delivery_method": {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "code": "store_courier",
+      "name": "Antar Kurir Toko",
+      "description": "Diantar hari ini",
+      "fee": 2500,
+      "fee_label": "Rp 2.500",
+      "requires_order_time": false,
+      "is_deliverable": true,
+      "shipping_snapshot": null
+    }
   }
 }
 ```
@@ -3084,3 +3094,13 @@ sudah dibuat dan tidak menghalangi seller memproses pesanan sampai selesai.
 
 Kontrak tiga endpoint baru, payload per mode, aturan jarak, dan respons error:
 [Pengaturan ongkir toko](docs/api/shipping-settings.md).
+
+
+### Integrasi Atur Ongkir
+
+Pengaturan ongkir telah digunakan oleh metode pengiriman, cart, dan checkout.
+Checkout dibatasi satu toko. Detail seller/buyer serta riwayat menambahkan
+`shipping_snapshot` yang disimpan saat checkout. Endpoint baru
+`GET /api/seller/orders/{id}/receipt` menyediakan JSON data struk dari nilai
+transaksi tersimpan. Kontrak lengkap, tarif legacy, respons tidak terjangkau,
+serta migrasi dijelaskan pada [Pengaturan ongkir toko](docs/api/shipping-settings.md).

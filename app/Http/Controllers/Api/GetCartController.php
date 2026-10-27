@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\DeliveryMethod;
+use App\Support\CartShippingCalculator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -30,8 +31,9 @@ class GetCartController extends Controller
                 ->where('code', $cart->delivery_method_code)
                 ->first()
             : null;
-        $deliveryFee = $deliveryMethod->fee ?? 0;
-        $grandTotal = $subtotal + $deliveryFee;
+        $shippingQuote = app(CartShippingCalculator::class)->calculate($cartItems, $request->user(), $deliveryMethod);
+        $deliveryFee = $shippingQuote['delivery_fee'];
+        $grandTotal = $deliveryFee === null ? null : $subtotal + $deliveryFee;
 
         return response()->json([
             'message' => 'Keranjang berhasil diambil.',
@@ -62,16 +64,19 @@ class GetCartController extends Controller
                     'code' => $deliveryMethod->code,
                     'name' => $deliveryMethod->name,
                     'description' => $deliveryMethod->description,
-                    'fee' => $deliveryMethod->fee,
-                    'fee_label' => $this->moneyLabel($deliveryMethod->fee),
+                    'fee' => $deliveryFee,
+                    'fee_label' => $deliveryFee === null ? null : $this->moneyLabel($deliveryFee),
                     'requires_order_time' => $deliveryMethod->requires_order_time,
                 ] : null,
                 'subtotal' => $subtotal,
                 'subtotal_label' => $this->moneyLabel($subtotal),
                 'delivery_fee' => $deliveryFee,
-                'delivery_fee_label' => $this->moneyLabel($deliveryFee),
+                'delivery_fee_label' => $deliveryFee === null ? null : $this->moneyLabel($deliveryFee),
+                'shipping_snapshot' => $shippingQuote['shipping_snapshot'],
+                'is_deliverable' => $shippingQuote['is_deliverable'],
+                'shipping_error' => $shippingQuote['shipping_error'],
                 'grand_total' => $grandTotal,
-                'grand_total_label' => $this->moneyLabel($grandTotal),
+                'grand_total_label' => $grandTotal === null ? null : $this->moneyLabel($grandTotal),
                 'total_items' => $cartItems->sum('quantity'),
             ],
         ]);

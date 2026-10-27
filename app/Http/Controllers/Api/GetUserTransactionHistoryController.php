@@ -37,6 +37,7 @@ class GetUserTransactionHistoryController extends Controller
                 'delivery_method' => $transaction->delivery_method,
                 'delivery_method_code' => $transaction->delivery_method_code,
                 'delivery_fee' => $transaction->delivery_fee,
+                'shipping_snapshot' => $transaction->shipping_snapshot,
                 'delivery_fee_label' => $this->moneyLabel((int) $transaction->delivery_fee),
                 'service_fee' => $transaction->service_fee,
                 'service_fee_label' => $this->moneyLabel((int) $transaction->service_fee),

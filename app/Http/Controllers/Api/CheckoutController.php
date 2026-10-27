@@ -14,6 +14,7 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionStatusHistory;
 use App\Models\User;
+use App\Support\CartShippingCalculator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -32,9 +33,7 @@ class CheckoutController extends Controller
         $pickupScheduledAt = $request->pickupScheduledAt();
         $promo = $request->promoCode();
         $subtotal = $request->subtotal();
-        $deliveryFee = $request->deliveryFee();
         $discountAmount = $request->discountAmount();
-        $grandTotal = $request->grandTotal();
 
         $transaction = DB::transaction(function () use (
             $user,
@@ -47,9 +46,7 @@ class CheckoutController extends Controller
             $pickupScheduledAt,
             $promo,
             $subtotal,
-            $deliveryFee,
-            $discountAmount,
-            $grandTotal
+            $discountAmount
         ): Transaction {
             $buyer = User::query()
                 ->lockForUpdate()
@@ -68,12 +65,20 @@ class CheckoutController extends Controller
                 }
             }
 
+            // Calculate from the current buyer address inside the checkout transaction.
+            $shippingCalculator = app(CartShippingCalculator::class);
+            $shippingQuote = $shippingCalculator->calculate($cartItems, $buyer, $deliveryMethod, lock: true);
+            $shippingCalculator->requireDeliverable($shippingQuote);
+            $deliveryFee = $shippingQuote['delivery_fee'];
+            $grandTotal = max($subtotal + $deliveryFee - $discountAmount, 0);
+
             $transaction = Transaction::query()->create([
                 'user_id' => $buyer->id,
                 'order_number' => $this->generateOrderNumber(),
                 'status' => Transaction::STATUS_PENDING_PAYMENT,
                 'subtotal_amount' => $subtotal,
                 'delivery_fee' => $deliveryFee,
+                'shipping_snapshot' => $shippingQuote['shipping_snapshot'],
                 'total_amount' => $grandTotal,
                 'delivery_method' => $deliveryMethod->name,
                 'delivery_method_code' => $deliveryMethod->code,
@@ -176,6 +181,7 @@ class CheckoutController extends Controller
                 'subtotal_amount' => $transaction->subtotal_amount,
                 'subtotal_amount_label' => $this->moneyLabel($transaction->subtotal_amount),
                 'delivery_fee' => $transaction->delivery_fee,
+                'shipping_snapshot' => $transaction->shipping_snapshot,
                 'delivery_fee_label' => $this->moneyLabel($transaction->delivery_fee),
                 'discount_amount' => $transaction->discount_amount,
                 'discount_amount_label' => $this->moneyLabel($transaction->discount_amount),

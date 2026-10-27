@@ -53,6 +53,10 @@ Requirement:
 6. Checkout harus menghasilkan `order_number` unik.
 7. Jika promo invalid pada saat checkout, request harus gagal eksplisit.
 8. Setelah checkout sukses, cart harus dibersihkan atau ditandai selesai sesuai desain persistence.
+9. Checkout hanya boleh berisi produk dari satu tenant/toko, termasuk metode pickup. Cart beberapa toko ditolak dengan 422 tanpa mutasi stok, cart, promo, atau transaksi.
+10. Ongkir kurir toko mengikuti pengaturan per tenant (free, flat, distance). Jika belum diatur, gunakan tarif master yang sudah ada. Pickup tidak memakai aturan radius pengantaran.
+11. Estimasi memakai koordinat profil buyer; checkout menghitung ulang di server dan menyimpan mode, tarif, jarak, serta biaya pada `shipping_snapshot`. Koordinat wajib tersedia jika perhitungan jarak atau batas jangkauan diperlukan.
+12. Detail seller/buyer, riwayat, dan data struk menggunakan ongkir serta snapshot transaksi tersimpan. Perubahan tarif atau alamat setelah checkout tidak mengubah pesanan lama.
 
 ## Order Lifecycle
 
@@ -92,7 +96,7 @@ Requirement:
 Requirement:
 
 1. Seller hanya melihat order yang mengandung item dari tenant miliknya.
-2. Jika satu transaksi berisi item dari beberapa tenant, seller hanya boleh melihat porsi item miliknya.
+2. Untuk transaksi lama yang berisi item dari beberapa tenant, seller hanya boleh melihat porsi item miliknya. Checkout baru dibatasi satu tenant.
 3. Total yang ditampilkan ke seller harus jelas apakah total transaksi penuh atau subtotal tenant seller.
 4. Seller dapat mengubah status order sesuai transisi yang diizinkan.
 5. Seller dapat melihat alasan pembatalan aktif.
@@ -124,3 +128,11 @@ Event minimum:
 2. Apakah transaksi multi-tenant boleh terjadi dalam satu checkout?
 3. Bagaimana aturan refund/cancel setelah buyer payment confirmed?
 4. Apakah stok harus dikunci saat cart, checkout, atau saat seller accept?
+
+
+## Data Struk Seller
+
+1. `GET /api/seller/orders/{id}/receipt` menyediakan JSON data cetak struk dari transaksi tersimpan dengan scope kepemilikan seller yang sama dengan detail pesanan.
+2. Data mencakup item, subtotal, ongkir, service fee, diskon, total, metode pengiriman/pembayaran, dan alamat saat checkout.
+3. Transaksi lama beberapa toko belum memiliki alokasi ongkir/diskon per toko; endpoint struk menolak dengan 422 agar total gabungan tidak dianggap total satu toko.
+4. Kontrak respons dan migrasi ada di [Pengaturan ongkir toko](../api/shipping-settings.md).
