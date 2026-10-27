@@ -60,6 +60,8 @@ use App\Http\Controllers\Api\RefreshUserSessionController;
 use App\Http\Controllers\Api\RegisterUserController;
 use App\Http\Controllers\Api\RegisterUserDeviceController;
 use App\Http\Controllers\Api\ResendOtpController;
+use App\Http\Controllers\Api\SellerShippingSettingsController;
+use App\Http\Controllers\Api\ShippingQuoteController;
 use App\Http\Controllers\Api\StoreTransactionRatingController;
 use App\Http\Controllers\Api\UpdateAgentProfileController;
 use App\Http\Controllers\Api\UpdateCartDeliveryMethodController;
@@ -120,6 +122,7 @@ Route::middleware(['session.token', 'role:buyer'])->group(function (): void {
     Route::post('/checkout', CheckoutController::class);
     Route::post('/promo-codes/validate', ValidatePromoCodeController::class);
     Route::get('/delivery-methods', GetDeliveryMethodsController::class);
+    Route::post('/tenants/{tenantId}/shipping-quote', ShippingQuoteController::class);
     Route::get('/order-time-options', GetOrderTimeOptionsController::class);
     Route::get('/payment-methods', GetPaymentMethodsController::class);
     Route::get('/service-fee', GetServiceFeeController::class);
@@ -151,6 +154,8 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
     Route::get('/dashboard/orders-today/counts', [GetSellerDashboardController::class, 'todayOrderCounts']);
     Route::get('/dashboard/orders/new-preview', [GetSellerDashboardController::class, 'newOrderPreview']);
     Route::get('/dashboard/top-products-today', [GetSellerDashboardController::class, 'topProductsToday']);
+    Route::get('/tenants/{tenantId}/shipping-settings', [SellerShippingSettingsController::class, 'show']);
+    Route::put('/tenants/{tenantId}/shipping-settings', [SellerShippingSettingsController::class, 'update']);
     Route::get('/tenants', GetSellerTenantListController::class);
     Route::post('/tenants', CreateSellerTenantController::class);
     Route::patch('/tenants/{id}/status', UpdateSellerTenantStatusController::class);

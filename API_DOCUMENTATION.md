@@ -3079,3 +3079,8 @@ berubah, dan tidak ada transaksi baru yang tersimpan. Pembeli dapat mencoba lagi
 setelah toko buka atau menghapus produk toko tersebut dari keranjang.
 Toko tetap terlihat pada GET tenant. Penutupan toko tidak membatalkan pesanan yang
 sudah dibuat dan tidak menghalangi seller memproses pesanan sampai selesai.
+
+## Pengaturan ongkir seller dan estimasi buyer
+
+Kontrak tiga endpoint baru, payload per mode, aturan jarak, dan respons error:
+[Pengaturan ongkir toko](docs/api/shipping-settings.md).
