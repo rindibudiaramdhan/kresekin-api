@@ -70,6 +70,7 @@ use App\Http\Controllers\Api\UpdateFinanceCancellationReasonCategoryController;
 use App\Http\Controllers\Api\UpdateSellerOrderStatusController;
 use App\Http\Controllers\Api\UpdateSellerProductController;
 use App\Http\Controllers\Api\UpdateSellerProductStatusController;
+use App\Http\Controllers\Api\UpdateSellerTenantController;
 use App\Http\Controllers\Api\UpdateSellerTenantStatusController;
 use App\Http\Controllers\Api\UpdateUserProfileController;
 use App\Http\Controllers\Api\UploadSellerProductImageController;
@@ -158,6 +159,7 @@ Route::middleware(['session.token', 'role:seller'])->prefix('seller')->group(fun
     Route::put('/tenants/{tenantId}/shipping-settings', [SellerShippingSettingsController::class, 'update']);
     Route::get('/tenants', GetSellerTenantListController::class);
     Route::post('/tenants', CreateSellerTenantController::class);
+    Route::match(['put', 'patch'], '/tenants/{id}', UpdateSellerTenantController::class);
     Route::patch('/tenants/{id}/status', UpdateSellerTenantStatusController::class);
     Route::get('/orders', GetSellerOrderListController::class);
     Route::get('/orders/{id}', GetSellerOrderDetailController::class);

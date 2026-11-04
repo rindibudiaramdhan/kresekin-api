@@ -163,6 +163,7 @@ Daftar ini diselaraskan dengan `php artisan route:list --path=api`. Method `GET|
 | GET | `/api/seller/dashboard/top-products-today` | Produk terlaris hari ini. |
 | GET | `/api/seller/tenants` | Daftar tenant seller aktif. |
 | POST | `/api/seller/tenants` | Buat tenant seller aktif. |
+| PUT/PATCH | `/api/seller/tenants/{id}` | Perbarui data dan area layanan toko milik seller. |
 | PATCH | `/api/seller/tenants/{id}/status` | Ubah status buka/tutup toko milik seller. |
 | GET | `/api/seller/orders` | Daftar order seller. |
 | GET | `/api/seller/orders/{id}` | Detail order seller. |
@@ -734,7 +735,7 @@ curl http://127.0.0.1:8000/api/seller/tenants \
 
 ### POST `/api/seller/tenants`
 
-Membuat tenant/toko untuk seller aktif tanpa kategori tenant. Endpoint update tenant belum tersedia. Model dan request tenant tidak menerima atribut kategori.
+Membuat tenant/toko untuk seller aktif tanpa kategori tenant. Model dan request tenant tidak menerima atribut kategori.
 
 Migration `2026_10_07_000002_drop_category_columns_from_tenants` menghapus `category` dan `product_category_id` beserta foreign key kategori pada tenant. Jalankan migration bersama rilis kode ini. Rollback hanya memulihkan struktur kolom nullable, bukan nilai kategori yang telah dihapus.
 
@@ -760,6 +761,24 @@ curl -X POST http://127.0.0.1:8000/api/seller/tenants \
   -H "Content-Type: application/json" \
   -d '{"owner_name":"Asep Pemilik","owner_phone":"081234567890","owner_email":"asep@example.com","agent_code":"KA-20265","name":"Toko Asep","location":"Jl Asri Raya No 45","housing_area_ids":["eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"],"latitude":-6.2,"longitude":106.8,"open_time":"07:00","close_time":"21:00"}'
 ```
+
+### PUT/PATCH `/api/seller/tenants/{id}`
+
+Memperbarui toko milik seller aktif. Kedua metode menerima perubahan parsial; field yang tidak dikirim dipertahankan. Perubahan atribut toko dan area layanan disimpan dalam satu transaksi database.
+
+Field opsional: `name`, `location`, `profile_picture_url`, `latitude`, `longitude`, `open_time`, `close_time`, dan `housing_area_ids`. Validasi mengikuti create toko; `name` dan `location` tidak boleh kosong. Field gambar, koordinat, dan jam dapat dikosongkan dengan `null`.
+
+Jika dikirim, `housing_area_ids` wajib berisi 1–3 UUID area yang ada dan berbeda. Array ini **mengganti seluruh area layanan lama**, bukan menambahkan area. Array kosong atau `null` ditolak dengan `422`. Area layanan toko terpisah dari `users.housing_area_id`; update profil tidak mengubah area layanan toko.
+
+```http
+PATCH /api/seller/tenants/{id}
+Authorization: Bearer <SELLER_TOKEN>
+Content-Type: application/json
+
+{"housing_area_ids":["eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"]}
+```
+
+Respons `200` berisi `message` dan `data` dengan `id`, `owner_user_id`, `name`, `location`, `housing_areas` (ID, nama, kode, dan village_code), `profile_picture_url`, koordinat, dan jam operasional. Aplikasi harus menggunakan `data.housing_areas` untuk hasil simpan dan `GET /api/seller/tenants` saat membuka ulang form. Toko tidak ditemukan atau milik seller lain menghasilkan `404`; tanpa autentikasi `401`, role selain seller `403`.
 
 ### GET `/api/seller/orders`
 

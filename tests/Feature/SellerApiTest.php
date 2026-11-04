@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\CancellationReasonCategory;
 use App\Models\HousingArea;
+use App\Models\HousingAreaTenant;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductUnit;
@@ -17,12 +18,109 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 use Tests\TestCase;
 
 class SellerApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_seller_can_replace_service_areas_and_read_them_back(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('area-seller@example.com', '+6281200000801', 'area-token', User::ROLE_SELLER);
+        $areas = collect(['A', 'B', 'C'])->map(fn ($code) => HousingArea::query()->create([
+            'name' => 'Area '.$code,
+            'code' => 'AREA-'.$code,
+            'city' => 'Bandung',
+            'district' => 'Antapani',
+            'subdistrict' => 'Antapani Wetan',
+            'village_code' => '3273141003',
+        ]));
+        $seller->forceFill(['housing_area_id' => $areas[0]->id])->save();
+        $id = $this->withToken($token)->postJson('/api/seller/tenants', [
+            'owner_name' => $seller->name,
+            'name' => 'Toko Area',
+            'location' => 'Alamat toko',
+            'housing_area_ids' => [$areas[0]->id, $areas[1]->id],
+        ])->assertCreated()->assertJsonCount(2, 'data.housing_areas')->json('data.id');
+
+        $this->withToken($token)->getJson('/api/seller/tenants')
+            ->assertOk()->assertJsonCount(2, 'data.0.housing_areas');
+
+        $this->withToken($token)->patchJson('/api/seller/tenants/'.$id, [
+            'housing_area_ids' => [$areas[2]->id],
+        ])->assertOk()->assertJsonCount(1, 'data.housing_areas')
+            ->assertJsonPath('data.housing_areas.0.id', $areas[2]->id)
+            ->assertJsonPath('data.name', 'Toko Area');
+
+        $this->withToken($token)->getJson('/api/seller/tenants')
+            ->assertOk()->assertJsonCount(1, 'data.0.housing_areas')
+            ->assertJsonPath('data.0.housing_areas.0.id', $areas[2]->id);
+        $this->assertDatabaseMissing('housing_area_tenant', ['tenant_id' => $id, 'housing_area_id' => $areas[0]->id]);
+        $this->assertDatabaseMissing('housing_area_tenant', ['tenant_id' => $id, 'housing_area_id' => $areas[1]->id]);
+        $this->assertSame($areas[0]->id, $seller->fresh()->housing_area_id);
+
+        $this->withToken($token)->putJson('/api/seller/tenants/'.$id, ['name' => 'Toko Baru'])
+            ->assertOk()->assertJsonPath('data.name', 'Toko Baru')
+            ->assertJsonPath('data.housing_areas.0.id', $areas[2]->id);
+
+        foreach ([[], null, [$areas[2]->id, $areas[2]->id], ['not-a-uuid'], [fake()->uuid()], $areas->pluck('id')->push(fake()->uuid())->all()] as $invalidAreas) {
+            $this->withToken($token)->patchJson('/api/seller/tenants/'.$id, [
+                'name' => 'Tidak boleh tersimpan',
+                'housing_area_ids' => $invalidAreas,
+            ])->assertUnprocessable();
+        }
+
+        $this->assertDatabaseHas('tenants', ['id' => $id, 'name' => 'Toko Baru']);
+        $this->assertDatabaseHas('housing_area_tenant', ['tenant_id' => $id, 'housing_area_id' => $areas[2]->id]);
+        $this->assertDatabaseCount('housing_area_tenant', 1);
+
+        [, $otherToken] = $this->createAuthenticatedUser('other-area@example.com', '+6281200000802', 'other-area-token', User::ROLE_SELLER);
+        $this->withToken($otherToken)->patchJson('/api/seller/tenants/'.$id, ['housing_area_ids' => [$areas[0]->id]])->assertNotFound();
+        $this->withToken($token)->patchJson('/api/seller/tenants/'.fake()->uuid(), ['housing_area_ids' => [$areas[0]->id]])->assertNotFound();
+        $this->assertDatabaseHas('housing_area_tenant', ['tenant_id' => $id, 'housing_area_id' => $areas[2]->id]);
+
+        [, $buyerToken] = $this->createAuthenticatedUser('buyer-area@example.com', '+6281200000803', 'buyer-area-token', User::ROLE_BUYER);
+        $this->withToken($buyerToken)->patchJson('/api/seller/tenants/'.$id, ['name' => 'Forbidden'])->assertForbidden();
+        $this->withHeader('Authorization', '')->patchJson('/api/seller/tenants/'.$id, ['name' => 'Unauthenticated'])->assertUnauthorized();
+    }
+
+    public function test_tenant_update_rolls_back_when_area_sync_fails(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('rollback-area@example.com', '+6281200000804', 'rollback-area-token', User::ROLE_SELLER);
+        $areas = collect(['OLD', 'NEW'])->map(fn ($code) => HousingArea::query()->create([
+            'name' => 'Area '.$code,
+            'code' => 'AREA-'.$code,
+            'city' => 'Bandung',
+            'district' => 'Antapani',
+            'subdistrict' => 'Antapani Wetan',
+            'village_code' => '3273141003',
+        ]));
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Nama lama',
+            'location' => 'Alamat toko',
+        ]);
+        $tenant->housingAreas()->attach($areas[0]->id);
+        $event = 'eloquent.creating: '.HousingAreaTenant::class;
+        Event::listen($event, function (): void {
+            throw new RuntimeException('Simulated area write failure');
+        });
+
+        try {
+            $this->withToken($token)->patchJson('/api/seller/tenants/'.$tenant->id, [
+                'name' => 'Nama baru',
+                'housing_area_ids' => [$areas[1]->id],
+            ])->assertStatus(500);
+        } finally {
+            Event::forget($event);
+        }
+
+        $this->assertSame('Nama lama', $tenant->fresh()->name);
+        $this->assertSame([$areas[0]->id], $tenant->housingAreas()->pluck('housing_areas.id')->all());
+    }
 
     public function test_seller_can_create_and_list_own_tenant(): void
     {
