@@ -30,6 +30,12 @@ class GetBuyerTenantListController extends Controller
         }
 
         $validated = $validator->validated();
+        $areaIds = $request->user()->profileHousingAreas()->modelKeys();
+
+        if (isset($validated['housing_area_id'])) {
+            $areaIds = array_values(array_intersect($areaIds, [$validated['housing_area_id']]));
+        }
+
         $limit = (int) ($validated['limit'] ?? 10);
         $page = (int) ($validated['page'] ?? 1);
         $currentTime = now('Asia/Jakarta')->format('H:i');
@@ -51,12 +57,9 @@ class GetBuyerTenantListController extends Controller
                 $productCategory,
                 fn ($query) => $query->whereHas('products', fn ($productQuery) => $productQuery->where('category', $productCategory->name))
             )
-            ->when(
-                isset($validated['housing_area_id']),
-                fn ($query) => $query->whereHas(
-                    'housingAreas',
-                    fn ($housingAreaQuery) => $housingAreaQuery->where('housing_areas.id', $validated['housing_area_id'])
-                )
+            ->whereHas(
+                'housingAreas',
+                fn ($housingAreaQuery) => $housingAreaQuery->whereIn('housing_areas.id', $areaIds)
             )
             ->latest()
             ->get()

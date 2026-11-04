@@ -32,6 +32,12 @@ class GetProductListController extends Controller
         }
 
         $validated = $validator->validated();
+        $areaIds = $request->user()->profileHousingAreas()->modelKeys();
+
+        if (isset($validated['housing_area_id'])) {
+            $areaIds = array_values(array_intersect($areaIds, [$validated['housing_area_id']]));
+        }
+
         $limit = (int) ($validated['limit'] ?? 10);
         $isPromo = isset($validated['is_promo'])
             ? filter_var($validated['is_promo'], FILTER_VALIDATE_BOOLEAN)
@@ -51,12 +57,9 @@ class GetProductListController extends Controller
                 isset($validated['tenant_id']),
                 fn ($query) => $query->where('tenant_id', $validated['tenant_id'])
             )
-            ->when(
-                isset($validated['housing_area_id']),
-                fn ($query) => $query->whereHas(
-                    'tenant.housingAreas',
-                    fn ($housingAreaQuery) => $housingAreaQuery->where('housing_areas.id', $validated['housing_area_id'])
-                )
+            ->whereHas(
+                'tenant.housingAreas',
+                fn ($housingAreaQuery) => $housingAreaQuery->whereIn('housing_areas.id', $areaIds)
             )
             ->when(
                 isset($validated['name']),

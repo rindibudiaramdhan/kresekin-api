@@ -55,6 +55,8 @@ class ProductApiTest extends TestCase
             ]);
         }
 
+        $this->assignListArea($user);
+
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
             ->getJson('/api/products');
 
@@ -145,6 +147,8 @@ class ProductApiTest extends TestCase
             'delivery_estimate' => '1-2 jam delivery',
         ]);
 
+        $this->assignListArea($user);
+
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
             ->getJson('/api/products?category=sayur&tenant_id='.$tenantA->id.'&name=pak');
 
@@ -158,7 +162,7 @@ class ProductApiTest extends TestCase
 
     public function test_product_list_can_be_filtered_by_housing_area_id(): void
     {
-        [, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedUser();
 
         $targetArea = HousingArea::query()->create([
             'name' => 'Komp Setra Dago',
@@ -206,6 +210,8 @@ class ProductApiTest extends TestCase
             'description' => 'Sembako area lain.',
             'delivery_estimate' => 'Hari ini',
         ]);
+
+        $user->update(['housing_area_id' => $targetArea->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/products?housing_area_id='.$targetArea->id);
@@ -267,7 +273,7 @@ class ProductApiTest extends TestCase
 
     public function test_product_list_can_be_filtered_by_promo_status(): void
     {
-        [, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedUser();
 
         $tenant = Tenant::query()->create([
             'name' => 'Toko Promo',
@@ -311,6 +317,8 @@ class ProductApiTest extends TestCase
             'delivery_estimate' => 'Hari ini',
         ]);
 
+        $this->assignListArea($user);
+
         $promoResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/products?is_promo=true');
 
@@ -335,7 +343,7 @@ class ProductApiTest extends TestCase
 
     public function test_product_list_and_detail_return_null_discount_when_original_price_is_not_higher(): void
     {
-        [, $token] = $this->createAuthenticatedUser();
+        [$user, $token] = $this->createAuthenticatedUser();
 
         $tenant = Tenant::query()->create([
             'name' => 'Toko Null Distance',
@@ -356,6 +364,8 @@ class ProductApiTest extends TestCase
             'description' => 'Sayur harian.',
             'delivery_estimate' => '2 jam delivery',
         ]);
+
+        $this->assignListArea($user);
 
         $listResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/products?name=Kubis');
@@ -399,5 +409,13 @@ class ProductApiTest extends TestCase
         ]);
 
         return [$user, $plainTextToken];
+    }
+
+    private function assignListArea(User $user): void
+    {
+        $area = HousingArea::query()->create(['name' => 'Area buyer', 'code' => 'LIST-AREA']);
+        $user->update(['housing_area_id' => $area->id]);
+
+        Tenant::query()->each(fn (Tenant $tenant) => $tenant->housingAreas()->sync([$area->id]));
     }
 }

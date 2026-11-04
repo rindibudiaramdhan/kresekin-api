@@ -52,6 +52,8 @@ class TenantApiTest extends TestCase
             ]);
         }
 
+        $this->assignListArea($user);
+
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
             ->getJson('/api/tenants');
 
@@ -119,6 +121,8 @@ class TenantApiTest extends TestCase
             ]);
         }
 
+        $this->assignListArea($user);
+
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
             ->getJson('/api/tenants?limit=3');
 
@@ -185,6 +189,8 @@ class TenantApiTest extends TestCase
             'close_time' => '21:00',
         ]);
         $otherTenant->housingAreas()->sync([$otherArea->id]);
+
+        $user->update(['housing_area_id' => $targetArea->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
             ->getJson('/api/tenants?housing_area_id='.$targetArea->id);
@@ -294,6 +300,8 @@ class TenantApiTest extends TestCase
             ]);
         }
 
+        $this->assignListArea($user);
+
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
             ->getJson('/api/tenants?product_category=toiletries');
 
@@ -380,6 +388,8 @@ class TenantApiTest extends TestCase
             'close_time' => '21:00',
         ]);
 
+        $this->assignListArea($user);
+
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
             ->getJson('/api/tenants');
 
@@ -448,5 +458,13 @@ class TenantApiTest extends TestCase
         $response
             ->assertUnauthorized()
             ->assertJsonPath('message', 'Unauthenticated.');
+    }
+
+    private function assignListArea(User $user): void
+    {
+        $area = HousingArea::query()->create(['name' => 'Area buyer', 'code' => 'LIST-AREA']);
+        $user->update(['housing_area_id' => $area->id]);
+
+        Tenant::query()->each(fn (Tenant $tenant) => $tenant->housingAreas()->sync([$area->id]));
     }
 }
