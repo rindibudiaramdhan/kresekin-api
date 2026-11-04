@@ -22,6 +22,7 @@ class GetUserProfileController extends Controller
                 'role' => $user->role,
                 'agent_code' => $user->agent_code,
                 'housing_area' => $user->housingArea,
+                'housing_areas' => $user->profileHousingAreas()->makeHidden('pivot'),
                 'address' => $user->address,
                 'landmark' => $user->landmark,
                 'latitude' => $user->latitude,

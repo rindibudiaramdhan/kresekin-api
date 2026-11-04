@@ -50,6 +50,16 @@ class SellerApiTest extends TestCase
             ->assertOk()->assertJsonCount(2, 'data.0.housing_areas');
 
         $this->withToken($token)->patchJson('/api/seller/tenants/'.$id, [
+            'housing_area_ids' => [$areas[1]->id, $areas[2]->id],
+        ])->assertOk()->assertJsonCount(2, 'data.housing_areas');
+        $multipleAreas = $this->withToken($token)->getJson('/api/seller/tenants')
+            ->assertOk()->assertJsonCount(2, 'data.0.housing_areas');
+        $this->assertEqualsCanonicalizing(
+            [$areas[1]->id, $areas[2]->id],
+            array_column($multipleAreas->json('data.0.housing_areas'), 'id'),
+        );
+
+        $this->withToken($token)->patchJson('/api/seller/tenants/'.$id, [
             'housing_area_ids' => [$areas[2]->id],
         ])->assertOk()->assertJsonCount(1, 'data.housing_areas')
             ->assertJsonPath('data.housing_areas.0.id', $areas[2]->id)

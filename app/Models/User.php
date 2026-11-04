@@ -6,9 +6,11 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -173,6 +175,25 @@ class User extends Authenticatable
     public function cart(): HasOne
     {
         return $this->hasOne(Cart::class);
+    }
+
+    public function housingAreas(): BelongsToMany
+    {
+        return $this->belongsToMany(HousingArea::class);
+    }
+
+    public function profileHousingAreas(): Collection
+    {
+        $areas = $this->housingAreas;
+
+        if ($areas->isEmpty() && $this->housingArea) {
+            return new Collection([$this->housingArea]);
+        }
+
+        return $areas->sortBy(fn ($area) => [
+            $area->id === $this->housing_area_id ? 0 : 1,
+            $area->id,
+        ])->values();
     }
 
     public function housingArea(): BelongsTo

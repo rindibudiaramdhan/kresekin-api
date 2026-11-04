@@ -359,7 +359,7 @@ curl -X POST http://127.0.0.1:8000/api/users/devices \
 
 ### GET `/api/users/profile`
 
-Butuh token. Mengambil profil user aktif.
+Butuh token. Mengambil profil user aktif. `data.housing_areas` berisi seluruh area profil buyer/seller dalam bentuk array objek area. `data.housing_area` tetap tersedia sebagai area utama untuk kompatibilitas. Profil tanpa area mengembalikan `housing_areas: []` dan `housing_area: null`. Data lama yang hanya memiliki satu area juga muncul dalam array.
 
 ```bash
 curl http://127.0.0.1:8000/api/users/profile \
@@ -375,7 +375,8 @@ Body:
 - `name` wajib, max 255
 - `email` wajib, email, unik per role
 - `phone` opsional, regex `+?[0-9]{8,15}`, unik per role
-- `housing_area_id` wajib UUID, harus ada di `housing_areas`
+- `housing_area_ids` array UUID berbeda, minimal 1 area dan semua harus ada di `housing_areas`; mengganti seluruh pilihan sebelumnya.
+- Klien lama dapat memakai `housing_area_id` (satu UUID) sebagai pengganti `housing_area_ids`. Kirim tepat salah satu field; mengirim keduanya ditolak dengan `422`.
 - `address` wajib, max 1000
 - `landmark` opsional, max 255
 
@@ -383,8 +384,12 @@ Body:
 curl -X PUT http://127.0.0.1:8000/api/users/profile \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Budi","email":"budi@example.com","phone":"+6281234567890","housing_area_id":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","address":"Jl. Melati No. 1","landmark":"Dekat masjid"}'
+  -d '{"name":"Budi","email":"budi@example.com","phone":"+6281234567890","housing_area_ids":["eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","ffffffff-ffff-4fff-8fff-ffffffffffff"],"address":"Jl. Melati No. 1","landmark":"Dekat masjid"}'
 ```
+
+Respons update menyertakan `data.housing_areas` yang sama dengan hasil GET profil. Area pertama yang dikirim menjadi area utama (`housing_area` dan kolom `users.housing_area_id`); penyimpanan profil dan seluruh pilihan area bersifat atomik. Pilihan area profil tidak otomatis mengubah area layanan toko. Untuk area toko, gunakan `PUT/PATCH /api/seller/tenants/{id}` dan baca kembali `housing_areas` melalui respons update atau daftar toko.
+
+Rilis dukungan multi-area profil memerlukan migration `2026_11_05_000001_create_housing_area_user_table` sebelum kode baru dipakai. Migration menyalin area profil lama ke tabel relasi tanpa menghapus kolom area utama. Rollback menghapus pilihan tambahan pada tabel relasi; kolom area utama tetap tersedia. Tidak ada perubahan otomatis terhadap relasi area toko.
 
 ### GET `/api/housing-areas`
 

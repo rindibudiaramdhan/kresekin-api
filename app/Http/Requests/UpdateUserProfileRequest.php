@@ -32,7 +32,9 @@ class UpdateUserProfileRequest extends FormRequest
                 'regex:/^\+?[0-9]{8,15}$/',
                 Rule::unique('users', 'phone')->where('role', $role)->ignore($userId),
             ],
-            'housing_area_id' => ['required', 'uuid', Rule::exists('housing_areas', 'id')],
+            'housing_area_id' => ['required_without:housing_area_ids', 'prohibits:housing_area_ids', 'uuid', Rule::exists('housing_areas', 'id')],
+            'housing_area_ids' => ['required_without:housing_area_id', 'array', 'list', 'min:1'],
+            'housing_area_ids.*' => ['required', 'uuid', 'distinct', Rule::exists('housing_areas', 'id')],
             'address' => ['required', 'string', 'max:1000'],
             'landmark' => ['nullable', 'string', 'max:255'],
         ];
