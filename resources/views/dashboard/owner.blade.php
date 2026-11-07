@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Online Monitoring - {{ config('app.name', 'Kresek.in') }}</title>
     <style>
         * { box-sizing: border-box; }
-        body { margin: 0; color: #172033; background: #f6f8fb; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+        body { margin: 0; color: #172033; background: var(--ds-canvas); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
         .owner-shell { min-height: 100vh; display: flex; }
         .owner-main { min-width: 0; flex: 1; }
         .owner-content { display: grid; gap: 22px; padding: 26px 32px 42px; }
@@ -18,7 +19,7 @@
         .owner-field select, .owner-field input { width: 100%; min-height: 42px; border: 1px solid #d5dde9; border-radius: 10px; background: #fff; padding: 0 12px; color: #172033; font: inherit; }
         .owner-live { margin-left: auto; min-width: 190px; display: grid; gap: 4px; text-align: right; }
         .owner-live strong { color: #05845f; }
-        .owner-live[data-state="error"] strong { color: #c52525; }
+        .owner-live[data-state="error"] strong { color: var(--ds-danger); }
         .owner-live[data-state="loading"] strong { color: #0b6aa7; }
         .owner-live small { color: #68758a; }
         .owner-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
@@ -26,7 +27,7 @@
         .owner-metric span { color: #667286; font-size: 14px; font-weight: 700; }
         .owner-metric strong { display: block; margin-top: 10px; font-size: clamp(25px, 3vw, 34px); }
         .owner-statuses { display: grid; grid-template-columns: repeat(7, minmax(120px, 1fr)); gap: 10px; overflow-x: auto; padding: 16px; }
-        .owner-status { border-radius: 12px; background: #f3f7fa; padding: 14px; }
+        .owner-status { border-radius: var(--ds-radius-card); background: #f3f7fa; padding: 14px; }
         .owner-status span { display: block; min-height: 34px; color: #607086; font-size: 12px; font-weight: 800; }
         .owner-status strong { font-size: 24px; }
         .owner-section-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 18px 20px; border-bottom: 1px solid #e7ebf1; }
@@ -36,15 +37,15 @@
         .owner-table th, .owner-table td { padding: 14px 18px; border-bottom: 1px solid #edf0f4; text-align: left; vertical-align: top; }
         .owner-table th { color: #667286; background: #fafbfd; font-size: 12px; text-transform: uppercase; }
         .owner-table td { font-size: 14px; }
-        .owner-table .money { color: #06845f; font-weight: 900; }
+        .owner-table .money { color: #06845f; font-weight: 700; }
         .owner-list { display: flex; flex-wrap: wrap; gap: 5px; }
-        .owner-chip { border-radius: 999px; color: #176375; background: #e7f8fa; padding: 4px 8px; font-size: 12px; font-weight: 800; }
-        .owner-badge { display: inline-block; border-radius: 999px; background: #edf2f8; padding: 6px 10px; font-size: 12px; font-weight: 900; }
+        .owner-chip { border-radius: var(--ds-radius-pill); color: #176375; background: #e7f8fa; padding: 4px 8px; font-size: 12px; font-weight: 800; }
+        .owner-badge { display: inline-block; border-radius: var(--ds-radius-pill); background: #edf2f8; padding: 6px 10px; font-size: 12px; font-weight: 700; }
         .owner-empty { padding: 30px !important; color: #758095; text-align: center !important; }
         .owner-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 14px 18px; }
         .owner-pagination button { min-height: 36px; border: 1px solid #d5dde9; border-radius: 9px; background: #fff; padding: 0 13px; cursor: pointer; }
         .owner-pagination button:disabled { opacity: .45; cursor: default; }
-        .owner-error { display: none; border: 1px solid #ffc9c9; border-radius: 12px; color: #9f1d1d; background: #fff0f0; padding: 14px 16px; }
+        .owner-error { display: none; border: 1px solid #ffc9c9; border-radius: var(--ds-radius-card); color: #9f1d1d; background: #fff0f0; padding: 14px 16px; }
         .owner-error.is-visible { display: block; }
         @media (max-width: 1180px) { .owner-metrics { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 860px) { .owner-shell { display: block; } .owner-content { padding: 18px; } }

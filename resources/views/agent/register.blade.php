@@ -1,24 +1,25 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <title>Daftar Agent - {{ config('app.name', 'Kresek.in') }}</title>
     <style>
         :root {
-            --brand: #11bec8;
-            --brand-dark: #079aa7;
-            --brand-soft: #e7fbfd;
-            --ink: #151922;
+            --brand: var(--ds-brand);
+            --brand-dark: var(--ds-brand-hover);
+            --brand-soft: var(--ds-brand-soft);
+            --ink: var(--ds-text);
             --muted: #596070;
             --line: #d7dce7;
-            --field: #f7f8fb;
-            --warning: #ffb91f;
-            --danger: #c52525;
+            --field: var(--ds-field);
+            --warning: var(--ds-accent);
+            --danger: var(--ds-danger);
             --success: #04845f;
             --shadow: 0 24px 70px rgba(16, 24, 40, .12);
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: var(--ds-font);
         }
 
         * {
@@ -31,7 +32,7 @@
             color: var(--ink);
             background:
                 radial-gradient(circle at 14% 10%, rgba(17, 190, 200, .12), transparent 30%),
-                linear-gradient(135deg, #ffffff 0%, #f7fafc 54%, #edf8fa 100%);
+                linear-gradient(135deg, var(--ds-surface) 0%, #f7fafc 54%, #edf8fa 100%);
         }
 
         a {
@@ -54,7 +55,7 @@
             width: min(720px, 100%);
             border: 1px solid rgba(215, 220, 231, .82);
             border-radius: 18px;
-            background: #ffffff;
+            background: var(--ds-surface);
             box-shadow: var(--shadow);
             padding: clamp(26px, 5vw, 44px);
         }
@@ -65,7 +66,7 @@
             gap: 13px;
             color: var(--brand);
             font-size: clamp(25px, 4vw, 31px);
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0;
         }
 
@@ -116,7 +117,7 @@
         .status-message {
             margin-top: 18px;
             border: 1px solid rgba(4, 132, 95, .18);
-            border-radius: 12px;
+            border-radius: var(--ds-radius-card);
             color: #066b50;
             background: #e8f8f1;
             padding: 12px 14px;
@@ -128,7 +129,7 @@
         .error-summary {
             margin-top: 18px;
             border: 1px solid rgba(197, 37, 37, .2);
-            border-radius: 12px;
+            border-radius: var(--ds-radius-card);
             color: var(--danger);
             background: #fff1f1;
             padding: 12px 14px;
@@ -165,14 +166,14 @@
         .form-row.compact-field label {
             color: #3f4656;
             font-size: 12px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: .06em;
         }
 
         .form-row.compact-field .field {
             min-height: 46px;
             border-radius: 7px;
-            background: #ffffff;
+            background: var(--ds-surface);
             padding: 0 14px;
         }
 
@@ -210,7 +211,7 @@
         .field:focus-within,
         .upload-field:focus-within {
             border-color: var(--brand);
-            background: #ffffff;
+            background: var(--ds-surface);
             box-shadow: 0 0 0 4px rgba(17, 190, 200, .14);
         }
 
@@ -234,7 +235,7 @@
             display: grid;
             place-items: center;
             border: 1.5px dashed #aeb7c8;
-            border-radius: 12px;
+            border-radius: var(--ds-radius-card);
             background: #f8fbfd;
             padding: 20px;
             text-align: center;
@@ -253,7 +254,7 @@
             display: block;
             color: #24324a;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .upload-help,
@@ -269,7 +270,7 @@
             align-items: flex-start;
             gap: 11px;
             border: 1px solid rgba(17, 190, 200, .18);
-            border-radius: 12px;
+            border-radius: var(--ds-radius-card);
             background: var(--brand-soft);
             padding: 14px;
         }
@@ -311,13 +312,13 @@
             padding: 0 22px;
             cursor: pointer;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .secondary-button {
             border: 1px solid var(--line);
             color: #4b5568;
-            background: #ffffff;
+            background: var(--ds-surface);
         }
 
         .secondary-button:hover,
@@ -331,7 +332,7 @@
 
         .primary-button {
             border: 0;
-            color: #ffffff;
+            color: var(--ds-surface);
             background: var(--brand);
             box-shadow: 0 15px 28px rgba(17, 190, 200, .24);
         }

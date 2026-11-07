@@ -1,0 +1,44 @@
+/* Kresek.in design tokens. Visual reference: designer screenshots supplied November 2026.
+   Values are implementation approximations until confirmed from Figma. */
+:root {
+    --ds-brand: #00bdcc;
+    --ds-brand-hover: #009faa;
+    --ds-brand-soft: #e7fbfd;
+    --ds-highlight: #009fa8;
+    --ds-accent: #ffb91f;
+    --ds-text: #1c2021;
+    --ds-text-muted: #52617f;
+    --ds-canvas: #f7f8fa;
+    --ds-surface: #ffffff;
+    --ds-field: #f3f4f6;
+    --ds-border: #e3e8f0;
+    --ds-input-border: #c7cede;
+    --ds-success: #005c40;
+    --ds-success-soft: #e0f7ed;
+    --ds-pending: #0b53a4;
+    --ds-pending-soft: #e3edff;
+    --ds-processing: #705500;
+    --ds-processing-soft: #ffda54;
+    --ds-danger: #c52121;
+    --ds-danger-soft: #ffecec;
+    --ds-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --ds-radius-control: 8px;
+    --ds-radius-card: 12px;
+    --ds-radius-pill: 999px;
+    --ds-space-1: 4px;
+    --ds-space-2: 8px;
+    --ds-space-3: 12px;
+    --ds-space-4: 16px;
+    --ds-space-6: 24px;
+    --ds-space-7: 28px;
+    --ds-space-8: 32px;
+    --ds-shadow-card: 0 14px 34px rgba(16, 24, 40, .07);
+    --ds-shadow-modal: 0 24px 70px rgba(15, 23, 42, .24);
+    --ds-focus-ring: 0 0 0 3px rgba(0, 189, 204, .22);
+}
+:where(button, input, select, textarea) { font: inherit; }
+:where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid var(--ds-brand-hover);
+    outline-offset: 3px;
+}
+:where(button, input, select, textarea):disabled { cursor: not-allowed; }

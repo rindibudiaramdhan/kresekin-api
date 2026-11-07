@@ -30,9 +30,9 @@
 
         .dashboard-header__title {
             margin: 0;
-            color: #11bec8;
+            color: var(--ds-brand);
             font-size: 25px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0;
             white-space: nowrap;
         }
@@ -46,7 +46,7 @@
         .dashboard-header__panel-label {
             color: #5c667a;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             white-space: nowrap;
         }
 
@@ -62,7 +62,7 @@
             display: inline-grid;
             place-items: center;
             border: 0;
-            border-radius: 12px;
+            border-radius: var(--ds-radius-card);
             color: #3f4656;
             background: transparent;
             cursor: pointer;
@@ -70,7 +70,7 @@
 
         .dashboard-header__notification:hover,
         .dashboard-header__notification:focus-visible {
-            color: #11bec8;
+            color: var(--ds-brand);
             background: #edf7f9;
             outline: 0;
         }
@@ -86,12 +86,12 @@
             display: inline-flex;
             align-items: center;
             gap: 12px;
-            border-radius: 999px;
+            border-radius: var(--ds-radius-pill);
             background: #e8eaee;
             padding: 7px 20px 7px 8px;
             color: #242833;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: .01em;
             white-space: nowrap;
         }
@@ -102,8 +102,8 @@
             display: inline-grid;
             place-items: center;
             border-radius: 50%;
-            color: #ffffff;
-            background: #11bec8;
+            color: var(--ds-surface);
+            background: var(--ds-brand);
         }
 
         .dashboard-header__avatar svg {

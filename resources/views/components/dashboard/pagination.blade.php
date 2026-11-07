@@ -34,13 +34,13 @@
             height: 46px;
             display: inline-grid;
             place-items: center;
-            border: 1px solid #c7cede;
+            border: 1px solid var(--ds-input-border);
             border-radius: 6px;
-            background: #ffffff;
-            color: #151922;
+            background: var(--ds-surface);
+            color: var(--ds-text);
             font: inherit;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             text-decoration: none;
         }
 
@@ -50,18 +50,18 @@
 
         .dashboard-pagination__button[aria-disabled="true"] {
             color: #9ca3af;
-            background: #f8fafc;
+            background: var(--ds-canvas);
         }
 
         .dashboard-pagination__page.is-current {
-            border-color: #11bec8;
-            background: #11bec8;
-            color: #ffffff;
+            border-color: var(--ds-brand);
+            background: var(--ds-brand);
+            color: var(--ds-surface);
         }
 
         .dashboard-pagination__ellipsis {
             color: #6b7487;
-            font-weight: 900;
+            font-weight: 700;
             padding: 0 4px;
         }
 

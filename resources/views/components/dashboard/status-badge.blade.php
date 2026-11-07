@@ -6,8 +6,8 @@
 @php
     $text = $label ?? match ($status) {
         'success', 'approved' => 'Success',
-        'pending', 'processing', 'estimated' => 'Pending',
-        'warning' => 'Diproses',
+        'pending', 'estimated' => 'Pending',
+        'processing', 'warning' => 'Diproses',
         'failed', 'rejected' => 'Failed',
         default => ucfirst($status),
     };
@@ -19,10 +19,10 @@
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            border-radius: 999px;
+            border-radius: var(--ds-radius-pill);
             padding: 7px 13px;
             font-size: 15px;
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1;
             white-space: nowrap;
         }
@@ -37,26 +37,26 @@
 
         .status-badge--success,
         .status-badge--approved {
-            color: #075f3d;
-            background: #e7f2ee;
+            color: var(--ds-success);
+            background: var(--ds-success-soft);
         }
 
         .status-badge--pending,
         .status-badge--estimated {
-            color: #0b53a4;
-            background: #e8f0ff;
+            color: var(--ds-pending);
+            background: var(--ds-pending-soft);
         }
 
         .status-badge--processing,
         .status-badge--warning {
-            color: #7a5a00;
-            background: #ffda54;
+            color: var(--ds-processing);
+            background: var(--ds-processing-soft);
         }
 
         .status-badge--failed,
         .status-badge--rejected {
-            color: #c52121;
-            background: #ffecec;
+            color: var(--ds-danger);
+            background: var(--ds-danger-soft);
         }
     </style>
 @endonce

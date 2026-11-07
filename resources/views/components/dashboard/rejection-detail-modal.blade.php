@@ -19,9 +19,9 @@
             max-height: calc(100vh - 40px);
             overflow-y: auto;
             border-radius: 14px;
-            background: #ffffff;
+            background: var(--ds-surface);
             color: #0b0b0f;
-            box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+            box-shadow: var(--ds-shadow-modal);
             padding: 28px 30px 32px;
         }
 
@@ -37,7 +37,7 @@
         .rejection-detail-modal__title {
             margin: 0;
             font-size: clamp(24px, 2.4vw, 30px);
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1.12;
             letter-spacing: 0;
         }
@@ -56,7 +56,7 @@
 
         .rejection-detail-modal__close:hover,
         .rejection-detail-modal__close:focus-visible {
-            color: #11bec8;
+            color: var(--ds-brand);
             outline: 0;
         }
 
@@ -112,20 +112,20 @@
             width: min(150px, 100%);
             min-height: 48px;
             border: 0;
-            border-radius: 8px;
-            background: #11bec8;
-            color: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-brand);
+            color: var(--ds-surface);
             cursor: pointer;
             font: inherit;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0;
             padding: 0 18px;
         }
 
         .rejection-detail-modal__button:hover,
         .rejection-detail-modal__button:focus-visible {
-            background: #0aaab3;
+            background: var(--ds-brand-hover);
             outline: 0;
         }
 

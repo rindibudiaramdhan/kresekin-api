@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
@@ -12,8 +13,8 @@
             min-height: 100vh;
             margin: 0;
             color: #17202f;
-            background: #f6f8fb;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--ds-canvas);
+            font-family: var(--ds-font);
         }
 
         button, input { font: inherit; }
@@ -28,7 +29,7 @@
             min-width: 0;
             height: 100vh;
             overflow-y: auto;
-            background: #f6f8fb;
+            background: var(--ds-canvas);
         }
 
         .agent-content {
@@ -47,7 +48,7 @@
             gap: 6px;
             border: 1px solid #dbe2ec;
             border-radius: 10px;
-            background: #ffffff;
+            background: var(--ds-surface);
             padding: 5px;
         }
 
@@ -60,12 +61,12 @@
             padding: 10px 14px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .period-control__button.is-active {
-            color: #ffffff;
-            background: #11bec8;
+            color: var(--ds-surface);
+            background: var(--ds-brand);
         }
 
         .agent-summary-grid {
@@ -80,9 +81,9 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            border-radius: 8px;
-            background: #11bec8;
-            color: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-brand);
+            color: var(--ds-surface);
             padding: 28px;
             box-shadow: 0 18px 36px rgba(17, 190, 200, .25);
         }
@@ -92,7 +93,7 @@
             margin: 0;
             color: rgba(255, 255, 255, .82);
             font-size: 13px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: .08em;
             text-transform: uppercase;
         }
@@ -108,18 +109,18 @@
         .commission-card__growth {
             display: inline-flex;
             width: fit-content;
-            border-radius: 999px;
+            border-radius: var(--ds-radius-pill);
             background: rgba(255, 255, 255, .18);
             padding: 8px 12px;
             font-size: 14px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .commission-card__footer {
             margin: 0;
             color: rgba(255, 255, 255, .84);
             font-size: 14px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: .03em;
         }
 
@@ -127,8 +128,8 @@
         .metric-tile,
         .umkm-table-card {
             border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            background: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-surface);
             box-shadow: 0 14px 32px rgba(16, 24, 40, .06);
         }
 
@@ -166,12 +167,12 @@
             align-items: center;
             gap: 8px;
             border: 1px solid #d9e1ec;
-            border-radius: 8px;
-            background: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-surface);
             color: #344054;
             padding: 10px 12px;
             font-size: 13px;
-            font-weight: 900;
+            font-weight: 700;
             white-space: nowrap;
         }
 
@@ -190,7 +191,7 @@
         .chart-bars__bar {
             min-height: 4px;
             border-radius: 5px 5px 0 0;
-            background: #11bec8;
+            background: var(--ds-brand);
         }
 
         .chart-labels {
@@ -200,7 +201,7 @@
             margin-top: 10px;
             color: #7a8496;
             font-size: 11px;
-            font-weight: 900;
+            font-weight: 700;
             text-transform: uppercase;
         }
 
@@ -247,9 +248,9 @@
             width: min(280px, 36vw);
             height: 42px;
             border: 1px solid #d9e1ec;
-            border-radius: 8px;
+            border-radius: var(--ds-radius-control);
             color: #1f2937;
-            background: #ffffff;
+            background: var(--ds-surface);
             padding: 0 14px;
             font-size: 14px;
             font-weight: 800;
@@ -258,13 +259,13 @@
         .filter-button {
             height: 42px;
             border: 1px solid #d9e1ec;
-            border-radius: 8px;
-            background: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-surface);
             color: #344054;
             padding: 0 16px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .agent-table-scroll {
@@ -312,7 +313,7 @@
             display: inline-grid;
             place-items: center;
             flex: 0 0 auto;
-            border-radius: 8px;
+            border-radius: var(--ds-radius-control);
             background: #e6f8fa;
             color: #078a92;
             font-size: 12px;
@@ -344,7 +345,7 @@
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            border-radius: 999px;
+            border-radius: var(--ds-radius-pill);
             padding: 7px 11px;
             font-size: 12px;
             font-weight: 950;
@@ -387,7 +388,7 @@
             border-top: 1px solid #edf1f6;
             padding: 30px 24px;
             color: #667085;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .table-error { color: #b42318; }
@@ -401,7 +402,7 @@
             padding: 16px 24px;
             color: #667085;
             font-size: 14px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .pagination-actions {
@@ -413,8 +414,8 @@
             min-width: 38px;
             height: 36px;
             border: 1px solid #d9e1ec;
-            border-radius: 8px;
-            background: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-surface);
             color: #344054;
             cursor: pointer;
             font-weight: 950;
@@ -422,13 +423,13 @@
 
         .pagination-button:disabled {
             color: #98a2b3;
-            background: #f8fafc;
+            background: var(--ds-canvas);
             cursor: not-allowed;
         }
 
         .is-loading .loading-text {
             color: transparent;
-            border-radius: 999px;
+            border-radius: var(--ds-radius-pill);
             background: linear-gradient(90deg, rgba(226, 232, 240, .75), rgba(248, 250, 252, .95), rgba(226, 232, 240, .75));
             background-size: 200% 100%;
             animation: shimmer 1.2s ease-in-out infinite;

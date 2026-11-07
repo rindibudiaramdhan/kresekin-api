@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
@@ -13,9 +14,9 @@
         body {
             min-height: 100vh;
             margin: 0;
-            color: #151922;
-            background: #f8fafc;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--ds-text);
+            background: var(--ds-canvas);
+            font-family: var(--ds-font);
         }
 
         .dashboard-shell {
@@ -28,7 +29,7 @@
             min-width: 0;
             height: 100vh;
             overflow-y: auto;
-            background: #f8fafc;
+            background: var(--ds-canvas);
         }
 
         .dashboard-content {

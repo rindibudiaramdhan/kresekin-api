@@ -10,10 +10,10 @@
     <style>
         .data-table-card {
             overflow: hidden;
-            border: 1px solid #e3e8f0;
-            border-radius: 12px;
-            background: #ffffff;
-            box-shadow: 0 14px 34px rgba(16, 24, 40, .07);
+            border: 1px solid var(--ds-border);
+            border-radius: var(--ds-radius-card);
+            background: var(--ds-surface);
+            box-shadow: var(--ds-shadow-card);
         }
 
         .data-table-card__header {
@@ -28,16 +28,16 @@
 
         .data-table-card__title {
             margin: 0;
-            color: #171b23;
+            color: var(--ds-text);
             font-size: 26px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0;
         }
 
         .data-table-card__action {
-            color: #11bec8;
+            color: var(--ds-brand);
             font-size: 24px;
-            font-weight: 900;
+            font-weight: 700;
             text-decoration: none;
         }
 
@@ -53,12 +53,12 @@
 
         .data-table th {
             height: 58px;
-            color: #52617f;
+            color: var(--ds-text-muted);
             background: #f6f7f9;
             padding: 0 24px;
             text-align: left;
             font-size: 15px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: .08em;
             text-transform: uppercase;
         }
@@ -67,14 +67,14 @@
             height: 70px;
             border-top: 1px solid #edf0f5;
             padding: 0 24px;
-            color: #171b23;
+            color: var(--ds-text);
             font-size: 16px;
             font-weight: 800;
             vertical-align: middle;
         }
 
         .data-table__muted {
-            color: #52617f;
+            color: var(--ds-text-muted);
             font-weight: 700;
         }
 
@@ -86,7 +86,7 @@
 
         .data-table__empty {
             padding: 28px;
-            color: #52617f;
+            color: var(--ds-text-muted);
             font-weight: 800;
         }
     </style>

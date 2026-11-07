@@ -14,21 +14,21 @@
             color: #174b8f;
             background: #dbe9ff;
             font-size: 12px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .avatar-initial--cyan {
-            color: #11bec8;
-            background: #ffffff;
+            color: var(--ds-brand);
+            background: var(--ds-surface);
         }
 
         .avatar-initial--soft {
-            color: #52617f;
+            color: var(--ds-text-muted);
             background: #f1f5fb;
         }
 
         .avatar-initial--red {
-            color: #c52121;
+            color: var(--ds-danger);
             background: #fff2f2;
         }
     </style>

@@ -7,10 +7,10 @@
     <style>
         .trend-card {
             min-height: 430px;
-            border: 1px solid #e3e8f0;
-            border-radius: 12px;
-            background: #ffffff;
-            box-shadow: 0 14px 34px rgba(16, 24, 40, .07);
+            border: 1px solid var(--ds-border);
+            border-radius: var(--ds-radius-card);
+            background: var(--ds-surface);
+            box-shadow: var(--ds-shadow-card);
             padding: 28px 30px;
         }
 
@@ -23,9 +23,9 @@
 
         .trend-card__title {
             margin: 0;
-            color: #171b23;
+            color: var(--ds-text);
             font-size: 26px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .trend-card__chart {
@@ -58,7 +58,7 @@
         </defs>
         <path d="M22 278 H730 M22 204 H730 M22 130 H730 M22 56 H730" stroke="#e1e5eb" stroke-width="1"/>
         <path class="trend-card__area" d="M22 278 H752 L752 278 L22 278 Z" fill="url(#trendFill)"/>
-        <path class="trend-card__line" d="M22 278 H752" fill="none" stroke="#11bec8" stroke-width="4" stroke-linecap="round"/>
+        <path class="trend-card__line" d="M22 278 H752" fill="none" stroke="var(--ds-brand)" stroke-width="4" stroke-linecap="round"/>
         <text class="trend-card__axis" x="22" y="318"></text>
         <text class="trend-card__axis" x="160" y="318"></text>
         <text class="trend-card__axis" x="300" y="318"></text>

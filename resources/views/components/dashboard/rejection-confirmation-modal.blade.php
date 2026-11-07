@@ -28,9 +28,9 @@
             max-height: calc(100vh - 40px);
             overflow-y: auto;
             border-radius: 14px;
-            background: #ffffff;
+            background: var(--ds-surface);
             color: #0b0b0f;
-            box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+            box-shadow: var(--ds-shadow-modal);
             padding: 28px 30px 32px;
         }
 
@@ -46,7 +46,7 @@
         .rejection-modal__title {
             margin: 0;
             font-size: clamp(24px, 2.4vw, 30px);
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1.12;
             letter-spacing: 0;
         }
@@ -65,7 +65,7 @@
 
         .rejection-modal__close:hover,
         .rejection-modal__close:focus-visible {
-            color: #11bec8;
+            color: var(--ds-brand);
             outline: 0;
         }
 
@@ -115,7 +115,7 @@
             margin: 18px 0 12px;
             color: #5c5c5f;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1.35;
         }
 
@@ -134,7 +134,7 @@
             color: #5c5c5f;
             cursor: pointer;
             font-size: 15px;
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1.35;
         }
 
@@ -153,11 +153,11 @@
             border: 2px solid #e00000;
             border-radius: 50%;
             color: transparent;
-            background: #ffffff;
+            background: var(--ds-surface);
         }
 
         .rejection-modal__radio:checked + .rejection-modal__radio-mark {
-            color: #ffffff;
+            color: var(--ds-surface);
             background: #e00000;
         }
 
@@ -173,9 +173,9 @@
         .rejection-modal__error {
             min-height: 18px;
             margin: 10px 0 14px;
-            color: #c52121;
+            color: var(--ds-danger);
             font-size: 14px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .rejection-modal__error[hidden] {
@@ -193,12 +193,12 @@
             width: min(170px, 100%);
             min-height: 48px;
             border: 0;
-            border-radius: 8px;
-            color: #ffffff;
+            border-radius: var(--ds-radius-control);
+            color: var(--ds-surface);
             cursor: pointer;
             font: inherit;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0;
             padding: 0 18px;
         }

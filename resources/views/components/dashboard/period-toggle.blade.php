@@ -15,11 +15,11 @@
             min-height: 34px;
             display: inline-flex;
             align-items: center;
-            border-radius: 8px;
+            border-radius: var(--ds-radius-control);
             color: #777d8c;
             padding: 0 16px;
             font-size: 15px;
-            font-weight: 900;
+            font-weight: 700;
             text-decoration: none;
         }
 

@@ -11,18 +11,18 @@
             display: inline-grid;
             place-items: center;
             border-radius: 10px;
-            color: #11bec8;
+            color: var(--ds-brand);
             background: #edf4ff;
         }
 
         .icon-tile--green {
-            color: #075f3d;
-            background: #e7f2ee;
+            color: var(--ds-success);
+            background: var(--ds-success-soft);
         }
 
         .icon-tile--blue {
             color: #174b8f;
-            background: #e8f0ff;
+            background: var(--ds-pending-soft);
         }
 
         .icon-tile--yellow {

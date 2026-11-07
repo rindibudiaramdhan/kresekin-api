@@ -2,6 +2,26 @@
 
 Dokumen ini mendefinisikan prinsip desain untuk halaman web dan dashboard yang ada di repository: registration agent, seller web area, agent dashboard, dan finance dashboard.
 
+## Acuan dan sumber token
+
+Acuan visual adalah tiga screenshot dari UI Designer yang diberikan pengguna: Admin Dashboard, Finance Management (termasuk modal approve/reject), dan Web Admin Login (normal/error). Acuan ini menggantikan deskripsi warna awal yang bertentangan di dokumen ini.
+
+Token runtime terpusat di `public/css/design-system.css`, dimuat langsung oleh halaman login, registrasi/OTP, dan dashboard tanpa ketergantungan build Vite. Komponen dashboard menggunakan token yang sama. Nilai warna dan ukuran merupakan pendekatan implementasi dari screenshot, bukan hasil ekstraksi properti Figma. Font Inter adalah fallback implementasi yang sudah ada; font final belum dikonfirmasi designer. Seller Bootstrap belum dicakup oleh referensi ini.
+
+| Token | Nilai | Penggunaan |
+| --- | --- | --- |
+| `--ds-brand` | `#00bdcc` | Tombol utama, link, navigasi/tab aktif, garis chart |
+| `--ds-highlight` | `#009fa8` | Kartu spotlight dan ringkasan komisi |
+| `--ds-canvas` | `#f7f8fa` | Background halaman |
+| `--ds-surface` | `#ffffff` | Kartu dan modal |
+| `--ds-text` | `#1c2021` | Teks utama |
+| `--ds-text-muted` | `#52617f` | Label dan teks sekunder |
+| `--ds-radius-control` | `8px` | Kontrol dan tombol |
+| `--ds-radius-card` | `12px` | Kartu |
+| `--ds-radius-pill` | `999px` | Badge transaksi dan identitas pengguna |
+
+Spacing dasar: 4, 8, 12, 16, 24, 28, dan 32px, tersedia sebagai `--ds-space-*`. Gunakan shadow kartu dan modal yang terpisah. Ukuran layar pada screenshot bukan ukuran CSS wajib; pertahankan layout responsive yang sudah ada.
+
 ## Principles
 
 1. UI harus operasional, cepat dipindai, dan tidak terasa seperti landing page marketing.
@@ -33,12 +53,12 @@ Token awal:
 
 | Token | Fungsi |
 | --- | --- |
-| Brand green | Primary action, highlight positif, icon brand |
+| Brand cyan/toska | Primary action, link, navigasi/tab aktif, icon brand |
 | Neutral slate/gray | Text, border, dashboard surface |
-| Soft green | Success/active state |
-| Amber | Warning/pending |
+| Soft green | Success/completed state |
+| Amber | Warning/processing |
 | Red | Error/rejected/canceled |
-| Blue | Informational/finance/action secondary |
+| Blue | Pengajuan/pending dan informasi |
 
 Warna status harus konsisten di badge, chart legend, dan summary card.
 
@@ -46,8 +66,8 @@ Warna status harus konsisten di badge, chart legend, dan summary card.
 
 | Status | Warna intent |
 | --- | --- |
-| Pending payment/requested/pending review | Amber |
-| Approved/accepted/processing | Blue |
+| Pending payment/requested/pending review | Blue |
+| Processing/in progress | Amber |
 | Completed/paid/disbursed/approved final | Green |
 | Rejected/canceled/failed | Red |
 | Inactive/empty/disabled | Gray |
@@ -84,6 +104,18 @@ Requirement:
 4. Modal approval/rejection harus menyebut konsekuensi aksi dan validasi alasan bila perlu.
 5. Card tidak boleh bersarang dalam card lain.
 
+## Variasi komponen dan autentikasi
+
+1. Dashboard memakai wordmark; halaman autentikasi memakai logo dengan ikon tas, sesuai screenshot.
+2. Metric card memiliki varian vertikal (overview) dan horizontal dengan ikon di kanan (finance).
+3. Badge transaksi berbentuk pill; badge ringkas pada tabel komisi boleh memakai kotak membulat. Warna tetap mengikuti arti status, bukan bentuk badge.
+4. Tab aktif memakai teks cyan dan garis bawah. Pagination aktif memakai background cyan.
+5. Tombol utama cyan, aksi penolakan merah, tombol batal netral. Tombol batal tetap interaktif, bukan disabled.
+6. Modal memuat judul, detail transaksi, konsekuensi aksi, dan konfirmasi. Modal penolakan memuat pilihan alasan.
+7. Login desktop memakai form di kiri dan panel promosi di kanan. Pertahankan pilihan role/metode autentikasi yang sudah berfungsi.
+8. Input memakai label di atas, ikon opsional, background netral, serta kontrol tampilkan password. Error harus tampil dekat field terkait, tidak di atas panel promosi.
+9. Focus harus terlihat; state loading, disabled, dan mobile adalah perilaku implementasi yang belum ditentukan lengkap oleh screenshot.
+
 ## Forms
 
 Agent registration form harus:
@@ -118,4 +150,4 @@ Empty state harus memberi aksi berikutnya bila ada, misalnya buat produk atau ub
 
 1. Apakah design system akan dipisah menjadi package/component library?
 2. Apakah dashboard mobile wajib full responsive atau cukup tablet/desktop untuk internal?
-3. Apakah brand color final sudah dikunci oleh tim desain?
+3. Apakah nilai HEX, font, ukuran, dan varian badge dari screenshot sudah dikonfirmasi melalui spesifikasi Figma?

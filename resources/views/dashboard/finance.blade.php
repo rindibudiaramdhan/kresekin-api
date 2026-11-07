@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
@@ -13,9 +14,9 @@
         body {
             min-height: 100vh;
             margin: 0;
-            color: #151922;
-            background: #f8fafc;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--ds-text);
+            background: var(--ds-canvas);
+            font-family: var(--ds-font);
         }
 
         .dashboard-shell {
@@ -28,7 +29,7 @@
             min-width: 0;
             height: 100vh;
             overflow-y: auto;
-            background: #f8fafc;
+            background: var(--ds-canvas);
         }
 
         .finance-compact .dashboard-sidebar {
@@ -126,9 +127,9 @@
 
         .finance-page__title {
             margin: 0;
-            color: #151922;
+            color: var(--ds-text);
             font-size: clamp(26px, 2.5vw, 34px);
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1.04;
             letter-spacing: 0;
         }
@@ -137,7 +138,7 @@
             margin: 6px 0 0;
             color: #4f586b;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1.3;
             letter-spacing: 0;
         }
@@ -227,8 +228,8 @@
             overflow: hidden;
             border: 1px solid #d9dee9;
             border-radius: 10px;
-            background: #ffffff;
-            box-shadow: 0 14px 34px rgba(16, 24, 40, .07);
+            background: var(--ds-surface);
+            box-shadow: var(--ds-shadow-card);
         }
 
         .finance-table-card__scroll {
@@ -263,12 +264,12 @@
 
         .finance-table th {
             height: 60px;
-            color: #52617f;
+            color: var(--ds-text-muted);
             background: #eef0f3;
             padding: 0 28px;
             text-align: left;
             font-size: 12px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: .08em;
             line-height: 1.25;
             text-transform: uppercase;
@@ -279,7 +280,7 @@
             height: 112px;
             border-top: 1px solid #edf0f5;
             padding: 0 28px;
-            color: #151922;
+            color: var(--ds-text);
             font-size: 14px;
             font-weight: 700;
             letter-spacing: 0;
@@ -288,7 +289,7 @@
 
         .finance-table__id {
             color: #424a5d;
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1.08;
             letter-spacing: .04em;
         }
@@ -314,8 +315,8 @@
             display: inline-grid;
             place-items: center;
             border: 1px solid #d7dce7;
-            border-radius: 8px;
-            background: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-surface);
             color: #6b7487;
             cursor: not-allowed;
         }
@@ -331,16 +332,16 @@
             display: inline-grid;
             place-items: center;
             border: 1px solid #d7dce7;
-            border-radius: 8px;
-            background: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-surface);
             color: #4f586b;
             cursor: pointer;
         }
 
         .finance-table__detail:hover,
         .finance-table__detail:focus-visible {
-            border-color: #11bec8;
-            color: #11bec8;
+            border-color: var(--ds-brand);
+            color: var(--ds-brand);
             outline: 0;
         }
 
@@ -353,20 +354,20 @@
             min-width: 92px;
             min-height: 38px;
             border: 0;
-            border-radius: 8px;
-            background: #11bec8;
-            color: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-brand);
+            color: var(--ds-surface);
             cursor: pointer;
             font: inherit;
             font-size: 15px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0;
             padding: 0 18px;
         }
 
         .finance-table__finish:hover,
         .finance-table__finish:focus-visible {
-            background: #0aaab3;
+            background: var(--ds-brand-hover);
             outline: 0;
         }
 
@@ -380,22 +381,22 @@
         .finance-table__buyer-action {
             min-height: 38px;
             border: 0;
-            border-radius: 8px;
-            color: #ffffff;
+            border-radius: var(--ds-radius-control);
+            color: var(--ds-surface);
             cursor: pointer;
             font: inherit;
             font-size: 13px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0;
             padding: 0 14px;
         }
 
         .finance-table__buyer-action--confirm {
-            background: #11bec8;
+            background: var(--ds-brand);
         }
 
         .finance-table__buyer-action--reject {
-            background: #c52121;
+            background: var(--ds-danger);
         }
 
         .finance-table__buyer-action:hover,
@@ -428,9 +429,9 @@
         .finance-info-modal__panel {
             width: min(520px, 100%);
             border-radius: 18px;
-            background: #ffffff;
-            color: #151922;
-            box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+            background: var(--ds-surface);
+            color: var(--ds-text);
+            box-shadow: var(--ds-shadow-modal);
             padding: 32px;
             text-align: center;
         }
@@ -443,20 +444,20 @@
             border-radius: 50%;
             margin-bottom: 18px;
             background: #e7f9fb;
-            color: #11bec8;
+            color: var(--ds-brand);
             font-size: 26px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .finance-info-modal--error .finance-info-modal__icon {
             background: #fff1f2;
-            color: #c52121;
+            color: var(--ds-danger);
         }
 
         .finance-info-modal__title {
             margin: 0;
             font-size: 26px;
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1.12;
             letter-spacing: 0;
         }
@@ -474,13 +475,13 @@
             min-width: 132px;
             min-height: 44px;
             border: 0;
-            border-radius: 8px;
-            background: #11bec8;
-            color: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-brand);
+            color: var(--ds-surface);
             cursor: pointer;
             font: inherit;
             font-size: 15px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0;
             margin-top: 24px;
             padding: 0 18px;
@@ -488,7 +489,7 @@
 
         .finance-info-modal__button:hover,
         .finance-info-modal__button:focus-visible {
-            background: #0aaab3;
+            background: var(--ds-brand-hover);
             outline: 0;
         }
 
@@ -499,7 +500,7 @@
             background: #fff1f2;
             color: #b91c1c;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             padding: 16px 18px;
         }
 
@@ -511,8 +512,8 @@
             display: inline-block;
             width: 100%;
             height: 10px;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+            border-radius: var(--ds-radius-pill);
+            background: linear-gradient(90deg, #e2e8f0, var(--ds-canvas), #e2e8f0);
             background-size: 200% 100%;
             animation: finance-loading-shimmer 1.2s ease-in-out infinite;
         }
@@ -535,7 +536,7 @@
 
         .finance-table__empty {
             height: 98px;
-            color: #52617f;
+            color: var(--ds-text-muted);
             font-size: 15px;
             font-weight: 800;
             text-align: center;
@@ -571,8 +572,8 @@
             width: min(180px, 68%);
             min-height: 24px;
             color: transparent;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+            border-radius: var(--ds-radius-pill);
+            background: linear-gradient(90deg, #e2e8f0, var(--ds-canvas), #e2e8f0);
             background-size: 200% 100%;
             animation: finance-loading-shimmer 1.2s ease-in-out infinite;
         }
@@ -581,7 +582,7 @@
             width: 34px;
             height: 34px;
             color: transparent;
-            background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+            background: linear-gradient(90deg, #e2e8f0, var(--ds-canvas), #e2e8f0);
             background-size: 200% 100%;
             animation: finance-loading-shimmer 1.2s ease-in-out infinite;
         }

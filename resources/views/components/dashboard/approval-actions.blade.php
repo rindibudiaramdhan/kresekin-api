@@ -19,14 +19,14 @@
             place-items: center;
             border: 3px solid currentColor;
             border-radius: 50%;
-            background: #ffffff;
+            background: var(--ds-surface);
             cursor: pointer;
             transition: background .16s ease, transform .16s ease;
         }
 
         .approval-actions__button:hover,
         .approval-actions__button:focus-visible {
-            background: #f8fafc;
+            background: var(--ds-canvas);
             outline: 0;
             transform: translateY(-1px);
         }
@@ -36,7 +36,7 @@
         }
 
         .approval-actions__button--reject {
-            color: #c52121;
+            color: var(--ds-danger);
         }
 
         .approval-actions__icon {

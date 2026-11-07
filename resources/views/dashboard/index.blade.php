@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
@@ -13,9 +14,9 @@
         body {
             min-height: 100vh;
             margin: 0;
-            color: #151922;
-            background: #f8fafc;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--ds-text);
+            background: var(--ds-canvas);
+            font-family: var(--ds-font);
         }
 
         .dashboard-shell {
@@ -28,7 +29,7 @@
             min-width: 0;
             height: 100vh;
             overflow-y: auto;
-            background: #f8fafc;
+            background: var(--ds-canvas);
         }
 
         .dashboard-content {
@@ -59,7 +60,7 @@
 
         .dashboard-money-positive {
             color: #06923c;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .avatar-initial {
@@ -71,22 +72,22 @@
             color: #174b8f;
             background: #dbe9ff;
             font-size: 12px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .avatar-initial--cyan {
-            color: #11bec8;
-            background: #ffffff;
+            color: var(--ds-brand);
+            background: var(--ds-surface);
         }
 
         .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            border-radius: 999px;
+            border-radius: var(--ds-radius-pill);
             padding: 7px 13px;
             font-size: 15px;
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1;
             white-space: nowrap;
         }
@@ -101,21 +102,26 @@
 
         .status-badge--success,
         .status-badge--approved {
-            color: #075f3d;
-            background: #e7f2ee;
+            color: var(--ds-success);
+            background: var(--ds-success-soft);
         }
 
         .status-badge--pending,
-        .status-badge--processing,
         .status-badge--estimated {
-            color: #0b53a4;
-            background: #e8f0ff;
+            color: var(--ds-pending);
+            background: var(--ds-pending-soft);
+        }
+
+        .status-badge--processing,
+        .status-badge--warning {
+            color: var(--ds-processing);
+            background: var(--ds-processing-soft);
         }
 
         .status-badge--failed,
         .status-badge--rejected {
-            color: #c52121;
-            background: #ffecec;
+            color: var(--ds-danger);
+            background: var(--ds-danger-soft);
         }
 
         @keyframes dashboard-loading-shimmer {
@@ -134,7 +140,7 @@
         .summary-highlight-card.is-loading .summary-highlight-card__value,
         .summary-highlight-card.is-loading .summary-highlight-card__footer strong {
             color: transparent;
-            border-radius: 999px;
+            border-radius: var(--ds-radius-pill);
             background: linear-gradient(90deg, rgba(226, 232, 240, .7), rgba(248, 250, 252, .95), rgba(226, 232, 240, .7));
             background-size: 200% 100%;
             animation: dashboard-loading-shimmer 1.2s ease-in-out infinite;
@@ -189,8 +195,8 @@
             left: 28px;
             right: 28px;
             height: 18px;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0);
+            border-radius: var(--ds-radius-pill);
+            background: linear-gradient(90deg, #e2e8f0, var(--ds-canvas), #e2e8f0);
             background-size: 200% 100%;
             animation: dashboard-loading-shimmer 1.2s ease-in-out infinite;
         }

@@ -12,17 +12,17 @@
             min-height: 430px;
             display: flex;
             flex-direction: column;
-            border-radius: 12px;
-            background: #0ca2a7;
+            border-radius: var(--ds-radius-card);
+            background: var(--ds-highlight);
             box-shadow: 0 14px 34px rgba(16, 24, 40, .12);
             padding: 30px;
-            color: #ffffff;
+            color: var(--ds-surface);
         }
 
         .spotlight-card__title {
             margin: 0;
             font-size: 28px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .spotlight-card__subtitle {
@@ -49,16 +49,16 @@
         }
 
         .spotlight-card__name {
-            color: #ffffff;
+            color: var(--ds-surface);
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: .04em;
         }
 
         .spotlight-card__growth {
             color: #69f090;
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .spotlight-card__loading-copy {
@@ -74,11 +74,11 @@
             justify-content: center;
             margin-top: auto;
             border: 1px solid rgba(255, 255, 255, .3);
-            border-radius: 8px;
-            color: #ffffff;
+            border-radius: var(--ds-radius-control);
+            color: var(--ds-surface);
             text-decoration: none;
             font-size: 17px;
-            font-weight: 900;
+            font-weight: 700;
         }
     </style>
 @endonce

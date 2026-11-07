@@ -30,10 +30,10 @@
         .filter-field__control {
             width: 100%;
             height: 48px;
-            border: 1px solid #c7cede;
-            border-radius: 8px;
-            background: #ffffff;
-            color: #52617f;
+            border: 1px solid var(--ds-input-border);
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-surface);
+            color: var(--ds-text-muted);
             font: inherit;
             font-size: 17px;
             font-weight: 700;
@@ -53,7 +53,7 @@
         }
 
         .filter-field__control:focus {
-            border-color: #11bec8;
+            border-color: var(--ds-brand);
             box-shadow: 0 0 0 3px rgba(17, 190, 200, .14);
         }
 

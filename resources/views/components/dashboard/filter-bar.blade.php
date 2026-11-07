@@ -9,10 +9,10 @@
             flex-wrap: wrap;
             align-items: center;
             gap: 24px;
-            border: 1px solid #e3e8f0;
-            border-radius: 12px;
-            background: #ffffff;
-            box-shadow: 0 14px 34px rgba(16, 24, 40, .07);
+            border: 1px solid var(--ds-border);
+            border-radius: var(--ds-radius-card);
+            background: var(--ds-surface);
+            box-shadow: var(--ds-shadow-card);
             padding: 32px 24px;
         }
 
@@ -26,13 +26,13 @@
         .filter-bar__button {
             height: 48px;
             border: 0;
-            border-radius: 8px;
-            background: #11bec8;
-            color: #ffffff;
+            border-radius: var(--ds-radius-control);
+            background: var(--ds-brand);
+            color: var(--ds-surface);
             cursor: pointer;
             font: inherit;
             font-size: 18px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0;
             padding: 0 28px;
             white-space: nowrap;
@@ -40,7 +40,7 @@
 
         .filter-bar__button:hover,
         .filter-bar__button:focus-visible {
-            background: #0aaab3;
+            background: var(--ds-brand-hover);
             outline: 0;
         }
 

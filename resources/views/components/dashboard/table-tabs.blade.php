@@ -26,13 +26,13 @@
             cursor: pointer;
             font: inherit;
             font-size: 18px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0;
             padding: 0;
         }
 
         .table-tabs__item.is-active {
-            color: #11bec8;
+            color: var(--ds-brand);
         }
 
         .table-tabs__item.is-active::after {

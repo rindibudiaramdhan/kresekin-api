@@ -13,11 +13,11 @@
             min-height: 252px;
             display: grid;
             align-content: center;
-            border-radius: 12px;
-            background: #0ca2a7;
+            border-radius: var(--ds-radius-card);
+            background: var(--ds-highlight);
             box-shadow: 0 14px 34px rgba(16, 24, 40, .12);
             padding: 34px;
-            color: #ffffff;
+            color: var(--ds-surface);
         }
 
         .summary-highlight-card::after {
@@ -36,8 +36,8 @@
             height: 36px;
             display: grid;
             place-items: center;
-            border-radius: 8px;
-            color: #ffffff;
+            border-radius: var(--ds-radius-control);
+            color: var(--ds-surface);
             background: rgba(255, 255, 255, .18);
             margin-bottom: 22px;
         }
@@ -54,7 +54,7 @@
         .summary-highlight-card__value {
             margin-top: 10px;
             font-size: clamp(34px, 3vw, 42px);
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1.05;
         }
 
@@ -65,7 +65,7 @@
         }
 
         .summary-highlight-card__footer strong {
-            color: #ffffff;
+            color: var(--ds-surface);
             margin-left: 8px;
         }
     </style>

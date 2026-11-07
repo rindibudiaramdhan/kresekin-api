@@ -19,10 +19,10 @@
             display: grid;
             align-content: space-between;
             gap: 20px;
-            border: 1px solid #e3e8f0;
-            border-radius: 12px;
-            background: #ffffff;
-            box-shadow: 0 14px 34px rgba(16, 24, 40, .07);
+            border: 1px solid var(--ds-border);
+            border-radius: var(--ds-radius-card);
+            background: var(--ds-surface);
+            box-shadow: var(--ds-shadow-card);
             padding: 28px 30px;
         }
 
@@ -52,9 +52,9 @@
 
         .metric-card__growth,
         .metric-card__caption {
-            color: #075f3d;
+            color: var(--ds-success);
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: .02em;
             white-space: nowrap;
         }
@@ -65,17 +65,17 @@
 
         .metric-card__label {
             margin: 0 0 10px;
-            color: #52617f;
+            color: var(--ds-text-muted);
             font-size: 16px;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: .08em;
             text-transform: uppercase;
         }
 
         .metric-card__value {
-            color: #171b23;
+            color: var(--ds-text);
             font-size: clamp(32px, 3.2vw, 42px);
-            font-weight: 900;
+            font-weight: 700;
             line-height: 1.05;
             letter-spacing: 0;
         }
