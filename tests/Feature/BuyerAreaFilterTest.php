@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\HousingArea;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserSessionToken;
@@ -13,6 +14,52 @@ use Tests\TestCase;
 class BuyerAreaFilterTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_fruit_seller_appears_when_one_of_its_housing_areas_matches_the_buyer_area(): void
+    {
+        $buyerArea = HousingArea::query()->create(['name' => 'Buyer Area', 'code' => 'BUYER']);
+        $otherArea = HousingArea::query()->create(['name' => 'Other Area', 'code' => 'OTHER']);
+        $buyer = User::factory()->create(['housing_area_id' => $buyerArea->id]);
+        $buyer->housingAreas()->sync([$buyerArea->id]);
+
+        UserSessionToken::query()->create([
+            'user_id' => $buyer->id,
+            'token' => hash('sha256', 'fruit-seller-token'),
+            'expires_at' => now()->addDay(),
+        ]);
+
+        ProductCategory::query()->create([
+            'name' => 'Buah',
+            'slug' => 'buah',
+            'image_path' => 'images/ic_fruit_category.svg',
+        ]);
+        $seller = Tenant::query()->create([
+            'name' => 'Toko Buah',
+            'is_open' => true,
+        ]);
+        $seller->housingAreas()->sync([$otherArea->id, $buyerArea->id]);
+        Product::query()->create([
+            'tenant_id' => $seller->id,
+            'name' => 'Apel',
+            'category' => 'Buah',
+            'price' => 10000,
+            'is_active' => true,
+            'stock' => 10,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer fruit-seller-token');
+
+        foreach (['/api/tenants?product_category=buah', '/api/tenants?product_category=buah&housing_area_id='.$buyerArea->id] as $endpoint) {
+            $this->getJson($endpoint)
+                ->assertOk()
+                ->assertJsonPath('meta.total', 1)
+                ->assertJsonCount(1, 'data')
+                ->assertJsonPath('data.0.id', $seller->id)
+                ->assertJsonPath('data.0.name', 'Toko Buah')
+                ->assertJsonPath('data.0.product_count', 1)
+                ->assertJsonPath('data.0.is_open', true);
+        }
+    }
 
     public function test_lists_follow_user_areas_and_cannot_be_expanded_by_query_parameters(): void
     {
