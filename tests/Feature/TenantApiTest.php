@@ -141,7 +141,7 @@ class TenantApiTest extends TestCase
         Carbon::setTestNow();
     }
 
-    public function test_tenant_list_can_be_filtered_by_housing_area_id(): void
+    public function test_tenant_list_is_filtered_by_the_users_profile_area(): void
     {
         $user = User::query()->create([
             'name' => 'Budi',
@@ -193,7 +193,7 @@ class TenantApiTest extends TestCase
         $user->update(['housing_area_id' => $targetArea->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
-            ->getJson('/api/tenants?housing_area_id='.$targetArea->id);
+            ->getJson('/api/tenants');
 
         $response
             ->assertOk()
@@ -206,7 +206,7 @@ class TenantApiTest extends TestCase
             ->assertJsonPath('data.0.housing_areas.0.village_code', '3273141003');
     }
 
-    public function test_tenant_list_returns_validation_error_for_unknown_housing_area_id(): void
+    public function test_tenant_list_ignores_unknown_and_invalid_housing_area_query_values(): void
     {
         $user = User::query()->create([
             'name' => 'Budi',
@@ -226,12 +226,14 @@ class TenantApiTest extends TestCase
             'expires_at' => now()->addDays(30),
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
-            ->getJson('/api/tenants?housing_area_id=11111111-1111-1111-1111-111111111111');
+        $this->withHeader('Authorization', 'Bearer '.$plainTextToken);
+        $expected = $this->getJson('/api/tenants')->assertOk()->json();
 
-        $response
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['housing_area_id']);
+        foreach (['11111111-1111-1111-1111-111111111111', 'invalid'] as $areaId) {
+            $this->getJson('/api/tenants?housing_area_id='.$areaId)
+                ->assertOk()
+                ->assertExactJson($expected);
+        }
     }
 
     public function test_tenant_list_can_be_filtered_by_product_category_without_tenant_category_columns(): void

@@ -527,14 +527,13 @@ curl http://127.0.0.1:8000/api/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
 
 Mengambil daftar tenant untuk buyer.
 
-Hasil otomatis dibatasi ke toko yang melayani salah satu area profil user pemilik token. Profil multi-area memakai seluruh pilihan area; profil lama memakai `housing_area_id` bila relasi area kosong. User tanpa area mendapat daftar kosong (`200`, `data: []`, `meta.total: 0`). Parameter `housing_area_id` hanya mempersempit ke area profil: UUID valid di luar profil menghasilkan daftar kosong, sedangkan UUID tidak valid/tidak ditemukan ditolak `422`. Filter ini berdasarkan area layanan toko, bukan GPS atau radius.
+Hasil otomatis dibatasi ke toko yang melayani salah satu area profil user pemilik token. Profil multi-area memakai seluruh pilihan area. Profil lama memakai field profil `housing_area_id` bila relasi area kosong. User tanpa area mendapat daftar kosong (`200`, `data: []`, `meta.total: 0`). Endpoint mengabaikan parameter query `housing_area_id`.
 
 Query opsional:
 
 - `limit`: 1 sampai 100, default 10
 - `page`: halaman
 - `product_category`: slug kategori produk
-- `housing_area_id`: UUID area profil untuk mempersempit hasil
 
 ```bash
 curl "http://127.0.0.1:8000/api/tenants?limit=10&product_category=sembako" \

@@ -49,7 +49,7 @@ class BuyerAreaFilterTest extends TestCase
 
         $this->withHeader('Authorization', 'Bearer fruit-seller-token');
 
-        foreach (['/api/tenants?product_category=buah', '/api/tenants?product_category=buah&housing_area_id='.$buyerArea->id] as $endpoint) {
+        foreach (['/api/tenants?product_category=buah', '/api/tenants?product_category=buah&housing_area_id='.$otherArea->id] as $endpoint) {
             $this->getJson($endpoint)
                 ->assertOk()
                 ->assertJsonPath('meta.total', 1)
@@ -88,18 +88,21 @@ class BuyerAreaFilterTest extends TestCase
             ]);
         }
 
+        // Legacy profiles containing only housing_area_id are still supported.
         foreach (['/api/products', '/api/tenants'] as $endpoint) {
-            // Legacy profiles containing only housing_area_id are still supported.
             $this->assertNames($endpoint, ['A', 'AB']);
-            $this->assertNames($endpoint.'?housing_area_id='.$areaB->id, []);
         }
+        $this->assertNames('/api/products?housing_area_id='.$areaB->id, []);
+        $this->assertNames('/api/tenants?housing_area_id='.$areaB->id, ['A', 'AB']);
 
         $user->housingAreas()->sync([$areaA->id, $areaB->id]);
         foreach (['/api/products', '/api/tenants'] as $endpoint) {
             $this->assertNames($endpoint, ['A', 'B', 'AB']);
-            $this->assertNames($endpoint.'?housing_area_id='.$areaB->id, ['B', 'AB']);
-            $this->assertNames($endpoint.'?housing_area_id='.$areaC->id, []);
         }
+        $this->assertNames('/api/products?housing_area_id='.$areaB->id, ['B', 'AB']);
+        $this->assertNames('/api/products?housing_area_id='.$areaC->id, []);
+        $this->assertNames('/api/tenants?housing_area_id='.$areaB->id, ['A', 'B', 'AB']);
+        $this->assertNames('/api/tenants?housing_area_id='.$areaC->id, ['A', 'B', 'AB']);
 
         // Results must follow the current authenticated user, including after an area change.
         $user->housingAreas()->sync([$areaC->id]);

@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -18,7 +19,6 @@ class GetBuyerTenantListController extends Controller
         $validator = Validator::make($request->query(), [
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
-            'housing_area_id' => ['nullable', 'uuid', 'exists:housing_areas,id'],
             'product_category' => ['nullable', 'string', 'exists:product_categories,slug'],
         ]);
 
@@ -31,10 +31,6 @@ class GetBuyerTenantListController extends Controller
 
         $validated = $validator->validated();
         $areaIds = $request->user()->profileHousingAreas()->modelKeys();
-
-        if (isset($validated['housing_area_id'])) {
-            $areaIds = array_values(array_intersect($areaIds, [$validated['housing_area_id']]));
-        }
 
         $limit = (int) ($validated['limit'] ?? 10);
         $page = (int) ($validated['page'] ?? 1);
@@ -96,7 +92,7 @@ class GetBuyerTenantListController extends Controller
             $page,
             [
                 'path' => $request->url(),
-                'query' => $request->query(),
+                'query' => Arr::except($request->query(), 'housing_area_id'),
             ]
         );
 
