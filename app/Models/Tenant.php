@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -177,6 +179,31 @@ class Tenant extends Model
         }
 
         return $currentTime >= $this->open_time || $currentTime <= $this->close_time;
+    }
+
+    #[Scope]
+    public function openNow(Builder $query): void
+    {
+        $currentTime = now('Asia/Jakarta')->format('H:i');
+
+        $query->where(function (Builder $query) use ($currentTime): void {
+            $query->where('is_open', true)
+                ->orWhere(function (Builder $query) use ($currentTime): void {
+                    $query->whereNull('is_open')
+                        ->whereNotIn('open_time', ['', '0'])
+                        ->whereNotIn('close_time', ['', '0'])
+                        ->where(function (Builder $query) use ($currentTime): void {
+                            $query->whereValueBetween($currentTime, ['open_time', 'close_time'])
+                                ->orWhere(function (Builder $query) use ($currentTime): void {
+                                    $query->whereColumn('open_time', '>', 'close_time')
+                                        ->where(function (Builder $query) use ($currentTime): void {
+                                            $query->where('open_time', '<=', $currentTime)
+                                                ->orWhere('close_time', '>=', $currentTime);
+                                        });
+                                });
+                        });
+                });
+        });
     }
 
     public function operatingHoursLabel(): ?string

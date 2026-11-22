@@ -30,75 +30,39 @@ class GetBuyerTenantListController extends Controller
         }
 
         $validated = $validator->validated();
-        $areaIds = $request->user()->profileHousingAreas()->modelKeys();
+        $user = $request->user();
 
         $limit = (int) ($validated['limit'] ?? 10);
         $page = (int) ($validated['page'] ?? 1);
-        $currentTime = now('Asia/Jakarta')->format('H:i');
-        $productCategory = isset($validated['product_category'])
-            ? ProductCategory::query()->where('slug', $validated['product_category'])->first()
-            : null;
+        $productCategory = $validated['product_category'] ?? null;
 
-        $tenantItems = Tenant::query()
+        $tenants = Tenant::query()
+            ->select(
+                'id',
+                'name',
+                'profile_picture_url',
+                'rating',
+                'open_time',
+                'close_time',
+            )
             ->with([
-                'housingAreas',
-                'products' => function ($query) use ($productCategory): void {
-                    $query->when(
-                        $productCategory,
-                        fn ($query) => $query->where('category', $productCategory->name)
-                    );
-                },
+                'housingAreas:id,name,code',
+                // 'products',
             ])
-            ->when(
-                $productCategory,
-                fn ($query) => $query->whereHas('products', fn ($productQuery) => $productQuery->where('category', $productCategory->name))
-            )
-            ->whereHas(
-                'housingAreas',
-                fn ($housingAreaQuery) => $housingAreaQuery->whereIn('housing_areas.id', $areaIds)
-            )
-            ->latest()
-            ->get()
-            ->map(function (Tenant $tenant) use ($currentTime): array {
-                $isOpen = $tenant->isOpenAt($currentTime);
-
-                return [
-                    'id' => $tenant->id,
-                    'name' => $tenant->name,
-                    'profile_picture_url' => $tenant->profile_picture_url,
-                    'rating' => round((float) $tenant->rating, 1),
-                    'housing_areas' => $tenant->housingAreas
-                        ->map(fn ($housingArea): array => [
-                            'id' => $housingArea->id,
-                            'name' => $housingArea->name,
-                            'code' => $housingArea->code,
-                            'village_code' => $housingArea->village_code,
-                        ])
-                        ->values(),
-                    'product_count' => $tenant->products->count(),
-                    'is_open' => $isOpen,
-                    'store_status' => $isOpen ? 'Buka' : 'Tutup',
-                    'open_time' => $tenant->open_time,
-                    'close_time' => $tenant->close_time,
-                    'operating_hours_label' => $tenant->operatingHoursLabel(),
-                ];
-            })
-            ->values();
-
-        $tenants = new LengthAwarePaginator(
-            $tenantItems->forPage($page, $limit)->values(),
-            $tenantItems->count(),
-            $limit,
-            $page,
-            [
-                'path' => $request->url(),
-                'query' => Arr::except($request->query(), 'housing_area_id'),
-            ]
-        );
+            ->withCount('products')
+            // ->whereHas('housingAreas', function ($query) use ($user) {
+            //     $query->whereIn('housing_areas.id', [$user->housing_area_id]);
+            // })
+            // ->openNow()
+            ->paginate($limit);
 
         return response()->json([
             'message' => 'Daftar tenant berhasil diambil.',
             'data' => $tenants->items(),
+            'productCategory' => $productCategory,
+            'user' => [
+                'housing_area_id' => $user->housing_area_id,
+            ],
             'meta' => [
                 'current_page' => $tenants->currentPage(),
                 'per_page' => $tenants->perPage(),
@@ -114,5 +78,81 @@ class GetBuyerTenantListController extends Controller
                 'next' => $tenants->nextPageUrl(),
             ],
         ]);
+
+        // $tenantItems = Tenant::query()
+        //     ->with([
+        //         'housingAreas',
+        //         'products' => function ($query) use ($productCategory): void {
+        //             $query->when(
+        //                 $productCategory,
+        //                 fn ($query) => $query->where('category', $productCategory->name)
+        //             );
+        //         },
+        //     ])
+        //     ->when(
+        //         $productCategory,
+        //         fn ($query) => $query->whereHas('products', fn ($productQuery) => $productQuery->where('category', $productCategory->name))
+        //     )
+        //     ->whereHas(
+        //         'housingAreas',
+        //         fn ($housingAreaQuery) => $housingAreaQuery->whereIn('housing_areas.id', $areaIds)
+        //     )
+        //     ->latest()
+        //     ->get()
+        //     ->map(function (Tenant $tenant) use ($currentTime): array {
+        //         $isOpen = $tenant->isOpenAt($currentTime);
+
+        //         return [
+        //             'id' => $tenant->id,
+        //             'name' => $tenant->name,
+        //             'profile_picture_url' => $tenant->profile_picture_url,
+        //             'rating' => round((float) $tenant->rating, 1),
+        //             'housing_areas' => $tenant->housingAreas
+        //                 ->map(fn ($housingArea): array => [
+        //                     'id' => $housingArea->id,
+        //                     'name' => $housingArea->name,
+        //                     'code' => $housingArea->code,
+        //                     'village_code' => $housingArea->village_code,
+        //                 ])
+        //                 ->values(),
+        //             'product_count' => $tenant->products->count(),
+        //             'is_open' => $isOpen,
+        //             'store_status' => $isOpen ? 'Buka' : 'Tutup',
+        //             'open_time' => $tenant->open_time,
+        //             'close_time' => $tenant->close_time,
+        //             'operating_hours_label' => $tenant->operatingHoursLabel(),
+        //         ];
+        //     })
+        //     ->values();
+
+        // $tenants = new LengthAwarePaginator(
+        //     $tenantItems->forPage($page, $limit)->values(),
+        //     $tenantItems->count(),
+        //     $limit,
+        //     $page,
+        //     [
+        //         'path' => $request->url(),
+        //         'query' => Arr::except($request->query(), 'housing_area_id'),
+        //     ]
+        // );
+
+        // return response()->json([
+        //     'message' => 'Daftar tenant berhasil diambil.',
+        //     'data' => $tenants->items(),
+        //     'meta' => [
+        //         'current_page' => $tenants->currentPage(),
+        //         'per_page' => $tenants->perPage(),
+        //         'last_page' => $tenants->lastPage(),
+        //         'total' => $tenants->total(),
+        //         'from' => $tenants->firstItem(),
+        //         'to' => $tenants->lastItem(),
+        //     ],
+        //     'links' => [
+        //         'first' => $tenants->url(1),
+        //         'last' => $tenants->url($tenants->lastPage()),
+        //         'prev' => $tenants->previousPageUrl(),
+        //         'next' => $tenants->nextPageUrl(),
+        //     ],
+        // ]);
     }
 }
