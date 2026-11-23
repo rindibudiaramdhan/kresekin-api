@@ -382,6 +382,11 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.minimum_stock', 5)
             ->assertJsonPath('data.is_active', true);
 
+        $this->assertDatabaseHas('product_category_product', [
+            'product_id' => $createResponse->json('data.id'),
+            'product_category_id' => $category->id,
+        ]);
+
         $listResponse = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/seller/products');
 
@@ -392,6 +397,51 @@ class SellerApiTest extends TestCase
             ->assertJsonPath('data.0.stock', 100)
             ->assertJsonPath('data.0.unit', 'ikat')
             ->assertJsonPath('data.0.product_unit.name', 'ikat');
+    }
+
+    public function test_seller_can_replace_the_primary_product_category_without_removing_additional_categories(): void
+    {
+        [$seller, $token] = $this->createAuthenticatedUser('seller-category-update@example.com', '+6281200000147', 'seller-category-update-token', User::ROLE_SELLER);
+
+        $tenant = Tenant::query()->create([
+            'owner_user_id' => $seller->id,
+            'name' => 'Tenant Seller Category Update',
+        ]);
+        $primaryCategory = $this->createProductCategory(Tenant::CATEGORY_VEGETABLES);
+        $additionalCategory = $this->createProductCategory(Tenant::CATEGORY_FROZEN_FOOD);
+        $replacementCategory = $this->createProductCategory(Tenant::CATEGORY_FRUITS);
+        $unit = $this->createProductUnit('ikat');
+
+        $product = $tenant->products()->create([
+            'name' => 'Produk uji',
+            'category' => $primaryCategory->name,
+            'price' => 7000,
+            'stock' => 10,
+            'unit' => $unit->name,
+            'product_unit_id' => $unit->id,
+        ]);
+        $product->productCategories()->attach([$primaryCategory->id, $additionalCategory->id]);
+
+        $payload = [
+            'tenant_id' => $tenant->id,
+            'name' => $product->name,
+            'category' => $replacementCategory->name,
+            'price' => $product->price,
+            'stock' => $product->stock,
+            'product_unit_id' => $unit->id,
+        ];
+
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $this->withToken($token)->putJson('/api/seller/products/'.$product->id, $payload)
+                ->assertOk()
+                ->assertJsonPath('data.category', $replacementCategory->name);
+        }
+
+        $this->assertSame($replacementCategory->name, $product->fresh()->category);
+        $this->assertEqualsCanonicalizing(
+            [$additionalCategory->id, $replacementCategory->id],
+            $product->productCategories()->pluck('product_categories.id')->all(),
+        );
     }
 
     public function test_seller_can_search_own_products_by_name(): void

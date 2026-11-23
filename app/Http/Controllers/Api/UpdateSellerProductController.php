@@ -5,20 +5,70 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateSellerProductRequest;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\ProductUnit;
 use App\Support\ProductImageStorage;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class UpdateSellerProductController extends Controller
 {
     public function __invoke(UpdateSellerProductRequest $request, string $id): JsonResponse
     {
-        $product = Product::query()
-            ->with(['tenant', 'productUnit'])
-            ->where('id', $id)
-            ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
-            ->first();
+        $imageStorage = new ProductImageStorage;
+        $uploadedImagePath = null;
+        $previousImagePath = null;
+
+        try {
+            $product = DB::transaction(function () use ($request, $id, $imageStorage, &$uploadedImagePath, &$previousImagePath): ?Product {
+                $product = Product::query()
+                    ->where('id', $id)
+                    ->whereHas('tenant', fn ($query) => $query->where('owner_user_id', $request->user()->id))
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $product) {
+                    return null;
+                }
+
+                $validated = $request->safe()->except('image');
+                $this->syncPrimaryCategory($product, $validated['category']);
+
+                $productUnit = ProductUnit::query()->findOrFail($validated['product_unit_id']);
+                $validated['unit'] = $productUnit->name;
+
+                if ($request->hasFile('image')) {
+                    $uploadedImagePath = $imageStorage->store($request->file('image'));
+                    $validated['image_path'] = $uploadedImagePath;
+                    $validated['image_url'] = $imageStorage->url($uploadedImagePath);
+                } elseif ($request->filled('image_path')) {
+                    $validated['image_url'] = $imageStorage->url($validated['image_path']);
+                } elseif ($request->has('image_url')) {
+                    $validated['image_path'] = null;
+                }
+
+                if (isset($validated['image_path']) || $request->has('image_url')) {
+                    $previousImagePath = $product->image_path;
+                }
+
+                if ($request->has('is_active')) {
+                    $validated['is_active'] = $request->boolean('is_active');
+                } else {
+                    unset($validated['is_active']);
+                }
+
+                $product->update($validated);
+
+                return $product;
+            });
+        } catch (Throwable $exception) {
+            $imageStorage->delete($uploadedImagePath);
+
+            throw $exception;
+        }
 
         if (! $product) {
             return response()->json([
@@ -26,39 +76,49 @@ class UpdateSellerProductController extends Controller
             ], Response::HTTP_NOT_FOUND);
         }
 
-        $validated = $request->safe()->except('image');
-        $productUnit = ProductUnit::query()->findOrFail($validated['product_unit_id']);
-        $validated['unit'] = $productUnit->name;
-        $imageStorage = new ProductImageStorage;
-
-        if ($request->hasFile('image')) {
-            $imageStorage->delete($product->image_path);
-            $validated['image_path'] = $imageStorage->store($request->file('image'));
-            $validated['image_url'] = $imageStorage->url($validated['image_path']);
-        } elseif ($request->filled('image_path')) {
-            if ($product->image_path !== $validated['image_path']) {
-                $imageStorage->delete($product->image_path);
-            }
-
-            $validated['image_url'] = $imageStorage->url($validated['image_path']);
-        } elseif ($request->has('image_url')) {
-            $imageStorage->delete($product->image_path);
-            $validated['image_path'] = null;
+        if ($previousImagePath !== null && $previousImagePath !== $product->image_path) {
+            $imageStorage->delete($previousImagePath);
         }
 
-        if ($request->has('is_active')) {
-            $validated['is_active'] = $request->boolean('is_active');
-        } else {
-            unset($validated['is_active']);
-        }
-
-        $product->update($validated);
         $product->load(['tenant', 'productUnit']);
 
         return response()->json([
             'message' => 'Produk seller berhasil diperbarui.',
             'data' => $this->mapProduct($product),
         ]);
+    }
+
+    private function syncPrimaryCategory(Product $product, string $categoryName): void
+    {
+        $categoryIds = ProductCategory::query()
+            ->where('name', $categoryName)
+            ->limit(2)
+            ->pluck('id');
+
+        if ($categoryIds->count() !== 1) {
+            throw ValidationException::withMessages([
+                'category' => 'Nama kategori harus cocok dengan tepat satu kategori di master.',
+            ]);
+        }
+
+        $categories = $product->productCategories();
+
+        if ($product->category !== $categoryName) {
+            $previousCategoryIds = $categories
+                ->where('product_categories.name', $product->category)
+                ->limit(2)
+                ->pluck('product_categories.id');
+
+            if ($previousCategoryIds->count() > 1) {
+                throw ValidationException::withMessages([
+                    'category' => 'Kategori utama sebelumnya tidak dapat ditentukan dari nama kategori.',
+                ]);
+            }
+
+            $categories->detach($previousCategoryIds->all());
+        }
+
+        $product->productCategories()->syncWithoutDetaching($categoryIds->all());
     }
 
     private function mapProduct(Product $product): array

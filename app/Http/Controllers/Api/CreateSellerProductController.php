@@ -9,7 +9,9 @@ use App\Models\ProductCategory;
 use App\Models\ProductUnit;
 use App\Support\ProductImageStorage;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class CreateSellerProductController extends Controller
 {
@@ -24,15 +26,31 @@ class CreateSellerProductController extends Controller
         $productUnit = ProductUnit::query()->findOrFail($validated['product_unit_id']);
         $validated['unit'] = $productUnit->name;
 
-        if ($request->hasFile('image')) {
-            $imageStorage = new ProductImageStorage;
-            $validated['image_path'] = $imageStorage->store($request->file('image'));
-            $validated['image_url'] = $imageStorage->url($validated['image_path']);
-        } elseif (! empty($validated['image_path'])) {
-            $validated['image_url'] = (new ProductImageStorage)->url($validated['image_path']);
+        $imageStorage = new ProductImageStorage;
+        $uploadedImagePath = null;
+
+        try {
+            if ($request->hasFile('image')) {
+                $uploadedImagePath = $imageStorage->store($request->file('image'));
+                $validated['image_path'] = $uploadedImagePath;
+            }
+
+            if (! empty($validated['image_path'])) {
+                $validated['image_url'] = $imageStorage->url($validated['image_path']);
+            }
+
+            $product = DB::transaction(function () use ($validated, $productCategory): Product {
+                $product = Product::query()->create($validated);
+                $product->productCategories()->attach($productCategory->id);
+
+                return $product;
+            });
+        } catch (Throwable $exception) {
+            $imageStorage->delete($uploadedImagePath);
+
+            throw $exception;
         }
 
-        $product = Product::query()->create($validated);
         $product->load(['tenant', 'productUnit']);
 
         return response()->json([
