@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 #[Fillable([
     'tenant_id',
     'name',
-    'category',
+    // 'category',
     'image_url',
     'image_path',
     'price',

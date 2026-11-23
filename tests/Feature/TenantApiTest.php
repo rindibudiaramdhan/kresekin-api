@@ -236,7 +236,7 @@ class TenantApiTest extends TestCase
         }
     }
 
-    public function test_tenant_list_can_be_filtered_by_product_category_without_tenant_category_columns(): void
+    public function test_tenant_list_filters_by_linked_product_category_slug(): void
     {
         $user = User::query()->create([
             'name' => 'Budi',
@@ -288,18 +288,28 @@ class TenantApiTest extends TestCase
             'close_time' => '21:00',
         ]);
 
-        ProductCategory::query()->create([
+        $toiletriesCategory = ProductCategory::query()->create([
             'name' => 'Toiletries',
             'slug' => 'toiletries',
             'image_path' => 'images/toiletries.svg',
         ]);
+        $groceriesCategory = ProductCategory::query()->create([
+            'name' => 'Sembako',
+            'slug' => 'sembako',
+            'image_path' => 'images/groceries.svg',
+        ]);
         foreach ([$far, $near, $groceries] as $tenant) {
-            Product::query()->create([
+            $product = new Product;
+            $product->forceFill([
                 'tenant_id' => $tenant->id,
                 'name' => 'Produk '.$tenant->name,
-                'category' => $tenant->id === $groceries->id ? 'Sembako' : 'Toiletries',
+                'category' => $tenant->id === $groceries->id ? 'Toiletries' : 'Sembako',
                 'price' => 10000,
-            ]);
+            ])->save();
+
+            $product->productCategories()->attach($tenant->id === $groceries->id
+                ? [$groceriesCategory->id]
+                : [$groceriesCategory->id, $toiletriesCategory->id]);
         }
 
         $this->assignListArea($user);
@@ -314,9 +324,14 @@ class TenantApiTest extends TestCase
             ->assertJsonMissingPath('data.1.category');
 
         $this->assertEqualsCanonicalizing([$far->id, $near->id], array_column($response->json('data'), 'id'));
+        foreach ($response->json('data') as $tenant) {
+            $this->assertContains('toiletries', array_column($tenant['products'][0]['product_categories'], 'slug'));
+        }
+        parse_str(parse_url($response->json('links.first'), PHP_URL_QUERY), $firstPageQuery);
+        $this->assertSame('toiletries', $firstPageQuery['product_category']);
     }
 
-    public function test_tenant_list_returns_validation_error_for_unknown_product_category(): void
+    public function test_tenant_list_returns_validation_error_for_invalid_or_unknown_product_category_slug(): void
     {
         $user = User::query()->create([
             'name' => 'Budi',
@@ -338,12 +353,12 @@ class TenantApiTest extends TestCase
             'expires_at' => now()->addDays(30),
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
-            ->getJson('/api/tenants?product_category=elektronik');
-
-        $response
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['product_category']);
+        foreach (['elektronik', 'Buah', 'frozen_food', ''] as $category) {
+            $this->withToken($plainTextToken)
+                ->getJson('/api/tenants?product_category='.$category)
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors(['product_category']);
+        }
     }
 
     public function test_tenant_without_coordinates_has_null_distance_and_is_sorted_last(): void

@@ -533,7 +533,7 @@ Query opsional:
 
 - `limit`: 1 sampai 100, default 10
 - `page`: halaman
-- `product_category`: slug kategori produk
+- `product_category`: slug yang terdaftar di `product_categories`. Toko cocok jika minimal satu produknya terhubung ke kategori itu lewat `product_category_product`. Format slug yang salah atau slug yang tidak terdaftar menghasilkan `422`.
 
 ```bash
 curl "http://127.0.0.1:8000/api/tenants?limit=10&product_category=sembako" \

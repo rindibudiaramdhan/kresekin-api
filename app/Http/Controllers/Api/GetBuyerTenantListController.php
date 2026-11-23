@@ -17,9 +17,16 @@ class GetBuyerTenantListController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $validator = Validator::make($request->query(), [
-            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'page' => ['nullable', 'integer', 'min:1'],
-            'product_category' => ['nullable', 'string', 'exists:product_categories,slug'],
+            'limit' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+            'product_category' => [
+                'bail',
+                'sometimes',
+                'required',
+                'string',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/D',
+                'exists:product_categories,slug',
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -44,17 +51,28 @@ class GetBuyerTenantListController extends Controller
                 'rating',
                 'open_time',
                 'close_time',
+                'owner_user_id',
             )
             ->with([
-                'housingAreas:id,name,code',
-                // 'products',
+                // 'housingAreas:id,name,code',
+                'owner:id,name,email,phone',
+                'products:id,tenant_id,name,price,stock,unit',
+                'products.productCategories:id,name,slug,image_path',
             ])
             ->withCount('products')
+            ->when(
+                $productCategory !== null,
+                fn ($query) => $query->whereHas(
+                    'products.productCategories',
+                    fn ($categoryQuery) => $categoryQuery->where('product_categories.slug', $productCategory),
+                ),
+            )
             // ->whereHas('housingAreas', function ($query) use ($user) {
             //     $query->whereIn('housing_areas.id', [$user->housing_area_id]);
             // })
             // ->openNow()
-            ->paginate($limit);
+            ->paginate($limit)
+            ->appends(Arr::only($validated, ['limit', 'product_category']));
 
         return response()->json([
             'message' => 'Daftar tenant berhasil diambil.',
