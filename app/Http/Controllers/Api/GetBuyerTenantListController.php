@@ -37,7 +37,7 @@ class GetBuyerTenantListController extends Controller
         }
 
         $validated = $validator->validated();
-        $user = $request->user();
+        $housingAreaId = $request->user()->housing_area_id;
 
         $limit = (int) ($validated['limit'] ?? 10);
         $page = (int) ($validated['page'] ?? 1);
@@ -54,12 +54,16 @@ class GetBuyerTenantListController extends Controller
                 'owner_user_id',
             )
             ->with([
-                // 'housingAreas:id,name,code',
+                'housingAreas:id,name,code',
                 'owner:id,name,email,phone',
                 'products:id,tenant_id,name,price,stock,unit',
                 'products.productCategories:id,name,slug,image_path',
             ])
             ->withCount('products')
+            ->whereHas(
+                'housingAreas',
+                fn ($areaQuery) => $areaQuery->where('housing_areas.id', $housingAreaId),
+            )
             ->when(
                 $productCategory !== null,
                 fn ($query) => $query->whereHas(
@@ -67,9 +71,6 @@ class GetBuyerTenantListController extends Controller
                     fn ($categoryQuery) => $categoryQuery->where('product_categories.slug', $productCategory),
                 ),
             )
-            // ->whereHas('housingAreas', function ($query) use ($user) {
-            //     $query->whereIn('housing_areas.id', [$user->housing_area_id]);
-            // })
             // ->openNow()
             ->paginate($limit)
             ->appends(Arr::only($validated, ['limit', 'product_category']));
@@ -79,7 +80,7 @@ class GetBuyerTenantListController extends Controller
             'data' => $tenants->items(),
             'productCategory' => $productCategory,
             'user' => [
-                'housing_area_id' => $user->housing_area_id,
+                'housing_area_id' => $housingAreaId,
             ],
             'meta' => [
                 'current_page' => $tenants->currentPage(),

@@ -141,7 +141,7 @@ class TenantApiTest extends TestCase
         Carbon::setTestNow();
     }
 
-    public function test_tenant_list_is_filtered_by_the_users_profile_area(): void
+    public function test_tenant_list_matches_any_service_area_to_the_authenticated_users_primary_area(): void
     {
         $user = User::query()->create([
             'name' => 'Budi',
@@ -179,7 +179,7 @@ class TenantApiTest extends TestCase
             'open_time' => '07:00',
             'close_time' => '21:00',
         ]);
-        $targetTenant->housingAreas()->sync([$targetArea->id]);
+        $targetTenant->housingAreas()->sync([$otherArea->id, $targetArea->id]);
 
         $otherTenant = Tenant::query()->create([
             'name' => 'Toko Area Lain',
@@ -190,20 +190,45 @@ class TenantApiTest extends TestCase
         ]);
         $otherTenant->housingAreas()->sync([$otherArea->id]);
 
+        $category = ProductCategory::query()->create([
+            'name' => 'Buah',
+            'slug' => 'buah',
+            'image_path' => 'images/fruits.svg',
+        ]);
+        foreach ([$targetTenant, $otherTenant] as $tenant) {
+            $product = new Product;
+            $product->forceFill([
+                'tenant_id' => $tenant->id,
+                'name' => 'Apel',
+                'category' => 'Buah',
+                'price' => 10000,
+            ])->save();
+            $product->productCategories()->attach($category->id);
+        }
+
+        $user->housingAreas()->sync([$targetArea->id, $otherArea->id]);
+
+        $this->withToken($plainTextToken)
+            ->getJson('/api/tenants')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 0)
+            ->assertJsonPath('data', []);
+
         $user->update(['housing_area_id' => $targetArea->id]);
 
-        $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
-            ->getJson('/api/tenants');
+        $urls = [
+            '/api/tenants',
+            '/api/tenants?product_category=buah&housing_area_id='.$otherArea->id,
+        ];
 
-        $response
-            ->assertOk()
-            ->assertJsonPath('meta.total', 1)
-            ->assertJsonPath('data.0.id', $targetTenant->id)
-            ->assertJsonPath('data.0.name', 'Toko Area Target')
-            ->assertJsonPath('data.0.housing_areas.0.id', $targetArea->id)
-            ->assertJsonPath('data.0.housing_areas.0.name', 'Komp Setra Dago')
-            ->assertJsonPath('data.0.housing_areas.0.code', 'AREA-001')
-            ->assertJsonPath('data.0.housing_areas.0.village_code', '3273141003');
+        foreach ($urls as $url) {
+            $this->withToken($plainTextToken)
+                ->getJson($url)
+                ->assertOk()
+                ->assertJsonPath('meta.total', 1)
+                ->assertJsonPath('data.0.id', $targetTenant->id)
+                ->assertJsonPath('user.housing_area_id', $targetArea->id);
+        }
     }
 
     public function test_tenant_list_ignores_unknown_and_invalid_housing_area_query_values(): void

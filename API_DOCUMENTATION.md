@@ -527,7 +527,7 @@ curl http://127.0.0.1:8000/api/products/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb \
 
 Mengambil daftar tenant untuk buyer.
 
-Hasil otomatis dibatasi ke toko yang melayani salah satu area profil user pemilik token. Profil multi-area memakai seluruh pilihan area. Profil lama memakai field profil `housing_area_id` bila relasi area kosong. User tanpa area mendapat daftar kosong (`200`, `data: []`, `meta.total: 0`). Endpoint mengabaikan parameter query `housing_area_id`.
+Toko muncul jika salah satu area layanannya cocok dengan `housing_area_id` utama pada profil buyer pemilik token. Jika area utama belum disetel, API mengembalikan daftar kosong (`200`, `data: []`, `meta.total: 0`). Parameter query `housing_area_id` diabaikan. Jika `product_category` dikirim, toko juga harus memenuhi filter kategori itu.
 
 Query opsional:
 
