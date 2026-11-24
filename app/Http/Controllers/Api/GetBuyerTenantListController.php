@@ -42,6 +42,11 @@ class GetBuyerTenantListController extends Controller
         $limit = (int) ($validated['limit'] ?? 10);
         $page = (int) ($validated['page'] ?? 1);
         $productCategory = $validated['product_category'] ?? null;
+        $currentTime = now('Asia/Jakarta')->format('H:i');
+        $hasProductCategory = fn ($query) => $query->whereHas(
+            'productCategories',
+            fn ($categoryQuery) => $categoryQuery->where('product_categories.slug', $productCategory),
+        );
 
         $tenants = Tenant::query()
             ->select(
@@ -49,12 +54,13 @@ class GetBuyerTenantListController extends Controller
                 'name',
                 'profile_picture_url',
                 'rating',
+                'is_open',
                 'open_time',
                 'close_time',
                 'owner_user_id',
             )
             ->with([
-                'housingAreas:id,name,code',
+                'housingAreas:id,name,code,village_code',
                 'owner:id,name,email,phone',
                 'products:id,tenant_id,name,price,stock,unit',
                 'products.productCategories:id,name,slug,image_path',
@@ -66,14 +72,23 @@ class GetBuyerTenantListController extends Controller
             )
             ->when(
                 $productCategory !== null,
-                fn ($query) => $query->whereHas(
-                    'products.productCategories',
-                    fn ($categoryQuery) => $categoryQuery->where('product_categories.slug', $productCategory),
-                ),
+                fn ($query) => $query->whereHas('products', $hasProductCategory)
+                    ->withCount(['products as product_count' => $hasProductCategory]),
             )
             // ->openNow()
             ->paginate($limit)
-            ->appends(Arr::only($validated, ['limit', 'product_category']));
+            ->appends(Arr::only($validated, ['limit', 'product_category']))
+            ->through(function (Tenant $tenant) use ($currentTime): array {
+                $isOpen = $tenant->isOpenAt($currentTime);
+
+                return [
+                    ...$tenant->toArray(),
+                    'is_open' => $isOpen,
+                    'store_status' => $isOpen ? 'Buka' : 'Tutup',
+                    'operating_hours_label' => $tenant->operatingHoursLabel(),
+                    'product_count' => $tenant->product_count ?? $tenant->products_count,
+                ];
+            });
 
         return response()->json([
             'message' => 'Daftar tenant berhasil diambil.',

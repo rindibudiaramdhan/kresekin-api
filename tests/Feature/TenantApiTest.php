@@ -176,8 +176,9 @@ class TenantApiTest extends TestCase
             'name' => 'Toko Area Target',
             'profile_picture_url' => 'https://example.com/target-area.png',
             'rating' => 4.8,
-            'open_time' => '07:00',
-            'close_time' => '21:00',
+            'is_open' => false,
+            'open_time' => '00:00',
+            'close_time' => '23:59',
         ]);
         $targetTenant->housingAreas()->sync([$otherArea->id, $targetArea->id]);
 
@@ -222,12 +223,22 @@ class TenantApiTest extends TestCase
         ];
 
         foreach ($urls as $url) {
-            $this->withToken($plainTextToken)
+            $response = $this->withToken($plainTextToken)
                 ->getJson($url)
                 ->assertOk()
                 ->assertJsonPath('meta.total', 1)
                 ->assertJsonPath('data.0.id', $targetTenant->id)
+                ->assertJsonPath('data.0.is_open', false)
+                ->assertJsonPath('data.0.store_status', 'Tutup')
+                ->assertJsonPath('data.0.operating_hours_label', 'Buka 00:00 sd 23:59')
+                ->assertJsonPath('data.0.product_count', 1)
+                ->assertJsonPath('data.0.products_count', 1)
                 ->assertJsonPath('user.housing_area_id', $targetArea->id);
+
+            $this->assertEqualsCanonicalizing(
+                [$targetArea->village_code, $otherArea->village_code],
+                array_column($response->json('data.0.housing_areas'), 'village_code'),
+            );
         }
     }
 
@@ -337,6 +348,15 @@ class TenantApiTest extends TestCase
                 : [$groceriesCategory->id, $toiletriesCategory->id]);
         }
 
+        $additionalProduct = new Product;
+        $additionalProduct->forceFill([
+            'tenant_id' => $far->id,
+            'name' => 'Beras',
+            'category' => 'Sembako',
+            'price' => 10000,
+        ])->save();
+        $additionalProduct->productCategories()->attach($groceriesCategory->id);
+
         $this->assignListArea($user);
 
         $response = $this->withHeader('Authorization', 'Bearer '.$plainTextToken)
@@ -350,7 +370,10 @@ class TenantApiTest extends TestCase
 
         $this->assertEqualsCanonicalizing([$far->id, $near->id], array_column($response->json('data'), 'id'));
         foreach ($response->json('data') as $tenant) {
-            $this->assertContains('toiletries', array_column($tenant['products'][0]['product_categories'], 'slug'));
+            $this->assertSame(1, $tenant['product_count']);
+            $this->assertSame($tenant['id'] === $far->id ? 2 : 1, $tenant['products_count']);
+            $categories = collect($tenant['products'])->pluck('product_categories')->collapse();
+            $this->assertContains('toiletries', $categories->pluck('slug')->all());
         }
         parse_str(parse_url($response->json('links.first'), PHP_URL_QUERY), $firstPageQuery);
         $this->assertSame('toiletries', $firstPageQuery['product_category']);
